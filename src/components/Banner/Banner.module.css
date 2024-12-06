@@ -1,40 +1,56 @@
-/* Banner container */
+/* Banner Container */
 .banner {
   background-color: var(--primary-color);
   color: var(--white);
-  padding: 10px 20px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: space-between; /* Logo on the left, Sign In on the right */
+  padding: 10px 20px;
 }
 
-/* Logo and Name Section */
+/* Logo Section */
 .logoSection {
   display: flex;
   align-items: center;
   gap: 10px;
 }
 
-/* Logo Styling */
 .logo {
   width: 40px;
   height: 40px;
   object-fit: contain;
 }
 
-/* Name Styling */
 .name {
-  font-size: 20px;
   font-weight: bold;
+  font-size: 20px;
 }
 
-/* Responsive Design for Mobile Devices */
+/* Sign In Section */
+.signInSection {
+  color: var(--white);
+  background-color: var(--primary-color);
+  padding: 5px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Hover Effect for Sign In Section */
+.signInSection:hover {
+  background-color: var(--white);
+  color: var(--primary-color);
+}
+
+/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .banner {
-    justify-content: center; /* Center content for smaller screens */
+    flex-direction: column;
+    text-align: center;
   }
 
-  .logoSection {
-    justify-content: center;
+  .signInSection {
+    margin-top: 10px;
   }
 }
