@@ -1,0 +1,40 @@
+/* Banner container */
+.banner {
+  background-color: var(--primary-color);
+  color: var(--white);
+  padding: 10px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+/* Logo and Name Section */
+.logoSection {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Logo Styling */
+.logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+/* Name Styling */
+.name {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+/* Responsive Design for Mobile Devices */
+@media (max-width: 768px) {
+  .banner {
+    justify-content: center; /* Center content for smaller screens */
+  }
+
+  .logoSection {
+    justify-content: center;
+  }
+}
