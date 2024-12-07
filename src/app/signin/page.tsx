@@ -24,10 +24,7 @@ const SignIn: React.FC = () => {
         return;
       }
 
-      console.log("Login successful. Token:", data.token);
-
-      // Store the JWT token locally (although consider secure cookies for production)
-      localStorage.setItem("authToken", data.token);
+      console.log("Login successful:");
     } catch (err: any) {
       console.error("Login error:", err);
     }
