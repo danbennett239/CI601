@@ -39,7 +39,7 @@ const Register: React.FC = () => {
       }
 
       console.log("User registered successfully:", data);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error during registration:", err);
       setError("Registration failed. Please try again.");
     }

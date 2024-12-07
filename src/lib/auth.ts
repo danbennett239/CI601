@@ -10,7 +10,7 @@ export interface UserPayload {
   id: string;
   email: string;
   role: string;
-  hasura_claims: Record<string, any>;
+  hasura_claims: Record<string, unknown>;
 }
 
 export function signAccessToken(payload: UserPayload) {
@@ -24,7 +24,7 @@ export function signRefreshToken(payload: UserPayload) {
 export function verifyToken(token: string): UserPayload | null {
   try {
     return jwt.verify(token, JWT_SECRET) as UserPayload;
-  } catch (e) {
+  } catch {
     return null;
   }
 }

@@ -36,7 +36,7 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ user_id: result.data.insert_users_one.user_id, email: result.data.insert_users_one.email });
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
   }
 }

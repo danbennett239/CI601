@@ -25,7 +25,7 @@ const SignIn: React.FC = () => {
       }
 
       console.log("Login successful:");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
     }
   };

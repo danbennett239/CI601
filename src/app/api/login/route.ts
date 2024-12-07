@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { signAccessToken, signRefreshToken } from '@/lib/auth';
-// import jwt from 'jsonwebtoken';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
-// const JWT_SECRET = process.env.JWT_SECRET!;
 
 const GET_USER_BY_EMAIL = `
   query GetUserByEmail($email: String!) {
@@ -69,7 +67,7 @@ export async function POST(req: NextRequest) {
     res.cookies.set('accessToken', accessToken, { httpOnly: true, secure: true, path: '/', maxAge: 3600 });
     res.cookies.set('refreshToken', refreshToken, { httpOnly: true, secure: true, path: '/', maxAge: 604800 });
     return res;
-  } catch (err: any) {
+  } catch {
     return NextResponse.json({ error: "Authentication failed." }, { status: 500 });
   }
 }
