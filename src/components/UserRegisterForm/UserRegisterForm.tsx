@@ -9,13 +9,14 @@ interface UserRegisterFormProps {
 }
 
 const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
-  const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -31,7 +32,7 @@ const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
       const res = await fetch("/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password, role: "user" }),
+        body: JSON.stringify({ first_name: firstName, last_name: lastName, email, password, role: "user" }),
       });
 
       const data = await res.json();
@@ -56,13 +57,25 @@ const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
       <h2 className={styles.title}>Register</h2>
       <form onSubmit={handleSubmit} className={styles.form}>
         <label htmlFor="name" className={styles.label}>
-          Name:
+          First Name:
         </label>
         <input
           type="text"
-          id="name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          id="firstName"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          className={styles.input}
+          required
+        />
+
+        <label htmlFor="name" className={styles.label}>
+          Last Name:
+        </label>
+        <input
+          type="text"
+          id="lastName"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           className={styles.input}
           required
         />

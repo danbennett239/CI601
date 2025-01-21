@@ -5,8 +5,8 @@ const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
 
 const REGISTER_USER_MUTATION = `
-  mutation RegisterUser($name: String!, $email: String!, $password: String!, $role: String!) {
-    insert_users_one(object: { name: $name, email: $email, password: $password, role: $role }) {
+  mutation RegisterUser($first_name: String!, $last_name: String!, $email: String!, $password: String!, $role: String!) {
+    insert_users_one(object: { first_name: $first_name, last_name: $last_name, email: $email, password: $password, role: $role }) {
       user_id
       email
     }
@@ -14,7 +14,7 @@ const REGISTER_USER_MUTATION = `
 `;
 
 export async function POST(req: NextRequest) {
-  const { name, email, password, role } = await req.json();
+  const { first_name, last_name, email, password, role } = await req.json();
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
     const response = await fetch(HASURA_GRAPHQL_URL, {
@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         query: REGISTER_USER_MUTATION,
-        variables: { name, email, password: hashedPassword, role },
+        variables: { first_name, last_name, email, password: hashedPassword, role },
       }),
     });
 
