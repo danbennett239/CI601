@@ -52,7 +52,7 @@ export default function SigninPage() {
         )}
         <p className={styles.dentalPrompt}>
           Are you a dental practice?{" "}
-          <a href="/dental-signin" className={styles.dentalLink}>
+          <a href="/practice-signin" className={styles.dentalLink}>
             Please go here
           </a>
         </p>
@@ -78,7 +78,7 @@ export default function SigninPage() {
       <div className={styles.dentalPracticeSection}>
         <p className={styles.dentalPrompt}>
           Are you a dental practice?{" "}
-          <a href="/dental-signin" className={styles.dentalLink}>
+          <a href="/practice-signin" className={styles.dentalLink}>
             Please go here
           </a>
         </p>
