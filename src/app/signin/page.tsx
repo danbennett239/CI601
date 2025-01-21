@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { useDevice } from "@/content/DeviceContent";
 import UserLoginForm from "@/components/UserLoginForm/UserLoginForm";
 import UserRegisterForm from "@/components/UserRegisterForm/UserRegisterForm";
-import styles from "@/app/signin/Signin.module.css";
+import styles from "./SignIn.module.css";
 
 export default function SigninPage() {
   const { isMobile } = useDevice();
@@ -50,18 +50,38 @@ export default function SigninPage() {
             </button>
           </>
         )}
+        <p className={styles.dentalPrompt}>
+          Are you a dental practice?{" "}
+          <a href="/dental-signin" className={styles.dentalLink}>
+            Please go here
+          </a>
+        </p>
       </div>
     );
   }
 
-  // On desktop, show them side by side
+  // On desktop, show them side by side with a divider
   return (
     <div className={styles.containerDesktop}>
       <div className={styles.loginWrapper}>
         <UserLoginForm onSuccess={handleLoginSuccess} />
       </div>
+
+      {/* Vertical line divider */}
+      <div className={styles.divider} />
+
       <div className={styles.registerWrapper}>
         <UserRegisterForm onSuccess={handleRegisterSuccess} />
+      </div>
+
+      {/* Dental practice link below (or you can place it outside flex, if you prefer) */}
+      <div className={styles.dentalPracticeSection}>
+        <p className={styles.dentalPrompt}>
+          Are you a dental practice?{" "}
+          <a href="/dental-signin" className={styles.dentalLink}>
+            Please go here
+          </a>
+        </p>
       </div>
     </div>
   );

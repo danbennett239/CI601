@@ -1,4 +1,6 @@
-/* Mobile: stack the forms/toggle button vertically */
+/* app/signin/Signin.module.css */
+
+/* MOBILE layout: stack forms + toggle button vertically */
 .containerMobile {
   display: flex;
   flex-direction: column;
@@ -26,16 +28,17 @@
   background-color: var(--primary-color);
 }
 
-/* Desktop: place forms side by side */
+/* DESKTOP layout: place forms side by side, center them vertically */
 .containerDesktop {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: center; /* centers vertically */
   justify-content: center;
   gap: 40px;
   height: calc(100vh - 80px);
   margin: 0;
   padding: 40px;
+  position: relative; /* in case we want to place an absolute item */
 }
 
 .loginWrapper,
@@ -44,4 +47,37 @@
   display: flex;
   justify-content: center;
   align-items: center;
+}
+
+/* The vertical line divider */
+.divider {
+  width: 1px;
+  background-color: #ccc;
+  height: 60%; /* or 80%, your preference */
+  min-height: 300px; /* ensures it's tall enough if the forms are short */
+  align-self: center; /* center it vertically in the container */
+}
+
+/* Dental practice link area (on desktop, you might put it below or in the corner) */
+.dentalPracticeSection {
+  position: absolute;
+  bottom: 40px; /* or you can place this outside the container entirely */
+  width: 100%;
+  text-align: center;
+}
+
+/* Or you can just place the link outside the flex, if you prefer a simpler layout. */
+
+/* Shared across mobile & desktop: the text link */
+.dentalPrompt {
+  margin-top: 20px;
+  font-size: 14px;
+  color: #333;
+}
+
+/* Style the link */
+.dentalLink {
+  color: var(--primary-color);
+  text-decoration: underline;
+  font-weight: 600;
 }
