@@ -6,7 +6,7 @@ import React, { useState } from "react";
 import { useDevice } from "@/content/DeviceContent";
 import UserLoginForm from "@/components/UserLoginForm/UserLoginForm";
 import UserRegisterForm from "@/components/UserRegisterForm/UserRegisterForm";
-import styles from "./Signin.module.css";
+import styles from "@/app/signin/Signin.module.css";
 
 export default function SigninPage() {
   const { isMobile } = useDevice();
