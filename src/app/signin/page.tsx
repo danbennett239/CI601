@@ -8,10 +8,26 @@ const SignIn: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Signing in with:", { email, password });
-    // TODO: Add authentication logic
+    try {
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        console.error("Login error:", data.error);
+        return;
+      }
+
+      console.log("Login successful:");
+    } catch (err: unknown) {
+      console.error("Login error:", err);
+    }
   };
 
   return (

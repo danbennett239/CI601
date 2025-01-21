@@ -14,7 +14,7 @@ const Register: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Password match validation
@@ -24,8 +24,25 @@ const Register: React.FC = () => {
     }
 
     setError(""); // Clear error if passwords match
-    console.log("Registering user:", { name, email, password });
-    // TODO: Add API call for user registration
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password, role: "user" }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || "Registration failed.");
+        return;
+      }
+
+      console.log("User registered successfully:", data);
+    } catch (err: unknown) {
+      console.error("Error during registration:", err);
+      setError("Registration failed. Please try again.");
+    }
   };
 
   return (
