@@ -19,8 +19,9 @@ const Banner: React.FC = () => {
         />
         <span className={styles.name}>Tempname</span>
       </div>
-
-      {/* Sign In Section */}
+      <Link href="/home">
+      <div className={styles.signInSection}>Home</div>
+      </Link>      {/* Sign In Section */}
       <Link href="/signin">
         <div className={styles.signInSection}>
           Sign In
