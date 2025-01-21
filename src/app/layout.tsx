@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Banner from "@/components/Banner/Banner";
 import { getUserFromCookies, tryRefreshUser } from '@/lib/auth';
+import { DeviceProvider } from "@/content/DeviceContent";
 
 export const metadata: Metadata = {
   title: "Tempname",
@@ -25,9 +26,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Banner />
-        {user ? (<p>Welcome</p>) : (<p>Sign in</p>)}
-        {children}
+        <DeviceProvider>
+          <Banner />
+          {user ? (<p>Welcome</p>) : (<p>Sign in</p>)}
+          {children}
+        </DeviceProvider>
       </body>
     </html>
   );
