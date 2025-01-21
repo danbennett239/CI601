@@ -1,0 +1,47 @@
+/* Mobile: stack the forms/toggle button vertically */
+.containerMobile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  height: calc(100vh - 80px);
+  margin: 0;
+}
+
+/* Toggle button for switching forms on mobile */
+.toggleButton {
+  background-color: var(--secondary-color);
+  color: #fff;
+  border: none;
+  padding: 10px 15px;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+  margin-top: 10px;
+}
+
+.toggleButton:hover {
+  background-color: var(--primary-color);
+}
+
+/* Desktop: place forms side by side */
+.containerDesktop {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 40px;
+  height: calc(100vh - 80px);
+  margin: 0;
+  padding: 40px;
+}
+
+.loginWrapper,
+.registerWrapper {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}

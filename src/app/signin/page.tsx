@@ -1,75 +1,68 @@
+// app/signin/page.tsx
+
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
-import styles from "../../styles/SignIn.module.css";
+import { useDevice } from "@/content/DeviceContent";
+import UserLoginForm from "@/components/UserLoginForm/UserLoginForm";
+import UserRegisterForm from "@/components/UserRegisterForm/UserRegisterForm";
+import styles from "./Signin.module.css";
 
-const SignIn: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function SigninPage() {
+  const { isMobile } = useDevice();
+  // On mobile, we can let the user toggle back and forth
+  const [showRegister, setShowRegister] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      const res = await fetch("/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        console.error("Login error:", data.error);
-        return;
-      }
-
-      console.log("Login successful:");
-    } catch (err: unknown) {
-      console.error("Login error:", err);
-    }
+  // Called after successful login
+  const handleLoginSuccess = () => {
+    console.log("Login success!");
+    // ...Add your redirect or additional logic here
   };
 
+  // Called after successful registration
+  const handleRegisterSuccess = () => {
+    console.log("Register success!");
+    // ...Add your redirect or additional logic here
+  };
+
+  if (isMobile) {
+    // On mobile, show one form at a time
+    return (
+      <div className={styles.containerMobile}>
+        {showRegister ? (
+          <>
+            <UserRegisterForm onSuccess={handleRegisterSuccess} />
+            <button
+              className={styles.toggleButton}
+              onClick={() => setShowRegister(false)}
+            >
+              Back to Sign In
+            </button>
+          </>
+        ) : (
+          <>
+            <UserLoginForm onSuccess={handleLoginSuccess} />
+            <button
+              className={styles.toggleButton}
+              onClick={() => setShowRegister(true)}
+            >
+              Register
+            </button>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  // On desktop, show them side by side
   return (
-    <div className={styles.outerWrapper}>
-      <div className={styles.container}>
-        <h1 className={styles.title}>Sign In</h1>
-        <form onSubmit={handleSubmit} className={styles.form}>
-          <label htmlFor="email" className={styles.label}>
-            Email:
-          </label>
-          <input
-            type="email"
-            id="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className={styles.input}
-            required
-          />
-          <label htmlFor="password" className={styles.label}>
-            Password:
-          </label>
-          <input
-            type="password"
-            id="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className={styles.input}
-            required
-          />
-          <button type="submit" className={styles.button}>
-            Sign In
-          </button>
-        </form>
-        <div className={styles.register}>
-          <p>Don’t have an account?</p>
-          <Link href="/register">
-            <button className={styles.registerButton}>Register</button>
-          </Link>
-        </div>
+    <div className={styles.containerDesktop}>
+      <div className={styles.loginWrapper}>
+        <UserLoginForm onSuccess={handleLoginSuccess} />
+      </div>
+      <div className={styles.registerWrapper}>
+        <UserRegisterForm onSuccess={handleRegisterSuccess} />
       </div>
     </div>
   );
-};
-
-export default SignIn;
+}
