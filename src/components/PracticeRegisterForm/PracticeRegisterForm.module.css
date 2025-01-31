@@ -1,11 +1,112 @@
-.formContainer {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  max-width: 500px;
+.formWrapper {
+  max-width: 700px; /* a bit wider since it's multi-column */
+  width: 100%;
   margin: 0 auto;
+  padding: 20px;
+  text-align: center;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+.title {
+  font-size: 24px;
+  font-weight: bold;
+  margin-bottom: 20px;
+}
+
+/* The main form container */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Two-column grid for certain sections */
+.twoColumnGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+/* A wrapper for each label+input pair */
+.fieldBlock {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Label styling from your user form */
+.label {
+  text-align: left;
+  font-weight: 600;
+  margin-bottom: 5px;
+}
+
+/* Standard input style */
+.input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+/* Error message styling */
+.error {
+  color: red;
+  font-size: 14px;
+  margin-top: -10px;
+}
+
+/* Button style from user register form */
+.button {
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #fff;
+  background-color: var(--primary-color);
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  margin-top: 10px;
+}
+
+.button:hover {
+  background-color: var(--secondary-color);
+}
+
+/* Password fields with icons */
+.inputWrapper {
+  position: relative;
+  width: 100%;
+}
+
+.inputWithIcon {
+  width: 100%;
+  padding-right: 40px; /* space for the eye icon */
+  padding-left: 10px;
+  padding-top: 10px;
+  padding-bottom: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.eyeIcon {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #666;
+  cursor: pointer;
+  transition: color 0.3s ease;
+}
+
+.eyeIcon:hover {
+  color: #333;
+}
+
+/* Photo circle styling */
 .photoSection {
   display: flex;
   flex-direction: column;
@@ -13,8 +114,8 @@
 }
 
 .photoCircle {
-  width: 120px;
-  height: 120px;
+  width: 100px;
+  height: 100px;
   border: 2px dashed #aaa;
   border-radius: 50%;
   display: flex;
@@ -22,7 +123,6 @@
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
-  position: relative;
   margin-bottom: 0.5rem;
 }
 
@@ -42,55 +142,38 @@
   object-fit: cover;
 }
 
-.photoText {
-  font-size: 0.85rem;
-  color: #666;
-}
-
-.inputGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.inputGroup label {
-  font-weight: 500;
-  margin-bottom: 0.25rem;
-}
-
-.inputGroup input,
-.inputGroup textarea {
-  padding: 0.5rem;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
-
+/* Opening Hours Section */
 .hoursSection {
+  text-align: left;
+  background-color: #fff;
   border: 1px solid #ccc;
-  padding: 1rem;
-  border-radius: 4px;
+  padding: 15px;
+  border-radius: 6px;
 }
 
-.hoursSection h3 {
+.hoursTitle {
   margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .dayRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.submitButton {
-  background-color: #0070f3;
-  color: #fff;
-  font-size: 1rem;
-  padding: 0.6rem 1.2rem;
-  border: none;
+.dayLabel {
+  width: 80px;
+  font-weight: 500;
+}
+
+.inputTime {
+  width: 100px;
+  padding: 6px;
+  font-size: 14px;
+  border: 1px solid #ccc;
   border-radius: 4px;
-  cursor: pointer;
-}
-
-.submitButton:hover {
-  background-color: #005ac1;
 }
