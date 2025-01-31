@@ -198,7 +198,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     console.log("Practice Register Form Data:", formData);
 
     try {
-      const res = await fetch("/api/practices/register", {
+      const res = await fetch("/api/practice/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
