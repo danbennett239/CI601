@@ -4,8 +4,25 @@ import React, { useState, useRef, ChangeEvent } from "react";
 import styles from "./PracticeRegisterForm.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
+/** Utility to parse "HH:MM" -> total minutes from midnight */
+function timeToMinutes(t: string): number {
+  const [hh, mm] = t.split(":");
+  return parseInt(hh, 10) * 60 + parseInt(mm, 10);
+}
+/** Quick check for valid "HH:MM" format */
+function isValidTime(t: string): boolean {
+  return /^\d{2}:\d{2}$/.test(t);
+}
+
 interface PracticeRegisterFormProps {
   onSuccess?: () => void;
+}
+
+interface DayHours {
+  dayName: string;
+  open: string;
+  close: string;
+  closed: boolean;
 }
 
 export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterFormProps) {
@@ -30,12 +47,19 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
   const [addressLine2, setAddressLine2] = useState("");
   const [addressLine3, setAddressLine3] = useState("");
   const [city, setCity] = useState("");
+  const [county, setCounty] = useState("");
   const [postcode, setPostcode] = useState("");
+  const [country, setCountry] = useState("");
 
   // Opening Hours
   const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-  const [openingHours, setOpeningHours] = useState(
-    daysOfWeek.map(() => ({ open: "", close: "" }))
+  const [openingHours, setOpeningHours] = useState<DayHours[]>(
+    daysOfWeek.map((day) => ({
+      dayName: day,
+      open: "",
+      close: "",
+      closed: false,
+    }))
   );
 
   // Error handling
@@ -65,11 +89,62 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }
   };
 
-  /** Handle opening hours changes */
+  /** Validate times so that close >= open (if both are set). */
+  const validateTimes = (updatedIndex: number, field: "open" | "close") => {
+    const dayObj = openingHours[updatedIndex];
+    if (!dayObj.closed) {
+      const openVal = dayObj.open;
+      const closeVal = dayObj.close;
+
+      if (isValidTime(openVal) && isValidTime(closeVal)) {
+        if (timeToMinutes(closeVal) <= timeToMinutes(openVal)) {
+          // If invalid, clear the one we just changed or show an error
+          if (field === "close") {
+            alert("Closing time must be after opening time.");
+            setOpeningHours((prev) => {
+              const cloned = [...prev];
+              cloned[updatedIndex].close = "";
+              return cloned;
+            });
+          } else {
+            alert("Opening time must be before closing time.");
+            setOpeningHours((prev) => {
+              const cloned = [...prev];
+              cloned[updatedIndex].open = "";
+              return cloned;
+            });
+          }
+        }
+      }
+    }
+  };
+
+  /** Handle opening hours changes for time inputs */
   const handleHoursChange = (index: number, field: "open" | "close", value: string) => {
-    const updatedHours = [...openingHours];
-    updatedHours[index][field] = value;
-    setOpeningHours(updatedHours);
+    setOpeningHours((prev) => {
+      const updated = [...prev];
+      updated[index][field] = value;
+      return updated;
+    });
+    // After setting, re-validate
+    setTimeout(() => validateTimes(index, field), 0);
+  };
+
+  /** Handle the 'Closed' checkbox toggle */
+  const handleClosedChange = (index: number, checked: boolean) => {
+    setOpeningHours((prev) => {
+      const updated = [...prev];
+      if (checked) {
+        // If user just checked "Closed", clear the open/close times
+        updated[index].open = "";
+        updated[index].close = "";
+        updated[index].closed = true;
+      } else {
+        // If user unchecked, set to false => day is open
+        updated[index].closed = false;
+      }
+      return updated;
+    });
   };
 
   /** Handle form submission */
@@ -84,6 +159,23 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
 
     setError("");
 
+    // Transform openingHours to place "closed" if day is closed
+    const finalHours = openingHours.map((dayObj) => {
+      if (dayObj.closed) {
+        return {
+          dayName: dayObj.dayName,
+          open: "closed",
+          close: "closed",
+        };
+      } else {
+        return {
+          dayName: dayObj.dayName,
+          open: dayObj.open,
+          close: dayObj.close,
+        };
+      }
+    });
+
     // Construct the practice data (adapt as needed for your API)
     const formData = {
       practiceName,
@@ -96,9 +188,11 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         line2: addressLine2,
         line3: addressLine3,
         city,
+        county,
         postcode,
+        country,
       },
-      openingHours,
+      openingHours: finalHours,
     };
 
     console.log("Practice Register Form Data:", formData);
@@ -178,6 +272,20 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
             />
           </div>
 
+          {/* Phone Number */}
+          <div className={styles.fieldBlock}>
+            <label htmlFor="phoneNumber" className={styles.label}>
+              Phone Number:
+            </label>
+            <input
+              type="tel"
+              id="phoneNumber"
+              value={phoneNumber}
+              onChange={(e) => setPhoneNumber(e.target.value)}
+              className={styles.input}
+            />
+          </div>
+
           {/* Password */}
           <div className={styles.fieldBlock}>
             <label htmlFor="password" className={styles.label}>
@@ -192,27 +300,10 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 className={styles.inputWithIcon}
                 required
               />
-              <span
-                onClick={() => setShowPassword(!showPassword)}
-                className={styles.eyeIcon}
-              >
+              <span onClick={() => setShowPassword(!showPassword)} className={styles.eyeIcon}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
             </div>
-          </div>
-
-          {/* Phone Number */}
-          <div className={styles.fieldBlock}>
-            <label htmlFor="phoneNumber" className={styles.label}>
-              Phone Number:
-            </label>
-            <input
-              type="tel"
-              id="phoneNumber"
-              value={phoneNumber}
-              onChange={(e) => setPhoneNumber(e.target.value)}
-              className={styles.input}
-            />
           </div>
 
           {/* Confirm Password */}
@@ -291,6 +382,18 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
             />
           </div>
           <div className={styles.fieldBlock}>
+            <label htmlFor="county" className={styles.label}>
+              County:
+            </label>
+            <input
+              type="text"
+              id="county"
+              value={county}
+              onChange={(e) => setCounty(e.target.value)}
+              className={styles.input}
+            />
+          </div>
+          <div className={styles.fieldBlock}>
             <label htmlFor="postcode" className={styles.label}>
               Postcode:
             </label>
@@ -302,28 +405,53 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
               className={styles.input}
             />
           </div>
+          <div className={styles.fieldBlock}>
+            <label htmlFor="country" className={styles.label}>
+              Country:
+            </label>
+            <input
+              type="text"
+              id="country"
+              value={country}
+              onChange={(e) => setCountry(e.target.value)}
+              className={styles.input}
+            />
+          </div>
         </div>
         {/* END Address Fields */}
 
         {/* Opening Hours */}
         <div className={styles.hoursSection}>
           <h3 className={styles.hoursTitle}>Opening Hours</h3>
-          {daysOfWeek.map((day, index) => (
-            <div key={day} className={styles.dayRow}>
-              <div className={styles.dayLabel}>{day}:</div>
+          {openingHours.map((dayObj, index) => (
+            <div key={dayObj.dayName} className={styles.dayRow}>
+              <div className={styles.dayLabel}>{dayObj.dayName}:</div>
+
               <input
                 type="time"
-                value={openingHours[index].open}
+                value={dayObj.open}
                 onChange={(e) => handleHoursChange(index, "open", e.target.value)}
                 className={styles.inputTime}
+                disabled={dayObj.closed}
               />
               <span>-</span>
               <input
                 type="time"
-                value={openingHours[index].close}
+                value={dayObj.close}
                 onChange={(e) => handleHoursChange(index, "close", e.target.value)}
                 className={styles.inputTime}
+                disabled={dayObj.closed}
               />
+
+              <label className={styles.closedCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={dayObj.closed}
+                  onChange={(e) => handleClosedChange(index, e.target.checked)}
+                />
+                Closed
+              </label>
+              
             </div>
           ))}
         </div>
