@@ -1,0 +1,4 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- ALTER TABLE users
+-- ADD COLUMN practice_id UUID REFERENCES practices(practice_id) ON DELETE SET NULL;

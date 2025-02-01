@@ -1,3 +1,11 @@
 table:
   name: practices
   schema: public
+array_relationships:
+  - name: users
+    using:
+      foreign_key_constraint_on:
+        column: practice_id
+        table:
+          name: users
+          schema: public
