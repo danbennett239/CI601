@@ -1,14 +1,17 @@
+import { hashPassword } from "@/utils/auth";
+
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
 
-const CREATE_PRACTICE_MUTATION = `
-  mutation CreatePractice(
+const CREATE_PRACTICE_AND_USER_MUTATION = `
+  mutation CreatePracticeAndUser(
     $practice_name: String!,
     $email: String!,
+    $password: String!,
     $phone_number: String,
     $photo: String,
     $address: jsonb,
-    $opening_hours: jsonb
+    $opening_hours: jsonb,
   ) {
     insert_practices_one(
       object: {
@@ -19,29 +22,47 @@ const CREATE_PRACTICE_MUTATION = `
         address: $address,
         opening_hours: $opening_hours,
         verified: false
+        users: {
+          data: {
+            first_name: "",
+            last_name: "",
+            email: $email,
+            password: $password,
+            role: "unverified-practice"
+          }
+        }
       }
     ) {
       practice_id
+      practice_name
+      users {
+        user_id
+        email
+      }
     }
   }
 `;
 
-export async function createPractice({
-  practice_name,
+export async function createPracticeWithUser({
+  practiceName,
   email,
-  phone_number,
+  password,
+  phoneNumber,
   photo,
   address,
-  opening_hours,
+  openingHours,
 }: {
-  practice_name: string;
+  practiceName: string;
   email: string;
-  phone_number?: string;
+  password: string;
+  phoneNumber?: string;
   photo?: string;
   address: Record<string, string>;
-  opening_hours: Array<{ dayName: string; open: string; close: string }>;
+  openingHours: Array<{ dayName: string; open: string; close: string }>;
 }) {
   try {
+    const hashedPassword = await hashPassword(password);
+
     const response = await fetch(HASURA_GRAPHQL_URL, {
       method: "POST",
       headers: {
@@ -49,29 +70,29 @@ export async function createPractice({
         "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
       },
       body: JSON.stringify({
-        query: CREATE_PRACTICE_MUTATION,
+        query: CREATE_PRACTICE_AND_USER_MUTATION,
         variables: {
-          practice_name,
+          practice_name: practiceName,
           email,
-          phone_number,
+          password: hashedPassword,
+          phone_number: phoneNumber,
           photo,
           address,
-          opening_hours,
+          opening_hours: openingHours,
         },
       }),
     });
 
     const result = await response.json();
 
-    // ✅ Handle errors properly
     if (!response.ok || result.errors) {
       throw new Error(result.errors?.[0]?.message || "Practice registration failed.");
     }
 
-    // ✅ Return practice data
     return {
       practice_id: result.data.insert_practices_one.practice_id,
-      email: result.data.insert_practices_one.email,
+      practice_name: result.data.insert_practices_one.practice_name,
+      user: result.data.insert_practices_one.users[0],
     };
   } catch (error) {
     console.error("Practice Registration Error:", error);

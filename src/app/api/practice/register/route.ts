@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createPractice } from '@/lib/services/practiceService';
+import { createPracticeWithUser } from '@/lib/services/practiceService';
 
 export async function POST(req: NextRequest) {
   try {
-    const { practiceName, email, phoneNumber, photo, address, openingHours } = await req.json();
+    const { practiceName, email, password, phoneNumber, photo, address, openingHours } = await req.json();
 
-    const practice = await createPractice({
-      practice_name: practiceName,
+    const practice = await createPracticeWithUser({
+      practiceName,
       email,
-      phone_number: phoneNumber,
+      password,
+      phoneNumber,
       photo,
       address,
-      opening_hours: openingHours,
+      openingHours,
     });
 
     return NextResponse.json(practice, { status: 201 });
