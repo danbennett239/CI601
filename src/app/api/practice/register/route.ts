@@ -15,8 +15,14 @@ export async function POST(req: NextRequest) {
     });
 
     return NextResponse.json(practice, { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Practice Registration Error:", error);
-    return NextResponse.json({ error: error.message || "Practice registration failed" }, { status: 400 });
+
+    let errorMessage = "Practice registration failed";
+    if (error instanceof Error) {
+      errorMessage = error.message;
+    }
+
+    return NextResponse.json({ error: errorMessage }, { status: 400 });
   }
 }
