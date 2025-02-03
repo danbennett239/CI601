@@ -48,7 +48,7 @@ export async function loginUser({
 }: {
   email: string;
   password: string;
-}): Promise<{ user: any; accessToken: string; refreshToken: string }> {
+}): Promise<{ user_id: string; email: string; role: string; accessToken: string; refreshToken: string }> {
   // Fetch user by email from Hasura.
   const response = await fetch(HASURA_GRAPHQL_URL, {
     method: 'POST',
@@ -91,7 +91,7 @@ export async function loginUser({
   const accessToken = signAccessToken(payload);
   const refreshToken = signRefreshToken(payload);
 
-  return { user, accessToken, refreshToken };
+  return { user_id: user.user_id, email: user.email, role: user.role, accessToken, refreshToken };
 }
 
 /**
