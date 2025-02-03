@@ -20,6 +20,11 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
         body: JSON.stringify({ email, password }),
       });
 
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok) {

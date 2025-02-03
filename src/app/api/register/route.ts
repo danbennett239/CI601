@@ -1,42 +1,34 @@
+// app/api/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import bcrypt from 'bcryptjs';
-
-const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
-const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
-
-const REGISTER_USER_MUTATION = `
-  mutation RegisterUser($first_name: String!, $last_name: String!, $email: String!, $password: String!, $role: String!) {
-    insert_users_one(object: { first_name: $first_name, last_name: $last_name, email: $email, password: $password, role: $role }) {
-      user_id
-      email
-    }
-  }
-`;
+import { registerUser, loginUser } from '@/lib/services/authService';
 
 export async function POST(req: NextRequest) {
-  const { first_name, last_name, email, password, role } = await req.json();
   try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const response = await fetch(HASURA_GRAPHQL_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
-      },
-      body: JSON.stringify({
-        query: REGISTER_USER_MUTATION,
-        variables: { first_name, last_name, email, password: hashedPassword, role },
-      }),
+    const { first_name, last_name, email, password, role } = await req.json();
+    
+    // Register the user
+    await registerUser({ first_name, last_name, email, password, role });
+    
+    // Log the user in immediately (note: loginUser does its own query to get the user)
+    const { accessToken, refreshToken } = await loginUser({ email, password });
+    
+    // Return a redirect response to '/home' with cookies set
+    const response = NextResponse.redirect(new URL('/home', req.url));
+    response.cookies.set('accessToken', accessToken, {
+      httpOnly: true,
+      secure: true,
+      path: '/',
+      maxAge: 3600,
     });
-
-    const result = await response.json();
-
-    if (!response.ok || result.errors) {
-      return NextResponse.json({ error: result.errors?.[0]?.message || "Registration failed." }, { status: 400 });
-    }
-
-    return NextResponse.json({ user_id: result.data.insert_users_one.user_id, email: result.data.insert_users_one.email });
-  } catch {
-    return NextResponse.json({ error: "Registration failed. Please try again." }, { status: 500 });
+    response.cookies.set('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: true,
+      path: '/',
+      maxAge: 604800,
+    });
+    return response;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Registration failed.';
+    return NextResponse.json({ error: message }, { status: 400 });
   }
 }

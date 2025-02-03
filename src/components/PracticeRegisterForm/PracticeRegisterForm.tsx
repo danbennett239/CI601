@@ -204,6 +204,11 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         body: JSON.stringify(formData),
       });
 
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Registration failed");
 

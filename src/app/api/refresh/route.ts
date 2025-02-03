@@ -1,3 +1,4 @@
+// app/api/refresh/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyToken, signAccessToken } from '@/lib/auth';
 
@@ -15,7 +16,12 @@ export async function GET(req: NextRequest) {
   const newAccessToken = signAccessToken(payload);
 
   const res = NextResponse.json({ success: true });
-  // Set new access token cookie
-  res.cookies.set('accessToken', newAccessToken, { httpOnly: true, secure: true, path: '/', maxAge: 3600 });
+  // Set the new access token cookie
+  res.cookies.set('accessToken', newAccessToken, {
+    httpOnly: true,
+    secure: true,
+    path: '/',
+    maxAge: 3600,
+  });
   return res;
 }

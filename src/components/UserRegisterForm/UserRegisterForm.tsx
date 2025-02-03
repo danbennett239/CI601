@@ -35,6 +35,11 @@ const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
         body: JSON.stringify({ first_name: firstName, last_name: lastName, email, password, role: "user" }),
       });
 
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
       const data = await res.json();
 
       if (!res.ok) {
