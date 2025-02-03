@@ -60,7 +60,7 @@ export async function getUserFromCookies(): Promise<UserPayload | null> {
  * Intended to be called from a server component or server action.
  */
 export async function tryRefreshUser(): Promise<UserPayload | null> {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/refresh`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || ''}/api/auth/refresh`, {
     method: 'GET',
     credentials: 'include',
   });

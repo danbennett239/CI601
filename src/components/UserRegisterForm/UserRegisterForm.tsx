@@ -29,7 +29,7 @@ const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
 
     setError("");
     try {
-      const res = await fetch("/api/register", {
+      const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ first_name: firstName, last_name: lastName, email, password, role: "user" }),
