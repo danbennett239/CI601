@@ -1,6 +1,6 @@
 // lib/services/authService.ts
 import bcrypt from 'bcryptjs';
-import { signAccessToken, signRefreshToken } from '@/lib/auth';
+import { signAccessToken, signRefreshToken } from '@/lib/utils/auth';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;

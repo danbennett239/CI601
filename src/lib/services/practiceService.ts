@@ -1,4 +1,4 @@
-import { hashPassword } from "@/utils/auth";
+import { hashPassword } from "@/lib/utils/auth";
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;

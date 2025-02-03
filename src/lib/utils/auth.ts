@@ -1,10 +1,12 @@
 // src/lib/auth.ts
 import jwt from 'jsonwebtoken';
 import { cookies } from 'next/headers';
+import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const ACCESS_TOKEN_EXPIRY = '1h';     // 1 hour
 const REFRESH_TOKEN_EXPIRY = '7d';    // 7 days
+const SALT_ROUNDS = 10;
 
 export interface UserPayload {
   id: string;
@@ -72,3 +74,23 @@ export async function tryRefreshUser(): Promise<UserPayload | null> {
   // After successful refresh, we have new cookies set. Get the user again.
   return await getUserFromCookies();
 }
+
+/**
+ * Hashes a plain text password using bcrypt.
+ * @param password - The plain text password to hash.
+ * @returns A hashed password string.
+ */
+export async function hashPassword(password: string): Promise<string> {
+  return await bcrypt.hash(password, SALT_ROUNDS);
+}
+
+/**
+ * Compares a plain text password with a hashed password.
+ * @param plainPassword - The user's input password.
+ * @param hashedPassword - The stored hashed password.
+ * @returns A boolean indicating if the password matches.
+ */
+export async function verifyPassword(plainPassword: string, hashedPassword: string): Promise<boolean> {
+  return await bcrypt.compare(plainPassword, hashedPassword);
+}
+

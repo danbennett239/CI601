@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import Banner from "@/components/Banner/Banner";
-import { getUserFromCookies, tryRefreshUser } from '@/lib/auth';
+import { getUserFromCookies, tryRefreshUser } from '@/lib/utils/auth';
 import { DeviceProvider } from "@/content/DeviceContent";
 
 export const metadata: Metadata = {

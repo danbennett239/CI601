@@ -1,6 +1,6 @@
 // app/api/refresh/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyToken, signAccessToken } from '@/lib/auth';
+import { verifyToken, signAccessToken } from '@/lib/utils/auth';
 
 export async function GET(req: NextRequest) {
   const refreshToken = req.cookies.get('refreshToken')?.value;
