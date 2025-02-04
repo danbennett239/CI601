@@ -1,18 +1,38 @@
+// /components/UserLoginForm.tsx
 "use client";
 
 import React, { useState } from "react";
 import styles from "./UserLoginForm.module.css";
+import { userLoginSchema } from "../../schemas/authSchemas";
+import { toast } from "react-toastify";
+import Link from "next/link";
 
 interface UserLoginFormProps {
-  onSuccess?: () => void; // callback if login is successful
+  onSuccess?: () => void;
 }
+
+type FormErrors = { [key: string]: string[] };
 
 const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  // errors keyed by field name (e.g. email, password)
+  const [errors, setErrors] = useState<FormErrors>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Reset errors
+    setErrors({});
+
+    const result = userLoginSchema.safeParse({ email, password });
+    if (!result.success) {
+      // flatten errors so that we have errors per field
+      const fieldErrors = result.error.flatten().fieldErrors;
+      setErrors(fieldErrors);
+      return;
+    }
+
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
@@ -26,18 +46,18 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
       }
 
       const data = await res.json();
-
       if (!res.ok) {
-        console.error("Login error:", data.error);
+        setErrors({ form: [data.error || "Login failed."] });
         return;
       }
 
-      console.log("Login successful:", data);
+      toast.success("Login successful");
       if (onSuccess) {
         onSuccess();
       }
     } catch (err: unknown) {
       console.error("Login error:", err);
+      setErrors({ form: ["Login error. Please try again."] });
     }
   };
 
@@ -49,13 +69,18 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
           Email:
         </label>
         <input
-          type="email"
+          type="text"
           id="email"
           className={styles.input}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          required
         />
+        {errors.email &&
+          errors.email.map((msg, i) => (
+            <span key={i} className={styles.error}>
+              {msg}
+            </span>
+          ))}
 
         <label htmlFor="password" className={styles.label}>
           Password:
@@ -66,12 +91,27 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
           className={styles.input}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          required
         />
+        {errors.password &&
+          errors.password.map((msg, i) => (
+            <span key={i} className={styles.error}>
+              {msg}
+            </span>
+          ))}
 
+        {errors.form && (
+          <div className={styles.formError}>
+            {errors.form.map((msg, i) => (
+              <p key={i}>{msg}</p>
+            ))}
+          </div>
+        )}
         <button type="submit" className={styles.button}>
           Sign In
         </button>
+        <div style={{ marginTop: "10px" }}>
+          <Link href="/forgot-password">Forgot Password?</Link>
+        </div>
       </form>
     </div>
   );

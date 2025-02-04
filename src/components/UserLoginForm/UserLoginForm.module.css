@@ -48,3 +48,15 @@
 .button:hover {
   background-color: var(--secondary-color);
 }
+
+.error {
+  color: red;
+  font-size: 14px;
+  text-align: left;
+}
+
+.formError {
+  color: red;
+  font-size: 14px;
+  text-align: center;
+}

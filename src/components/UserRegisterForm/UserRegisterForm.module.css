@@ -34,12 +34,6 @@
   font-size: 16px;
 }
 
-.error {
-  color: red;
-  font-size: 14px;
-  margin-top: -10px;
-}
-
 /* Button */
 .button {
   padding: 10px 15px;
@@ -86,4 +80,16 @@
 
 .eyeIcon:hover {
   color: #333;
+}
+
+.error {
+  color: red;
+  font-size: 14px;
+  text-align: left;
+}
+
+.formError {
+  color: red;
+  font-size: 14px;
+  text-align: center;
 }
