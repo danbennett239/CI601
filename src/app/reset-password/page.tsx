@@ -3,7 +3,7 @@
 
 import React, { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import styles from "../../components/UserLoginForm.module.css"; // reusing your CSS
+import styles from "./ResetPasswordPage.module.css";
 import { toast } from "react-toastify";
 
 export default function ResetPasswordPage() {
