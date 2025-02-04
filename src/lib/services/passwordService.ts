@@ -5,24 +5,33 @@ import bcrypt from "bcryptjs";
 // --- Password Reset Functions ---
 
 export async function sendForgotPasswordEmail(email: string): Promise<void> {
+  console.log("Function called with email:", email);
+
   const user = await findUserByEmail(email);
   if (!user) {
-    // Do not reveal if the email exists.
+    console.log("No user found for email:", email);
     return;
   }
-  // Generate a secure token valid for 1 hour.
+
+  console.log("User found:", user);
+
   const token = crypto.randomBytes(32).toString("hex");
   const expires = Date.now() + 3600000;
-  console.log('Pre reset token');
-  await saveResetToken(user.user_id, token, expires); // persist the token
-  console.log('Post reset token');
+  
+  console.log("Pre reset token, token:", token);
+  await saveResetToken(user.user_id, token, expires);
+  console.log("Post reset token, saved in store");
 
   const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
-  const Mailjet = require('node-mailjet');
+  console.log("Reset URL generated:", resetUrl);
+
+  const Mailjet = require("node-mailjet");
   const mailjet = Mailjet.apiConnect(
     process.env.MAILJET_API_KEY as string,
     process.env.MAILJET_API_SECRET as string
   );
+
+  console.log("Mailjet connected, sending email...");
 
   const response = await mailjet
     .post("send", { version: "v3.1" })
@@ -33,11 +42,7 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
             Email: process.env.MAILJET_SENDER_EMAIL as string,
             Name: "Tempname Dentist",
           },
-          To: [
-            {
-              Email: email,
-            },
-          ],
+          To: [{ Email: email }],
           Subject: "Reset Your Password",
           TextPart: `Please click the following link to reset your password: ${resetUrl}`,
           HTMLPart: `<p>Please click the following link to reset your password:</p><a href="${resetUrl}">${resetUrl}</a>`,
@@ -45,8 +50,11 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
       ],
     });
 
-    return response;
+  console.log("Mailjet response:", response.body);
+
+  return response;
 }
+
 
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
   const tokenData = await findResetToken(token);
@@ -81,8 +89,8 @@ export async function findUserByEmail(email: string): Promise<{ user_id: string;
     body: JSON.stringify({ query, variables: { email } }),
   });
   const json = await res.json();
-  if (json.data.user && json.data.user.length > 0) {
-    return json.data.user[0];
+  if (json.data.users && json.data.users.length > 0) {
+    return json.data.users[0];
   }
   return null;
 }
