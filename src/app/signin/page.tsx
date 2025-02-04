@@ -46,7 +46,7 @@ export default function SigninPage() {
               className={styles.toggleButton}
               onClick={() => setShowRegister(true)}
             >
-              Register
+              Don't have an account? Register now
             </button>
           </>
         )}
@@ -61,6 +61,7 @@ export default function SigninPage() {
   }
 
   // On desktop, show them side by side with a divider
+  // TODO CHANGE REGISTER BUTTON TO SAME AS PRACTICE
   return (
     <div className={styles.containerDesktop}>
       <div className={styles.loginWrapper}>

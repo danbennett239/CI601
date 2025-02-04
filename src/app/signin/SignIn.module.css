@@ -13,7 +13,7 @@
 
 /* Toggle button for switching forms on mobile */
 .toggleButton {
-  background-color: var(--secondary-color);
+  background-color: var(--primary-color);
   color: #fff;
   border: none;
   padding: 10px 15px;
@@ -25,7 +25,13 @@
 }
 
 .toggleButton:hover {
+  background-color: var(--secondary-color);
+}
+
+.toggleButton:focus,
+.toggleButton:active {
   background-color: var(--primary-color);
+  outline: none;
 }
 
 /* DESKTOP layout: place forms side by side, center them vertically */
