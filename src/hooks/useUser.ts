@@ -3,9 +3,10 @@ import { useEffect, useState } from "react";
 
 export interface User {
   id: string;
+  first_name: string;
+  last_name: string;
   email: string;
   role: string;
-  // You can add additional fields that your GraphQL returns
 }
 
 export function useUser() {
