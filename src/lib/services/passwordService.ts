@@ -33,7 +33,25 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
 
   console.log("Mailjet connected, sending email...");
 
-  const response = await mailjet
+  // const response = await mailjet
+  //   .post("send", { version: "v3.1" })
+  //   .request({
+  //     Messages: [
+  //       {
+  //         From: {
+  //           Email: process.env.MAILJET_SENDER_EMAIL as string,
+  //           Name: "Tempname Dentist",
+  //         },
+  //         To: [{ Email: email }],
+  //         Subject: "Reset Your Password",
+  //         TextPart: `Please click the following link to reset your password: ${resetUrl}`,
+  //         HTMLPart: `<p>Please click the following link to reset your password:</p><a href="${resetUrl}">${resetUrl}</a>`,
+  //       },
+  //     ],
+  //   });
+  // return response;
+  // console.log("Mailjet response:", response.body);
+  await mailjet
     .post("send", { version: "v3.1" })
     .request({
       Messages: [
@@ -49,10 +67,6 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
         },
       ],
     });
-
-  console.log("Mailjet response:", response.body);
-
-  return response;
 }
 
 
