@@ -1,6 +1,7 @@
 // /lib/services/passwordService.ts
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
+import Mailjet from "node-mailjet";
 
 // --- Password Reset Functions ---
 
@@ -25,7 +26,6 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
   const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
   console.log("Reset URL generated:", resetUrl);
 
-  const Mailjet = require("node-mailjet");
   const mailjet = Mailjet.apiConnect(
     process.env.MAILJET_API_KEY as string,
     process.env.MAILJET_API_SECRET as string
