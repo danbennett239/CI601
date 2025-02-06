@@ -46,7 +46,7 @@ export default function SigninPage() {
               className={styles.toggleButton}
               onClick={() => setShowRegister(true)}
             >
-              Don't have an account? Register now
+              Don&apos;t have an account? Register now
             </button>
           </>
         )}

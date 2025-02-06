@@ -10,8 +10,10 @@ export async function POST(request: Request) {
     return NextResponse.json({
       message: "If this email is associated with an account, a reset link has been sent.",
     });
-  } catch (error: any) {
-    console.error("Forgot password error:", error);
-    return NextResponse.json({ error: "An error occurred" }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Forgot password error";
+    console.error("Forgot password error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+

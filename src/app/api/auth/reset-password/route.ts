@@ -7,8 +7,9 @@ export async function POST(request: Request) {
     const { token, password } = await request.json();
     await resetPassword(token, password);
     return NextResponse.json({ message: "Password reset successful" });
-  } catch (error: any) {
-    console.error("Reset password error:", error);
-    return NextResponse.json({ error: error.message || "An error occurred" }, { status: 400 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Reset password error";
+    console.error("Reset password error:", message);
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
