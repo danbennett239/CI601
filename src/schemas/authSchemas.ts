@@ -34,3 +34,14 @@ export const userRegistrationSchema = z
     message: "Passwords do not match",
     path: ["repeatPassword"],
   });
+
+export const forgotPasswordSchema = z.object({
+  email: z
+  .string()
+  .trim()
+  .min(1, { message: "Email is required" })
+  .refine((val) => val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
+    message: "Invalid email address",
+  }),
+});
+

@@ -109,7 +109,7 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
         <button type="submit" className={styles.button}>
           Sign In
         </button>
-        <div style={{ marginTop: "10px" }}>
+        <div className={styles.forgotPassword}>
           <Link href="/forgot-password">Forgot Password?</Link>
         </div>
       </form>
