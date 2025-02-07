@@ -1,11 +1,9 @@
-/* components/admin/DentalPracticeBox.module.css */
+/* components/admin/DentalPracticeBox/DentalPracticeBox.module.css */
 .box {
   border: 1px solid #ccc;
   padding: 20px;
   border-radius: 8px;
   background: #fff;
-  max-width: 600px;
-  width: 100%;
 }
 
 .tabs {
@@ -22,11 +20,8 @@
   cursor: pointer;
 }
 
-.tabs button.activeTab {
+.activeTab {
   background-color: var(--primary-color);
   color: #fff;
 }
 
-.tabContent {
-  /* You can add additional styling if needed */
-}

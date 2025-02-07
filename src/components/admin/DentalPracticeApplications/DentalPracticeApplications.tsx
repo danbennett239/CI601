@@ -1,22 +1,10 @@
-// components/admin/DentalPracticeApplications.tsx
+// components/admin/DentalPracticeApplications/DentalPracticeApplications.tsx
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import DentalPracticeModal from '../DentalPracticeModal/DentalPracticeModal';
-import styles from './DentalPracticeApplications.module.css';
-
-interface Practice {
-  practice_id: string;
-  practice_name: string;
-  email: string;
-  phone_number: string;
-  photo?: string;
-  address: any;
-  opening_hours: any;
-  verified: boolean;
-  created_at?: string;
-  updated_at?: string;
-}
+import React, { useState, useEffect } from "react";
+import DentalPracticeModal from "../DentalPracticeModal/DentalPracticeModal";
+import styles from "./DentalPracticeApplications.module.css";
+import { Practice } from "@/types/practice";
 
 const DentalPracticeApplications = () => {
   const [practices, setPractices] = useState<Practice[]>([]);
@@ -45,12 +33,10 @@ const DentalPracticeApplications = () => {
 
   const closeModal = () => {
     setSelectedPractice(null);
-    // Optionally reload practices after an update
     loadPractices();
   };
 
   if (loading) return <div>Loading...</div>;
-
   if (practices.length === 0)
     return <div>No pending dental practice applications.</div>;
 
@@ -67,7 +53,10 @@ const DentalPracticeApplications = () => {
         </div>
       ))}
       {selectedPractice && (
-        <DentalPracticeModal practice={selectedPractice} onClose={closeModal} />
+        <DentalPracticeModal
+          practice={selectedPractice}
+          onClose={closeModal}
+        />
       )}
     </div>
   );

@@ -1,0 +1,11 @@
+/* app/admin-panel/dental-practices/DentalPracticesPage.module.css */
+.container {
+  padding: 20px;
+}
+
+.backButton {
+  text-decoration: none;
+  color: var(--primary-color);
+  margin-bottom: 20px;
+  display: inline-block;
+}
