@@ -188,7 +188,7 @@ export async function fetchApprovedDentalPractices() {
 
 export async function approvePractice(practiceId: string) {
   const mutation = `
-    mutation ApprovePractice($practiceId: uuid!, $verifiedAt: timestamptz!) {
+    mutation ApprovePractice($practiceId: uuid!, $verifiedAt: timestamp!) {
       update_practices_by_pk(
         pk_columns: { practice_id: $practiceId }
         _set: { verified: true, verified_at: $verifiedAt }

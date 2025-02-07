@@ -20,7 +20,7 @@ const AdminPanelPage = () => {
       <div className={styles.cardsContainer}>
         {/* Each card represents an admin function */}
         <AdminPanelCard
-          title="Dental Practice Approvals"
+          title="Dental Practice Applications"
           link="/admin-panel/dental-practices"
         />
         {/* Add more cards as needed */}

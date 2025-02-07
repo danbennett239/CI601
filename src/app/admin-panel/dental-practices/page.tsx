@@ -11,7 +11,7 @@ const DentalPracticesPage = () => {
       <Link href="/admin-panel" className={styles.backButton}>
         Back to Admin Panel
       </Link>
-      <h1>Dental Practice Approvals</h1>
+      <h1>Dental Practice Applications</h1>
       <DentalPracticeBox />
     </div>
   );
