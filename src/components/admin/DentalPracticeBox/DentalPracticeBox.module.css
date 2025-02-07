@@ -13,15 +13,21 @@
 }
 
 .tabs button {
-  padding: 8px 16px;
+  padding: 10px 15px;
+  font-size: 16px;
+  color: #fff;
+  background-color: var(--primary-color);
   border: none;
-  background-color: #eee;
   border-radius: 4px;
   cursor: pointer;
+  transition: background-color 0.3s;
+}
+.tabs button:hover {
+  background-color: var(--secondary-color);
 }
 
 .activeTab {
-  background-color: var(--primary-color);
+  background-color: var(--secondary-color) !important;
   color: #fff;
 }
 
