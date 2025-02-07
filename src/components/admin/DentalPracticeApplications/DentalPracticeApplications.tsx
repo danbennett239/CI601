@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { fetchPendingDentalPractices } from '@/lib/services/practiceService';
 import DentalPracticeModal from '../DentalPracticeModal/DentalPracticeModal';
 import styles from './DentalPracticeApplications.module.css';
 
