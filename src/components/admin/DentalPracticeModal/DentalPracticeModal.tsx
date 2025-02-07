@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { approvePractice, denyPractice } from "@/lib/services/practiceService";
 import styles from "./DentalPracticeModal.module.css";
 import { Practice } from "@/types/practice";
 
