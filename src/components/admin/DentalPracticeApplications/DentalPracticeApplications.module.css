@@ -1,0 +1,19 @@
+/* components/admin/DentalPracticeApplications.module.css */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.listItem {
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  background-color: #fafafa;
+  transition: background-color 0.2s;
+}
+
+.listItem:hover {
+  background-color: #f0f0f0;
+}

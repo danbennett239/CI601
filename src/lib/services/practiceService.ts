@@ -99,3 +99,167 @@ export async function createPracticeWithUser({
     throw new Error("Practice registration failed. Please try again.");
   }
 }
+
+export async function fetchPendingDentalPractices() {
+  const query = `
+    query FetchPendingDentalPractices {
+      practices(where: { verified: { _eq: false } }) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        verified
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Fetching pending practices failed.");
+    }
+
+    return result.data.practices;
+  } catch (error) {
+    console.error("Error fetching pending practices:", error);
+    throw new Error("Fetching pending practices failed.");
+  }
+}
+
+export async function fetchApprovedDentalPractices() {
+  const query = `
+    query FetchApprovedDentalPractices {
+      practices(
+        where: { verified: { _eq: true } }
+        order_by: { verified_at: desc }
+      ) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        verified
+        created_at
+        updated_at
+        verified_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Fetching approved practices failed.");
+    }
+
+    return result.data.practices;
+  } catch (error) {
+    console.error("Error fetching approved practices:", error);
+    throw new Error("Fetching approved practices failed.");
+  }
+}
+
+export async function approvePractice(practiceId: string) {
+  const mutation = `
+    mutation ApprovePractice($practiceId: uuid!, $verifiedAt: timestamptz!) {
+      update_practices_by_pk(
+        pk_columns: { practice_id: $practiceId }
+        _set: { verified: true, verified_at: $verifiedAt }
+      ) {
+        practice_id
+        verified
+        verified_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          practiceId,
+          verifiedAt: new Date().toISOString(),
+        },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Approving practice failed.");
+    }
+
+    return result.data.update_practices_by_pk;
+  } catch (error) {
+    console.error("Error approving practice:", error);
+    throw new Error("Approving practice failed.");
+  }
+}
+
+export async function denyPractice(practiceId: string) {
+  const mutation = `
+    mutation DenyPractice($practiceId: uuid!) {
+      delete_practices_by_pk(practice_id: $practiceId) {
+        practice_id
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { practiceId },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Denying practice failed.");
+    }
+
+    return result.data.delete_practices_by_pk;
+  } catch (error) {
+    console.error("Error denying practice:", error);
+    throw new Error("Denying practice failed.");
+  }
+}

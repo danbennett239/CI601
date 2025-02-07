@@ -1,0 +1,10 @@
+/* app/admin-panel/AdminPanel.module.css */
+.container {
+  padding: 20px;
+}
+
+.boxesContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}

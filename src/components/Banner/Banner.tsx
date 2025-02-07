@@ -56,7 +56,7 @@ const Banner: React.FC = () => {
               </Link>
             )}
             {user.role === "admin" && (
-              <Link href="/admin">
+              <Link href="/admin-panel">
                 <div className={styles.navItem}>Admin Panel</div>
               </Link>
             )}
