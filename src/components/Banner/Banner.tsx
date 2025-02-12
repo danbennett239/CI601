@@ -60,10 +60,14 @@ const Banner: React.FC = () => {
                 <div className={styles.navItem}>Admin Panel</div>
               </Link>
             )}
-            {(user.role === "practice" ||
-              user.role === "unverified-practice") && (
-                <Link href="/practice-management">
-                  <div className={styles.navItem}>Practice Management</div>
+            {(user.role === "unverified-practice") && (
+                <Link href="/practice-application">
+                  <div className={styles.navItem}>View Application</div>
+                </Link>
+              )}
+            {(user.role === "verified-practice") && (
+                <Link href="/practice-dashboard">
+                  <div className={styles.navItem}>Practice Dashboard</div>
                 </Link>
               )}
             <div

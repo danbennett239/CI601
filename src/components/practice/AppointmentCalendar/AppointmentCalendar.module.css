@@ -1,0 +1,82 @@
+/* components/AppointmentCalendar.module.css */
+.calendarContainer {
+  display: flex;
+  flex-direction: column;
+  overflow-x: auto;
+  font-family: Arial, sans-serif;
+}
+
+.headerRow {
+  display: flex;
+}
+
+.timeColumn {
+  width: 60px;
+  border-right: 1px solid #ccc;
+}
+
+.timeLabel {
+  height: calc(100% / 32); /* each of the 32 slots gets equal height */
+  font-size: 10px;
+  text-align: right;
+  padding-right: 5px;
+  border-bottom: 1px solid #eee;
+}
+
+.dayHeader {
+  flex: 1;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  padding: 5px 0;
+  background: #f7f7f7;
+}
+
+.body {
+  display: flex;
+}
+
+.dayColumn {
+  flex: 1;
+  border-right: 1px solid #ccc;
+  position: relative;
+}
+
+.dayGrid {
+  position: relative;
+  height: 800px; /* fixed height; adjust as needed or make responsive */
+  border-bottom: 1px solid #ccc;
+}
+
+.timeSlot {
+  border-bottom: 1px solid #eee;
+  height: calc(100% / 32);
+  position: relative;
+  background-color: #d0d0d0; /* default darker shade */
+  transition: background-color 0.2s;
+}
+
+.timeSlot:hover {
+  background-color: #c0c0c0;
+}
+
+.openIndicator {
+  position: absolute;
+  left: 0;
+  right: 0;
+  background-color: #e0f7fa; /* lighter color for open hours */
+  pointer-events: none;
+}
+
+.appointmentBlock {
+  position: absolute;
+  background-color: rgba(63, 81, 181, 0.8);
+  color: #fff;
+  border: 1px solid #3f51b5;
+  border-radius: 4px;
+  padding: 2px;
+  font-size: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  z-index: 2;
+}

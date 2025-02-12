@@ -1,0 +1,13 @@
+/* app/practice-dashboard/appointments/AppointmentsPage.module.css */
+.appointmentsPage {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.filterContainer {
+  margin-bottom: 20px;
+}
+
+.filterContainer label {
+  margin-right: 10px;
+}

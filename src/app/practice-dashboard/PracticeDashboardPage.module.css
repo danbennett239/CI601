@@ -1,0 +1,11 @@
+/* app/practice-dashboard/PracticeDashboard.module.css */
+.dashboard {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.cardsContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+}
