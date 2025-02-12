@@ -12,6 +12,7 @@ const GET_USER_BY_EMAIL = `
       email
       password
       role
+      practice_id
     }
   }
 `;
@@ -80,6 +81,7 @@ export async function loginUser({
     id: user.user_id,
     email: user.email,
     role: user.role,
+    practice_id: user.practice_id,
     hasura_claims: {
       'x-hasura-default-role': user.role,
       'x-hasura-allowed-roles': [user.role],

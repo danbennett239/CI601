@@ -12,6 +12,7 @@ export interface UserPayload {
   id: string;
   email: string;
   role: string;
+  practice_id?: string;
   hasura_claims: Record<string, unknown>;
 }
 

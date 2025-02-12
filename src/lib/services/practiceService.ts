@@ -263,3 +263,46 @@ export async function denyPractice(practiceId: string) {
     throw new Error("Denying practice failed.");
   }
 }
+
+export async function fetchPracticeById(practiceId: string) {
+  console.log("Fetching practice details for:", practiceId);
+  const query = `
+    query GetPracticeDetails($practiceId: uuid!) {
+      practices_by_pk(practice_id: $practiceId) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        verified
+        verified_at
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables: { practiceId } }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Fetching practice details failed.");
+    }
+
+    return result.data.practices_by_pk;
+  } catch (error) {
+    console.error("Error fetching practice details:", error);
+    throw new Error("Fetching practice details failed.");
+  }
+}

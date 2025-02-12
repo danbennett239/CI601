@@ -3,11 +3,14 @@
 
 import React from "react";
 import { useUser } from "@/hooks/useUser";
+import { usePractice } from "@/hooks/usePractice";
 import PanelCard from "@/components/PanelCard/PanelCard";
 import styles from "./PracticeDashboardPage.module.css";
 
 export default function PracticeDashboard() {
   const { user, loading } = useUser();
+  const { practice, loading: practiceLoading, error } = usePractice(user?.practice_id);
+  console.log(practice, practiceLoading, error);
 
   if (loading) return <div>Loading...</div>;
   if (!user || user.role !== "verified-practice") {
@@ -17,6 +20,7 @@ export default function PracticeDashboard() {
   return (
     <div className={styles.dashboard}>
       <h1>Practice Dashboard</h1>
+      <p>{practice?.practice_name}</p>
       <div className={styles.cardsContainer}>
         <PanelCard
           title="Manage Appointments"

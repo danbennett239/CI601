@@ -7,6 +7,7 @@ export interface User {
   last_name: string;
   email: string;
   role: string;
+  practice_id?: string;
 }
 
 export function useUser() {
