@@ -2,14 +2,14 @@
 
 import React from "react";
 import Link from "next/link";
-import styles from "./AdminPanelCard.module.css";
+import styles from "./PanelCard.module.css";
 
-interface AdminPanelCardProps {
+interface PanelCardProps {
   title: string;
   link: string;
 }
 
-const AdminPanelCard: React.FC<AdminPanelCardProps> = ({ title, link }) => {
+const PanelCard: React.FC<PanelCardProps> = ({ title, link }) => {
   return (
     <Link href={link} className={styles.card}>
       <div className={styles.cardContent}>
@@ -19,4 +19,4 @@ const AdminPanelCard: React.FC<AdminPanelCardProps> = ({ title, link }) => {
   );
 };
 
-export default AdminPanelCard;
+export default PanelCard;

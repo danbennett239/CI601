@@ -3,7 +3,7 @@
 
 import React from "react";
 import { useUser } from "@/hooks/useUser";
-import AdminPanelCard from "@/components/admin/AdminPanelCard/AdminPanelCard";
+import PanelCard from "@/components/PanelCard/PanelCard";
 import styles from "./AdminPanelPage.module.css";
 
 const AdminPanelPage = () => {
@@ -19,7 +19,7 @@ const AdminPanelPage = () => {
       <h1>Admin Panel</h1>
       <div className={styles.cardsContainer}>
         {/* Each card represents an admin function */}
-        <AdminPanelCard
+        <PanelCard
           title="Dental Practice Applications"
           link="/admin-panel/dental-practices"
         />

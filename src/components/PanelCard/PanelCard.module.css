@@ -5,7 +5,7 @@
   justify-content: center;
   width: 150px;
   height: 150px;
-  background-color: #ccc; /* grey background */
+  background-color: #ccc;
   text-decoration: none;
   border-radius: 8px;
   transition: background-color 0.3s ease;
@@ -16,7 +16,7 @@
 }
 
 .cardContent h2 {
-  color: var(--primary-color); /* assuming this is blue */
+  color: var(--primary-color);
   text-align: center;
   font-size: 16px;
   margin: 0;

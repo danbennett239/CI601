@@ -3,7 +3,7 @@
 
 import React from "react";
 import { useUser } from "@/hooks/useUser";
-import AdminPanelCard from "@/components/admin/AdminPanelCard/AdminPanelCard";
+import PanelCard from "@/components/PanelCard/PanelCard";
 import styles from "./PracticeDashboardPage.module.css";
 
 export default function PracticeDashboard() {
@@ -18,7 +18,7 @@ export default function PracticeDashboard() {
     <div className={styles.dashboard}>
       <h1>Practice Dashboard</h1>
       <div className={styles.cardsContainer}>
-        <AdminPanelCard
+        <PanelCard
           title="Manage Appointments"
           link="/practice-dashboard/appointments"
         />
