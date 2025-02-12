@@ -1,6 +1,7 @@
-// components/AppointmentCalendar.tsx
 import React from "react";
 import styles from "./AppointmentCalendar.module.css";
+
+export type ViewType = "day" | "calendarWeek" | "workWeek" | "month";
 
 interface Appointment {
   id: number;
@@ -16,18 +17,21 @@ interface OpeningHoursItem {
 }
 
 interface AppointmentCalendarProps {
-  timeframe: "today" | "week" | "month";
+  view: ViewType;
+  currentDate: Date;
   appointments: Appointment[];
   openingHours: OpeningHoursItem[];
+  onAppointmentClick?: (appointment: Appointment) => void;
+  onSlotClick?: (start: Date, end: Date) => void;
 }
 
-const CALENDAR_START_HOUR = 6; // calendar starts at 6:00 AM
-const CALENDAR_END_HOUR = 22;  // calendar ends at 10:00 PM
-const SLOT_DURATION = 30;      // each slot represents 30 minutes
-const TOTAL_MINUTES = (CALENDAR_END_HOUR - CALENDAR_START_HOUR) * 60; // 16 hours = 960 minutes
-const NUM_SLOTS = TOTAL_MINUTES / SLOT_DURATION; // 960/30 = 32
+const CALENDAR_START_HOUR = 6; // 6:00 AM
+const CALENDAR_END_HOUR = 22;  // 10:00 PM
+const SLOT_DURATION = 30;      // minutes
+const TOTAL_MINUTES = (CALENDAR_END_HOUR - CALENDAR_START_HOUR) * 60; // e.g., 16 hours * 60 = 960 minutes
+const NUM_SLOTS = TOTAL_MINUTES / SLOT_DURATION; // e.g., 32 slots
 
-// Convert a time string (HH:MM) to minutes since midnight; returns null for "closed"
+// Helper: Convert "HH:MM" to minutes since midnight (or null for "closed")
 const timeStringToMinutes = (timeStr: string): number | null => {
   if (timeStr.toLowerCase() === "closed") return null;
   const parts = timeStr.split(":");
@@ -37,35 +41,21 @@ const timeStringToMinutes = (timeStr: string): number | null => {
   return hours * 60 + minutes;
 };
 
-// Get day name (e.g., "Monday") from a Date
-const getDayName = (date: Date): string => {
-  return date.toLocaleDateString("en-US", { weekday: "long" });
-};
-
-// Return minutes offset (from CALENDAR_START_HOUR) for a Date on that day
-const getMinutesOffset = (date: Date): number => {
-  const totalMinutesFromMidnight = date.getHours() * 60 + date.getMinutes();
-  return totalMinutesFromMidnight - CALENDAR_START_HOUR * 60;
-};
-
+// Compute positioned appointments (for one day) relative to CALENDAR_START_HOUR
 interface PositionedAppointment extends Appointment {
-  top: number;       // in percentage relative to the day column’s height
-  height: number;    // in percentage based on appointment duration
-  left: number;      // in percentage (for overlapping appointments)
-  width: number;     // in percentage (for overlapping appointments)
+  top: number;
+  height: number;
+  left: number;
+  width: number;
   startMinutes: number;
   endMinutes: number;
 }
-
-// Compute each appointment’s top, height, left, and width values (handling overlaps)
 const computePositionedAppointments = (appointments: Appointment[]): PositionedAppointment[] => {
-  // Map appointments to include start and end minutes (relative to CALENDAR_START_HOUR)
   let positioned: PositionedAppointment[] = appointments.map((appt) => {
     const startDate = new Date(appt.start);
     const endDate = new Date(appt.end);
-    let startMinutes = getMinutesOffset(startDate);
-    let endMinutes = getMinutesOffset(endDate);
-    // Clamp to calendar boundaries
+    let startMinutes = (startDate.getHours() * 60 + startDate.getMinutes()) - CALENDAR_START_HOUR * 60;
+    let endMinutes = (endDate.getHours() * 60 + endDate.getMinutes()) - CALENDAR_START_HOUR * 60;
     startMinutes = Math.max(0, startMinutes);
     endMinutes = Math.min(TOTAL_MINUTES, endMinutes);
     return {
@@ -78,11 +68,8 @@ const computePositionedAppointments = (appointments: Appointment[]): PositionedA
       width: 100,
     };
   });
-
-  // Sort appointments by start time
   positioned.sort((a, b) => a.startMinutes - b.startMinutes);
-
-  // Group overlapping appointments into clusters and assign left/width
+  // Group overlapping appointments into clusters
   let clusters: PositionedAppointment[][] = [];
   positioned.forEach((appt) => {
     let placed = false;
@@ -98,8 +85,6 @@ const computePositionedAppointments = (appointments: Appointment[]): PositionedA
       clusters.push([appt]);
     }
   });
-
-  // Within each cluster, each appointment gets a share of the horizontal space
   clusters.forEach(cluster => {
     const count = cluster.length;
     cluster.forEach((appt, index) => {
@@ -107,147 +92,239 @@ const computePositionedAppointments = (appointments: Appointment[]): PositionedA
       appt.width = 100 / count;
     });
   });
-
   return positioned;
 };
 
+// Helper: Return Monday (start of week) for a given date
+const getMonday = (date: Date): Date => {
+  const d = new Date(date);
+  const day = d.getDay();
+  const diff = d.getDate() - (day === 0 ? 6 : day - 1);
+  d.setDate(diff);
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
 const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
-  timeframe,
+  view,
+  currentDate,
   appointments,
   openingHours,
+  onAppointmentClick,
+  onSlotClick,
 }) => {
-  if (timeframe !== "week") {
-    return <div>Currently, only the week view is implemented.</div>;
+  // Determine which days to display based on the view
+  let days: Date[] = [];
+  if (view === "day") {
+    days = [new Date(currentDate)];
+  } else if (view === "calendarWeek") {
+    const monday = getMonday(currentDate);
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+  } else if (view === "workWeek") {
+    const monday = getMonday(currentDate);
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(monday);
+      d.setDate(monday.getDate() + i);
+      days.push(d);
+    }
+  } else if (view === "month") {
+    // For a simple month view, compute a grid of days covering the month.
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    // Start from the Sunday before (or equal to) the first day of month
+    const start = new Date(firstDayOfMonth);
+    start.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+    // End on the Saturday after (or equal to) the last day of month
+    const end = new Date(lastDayOfMonth);
+    end.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
+    let d = new Date(start);
+    while (d <= end) {
+      days.push(new Date(d));
+      d.setDate(d.getDate() + 1);
+    }
   }
 
-  // Define the week days in order (Monday to Sunday)
-  const weekDays = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-
-  // Group appointments by day (using the start date’s day name)
-  const appointmentsByDay: { [day: string]: Appointment[] } = {};
-  weekDays.forEach(day => (appointmentsByDay[day] = []));
-  appointments.forEach(appt => {
-    const date = new Date(appt.start);
-    const dayName = getDayName(date);
-    if (appointmentsByDay[dayName]) {
-      appointmentsByDay[dayName].push(appt);
-    }
-  });
-
-  return (
-    <div className={styles.calendarContainer}>
-      {/* Header row: empty left column for time labels then day headers */}
-      <div className={styles.headerRow}>
-        <div className={styles.timeColumn}></div>
-        {weekDays.map(day => (
-          <div key={day} className={styles.dayHeader}>
-            {day}
+  // --- Render for time–grid views (day, calendarWeek, workWeek) ---
+  if (view === "day" || view === "calendarWeek" || view === "workWeek") {
+    return (
+      <div className={styles.calendarContainer}>
+        <div className={styles.headerRow}>
+          <div className={styles.timeColumn}></div>
+          {days.map((day) => (
+            <div key={day.toDateString()} className={styles.dayHeader}>
+              {day.toLocaleDateString("en-US", {
+                weekday: "long",
+                month: "short",
+                day: "numeric",
+              })}
+            </div>
+          ))}
+        </div>
+        <div className={styles.body}>
+          <div className={styles.timeColumn}>
+            {Array.from({ length: NUM_SLOTS }).map((_, slotIndex) => {
+              const totalMinutes = CALENDAR_START_HOUR * 60 + slotIndex * SLOT_DURATION;
+              const hour = Math.floor(totalMinutes / 60);
+              const minute = totalMinutes % 60;
+              const label = `${hour.toString().padStart(2, "0")}:${minute === 0 ? "00" : minute}`;
+              return (
+                <div key={slotIndex} className={styles.timeLabel}>
+                  {label}
+                </div>
+              );
+            })}
           </div>
-        ))}
-      </div>
-      <div className={styles.body}>
-        {/* Time label column */}
-        <div className={styles.timeColumn}>
-          {Array.from({ length: NUM_SLOTS }).map((_, slotIndex) => {
-            const totalMinutes = CALENDAR_START_HOUR * 60 + slotIndex * SLOT_DURATION;
-            const hour = Math.floor(totalMinutes / 60);
-            const minute = totalMinutes % 60;
-            const label = `${hour.toString().padStart(2, "0")}:${minute === 0 ? "00" : minute}`;
+          {days.map((day) => {
+            // Get the opening hours for this day (if any)
+            const dayName = day.toLocaleDateString("en-US", { weekday: "long" });
+            const dayOpening = openingHours.find(oh => oh.dayName === dayName);
+            let openMinutes: number | null = null;
+            let closeMinutes: number | null = null;
+            if (dayOpening) {
+              const openAbs = timeStringToMinutes(dayOpening.open);
+              const closeAbs = timeStringToMinutes(dayOpening.close);
+              if (openAbs !== null && closeAbs !== null) {
+                openMinutes = Math.max(0, openAbs - CALENDAR_START_HOUR * 60);
+                closeMinutes = Math.min(TOTAL_MINUTES, closeAbs - CALENDAR_START_HOUR * 60);
+              }
+            }
+            // Filter appointments that occur on this day
+            const dayAppointments = appointments.filter(appt => {
+              const apptDate = new Date(appt.start);
+              return apptDate.toDateString() === day.toDateString();
+            });
+            const positionedAppointments = computePositionedAppointments(dayAppointments);
             return (
-              <div key={slotIndex} className={styles.timeLabel}>
-                {label}
+              <div key={day.toDateString()} className={styles.dayColumn}>
+                <div className={styles.dayGrid}>
+                  {Array.from({ length: NUM_SLOTS }).map((_, slotIndex) => {
+                    const slotStartMinutes = slotIndex * SLOT_DURATION;
+                    const slotEndMinutes = slotStartMinutes + SLOT_DURATION;
+                    let openFraction = 0;
+                    let openOffset = 0;
+                    if (openMinutes !== null && closeMinutes !== null) {
+                      const overlapStart = Math.max(slotStartMinutes, openMinutes);
+                      const overlapEnd = Math.min(slotEndMinutes, closeMinutes);
+                      const overlap = Math.max(0, overlapEnd - overlapStart);
+                      openFraction = overlap / SLOT_DURATION;
+                      openOffset = ((overlapStart - slotStartMinutes) / SLOT_DURATION) * 100;
+                    }
+                    // Compute actual slot start and end Date objects
+                    const slotStart = new Date(day);
+                    slotStart.setHours(CALENDAR_START_HOUR, slotIndex * SLOT_DURATION, 0, 0);
+                    const slotEnd = new Date(slotStart);
+                    slotEnd.setMinutes(slotStart.getMinutes() + SLOT_DURATION);
+
+                    return (
+                      <div
+                        key={slotIndex}
+                        className={styles.timeSlot}
+                        onClick={() => {
+                          if (onSlotClick) onSlotClick(slotStart, slotEnd);
+                        }}
+                      >
+                        {/*
+                          Render the open–hour indicator.
+                          Color scheme:
+                          - Closed hours (the base slot background): #a0a0a0
+                          - Open hours (the overlay): #d0d0d0
+                          
+                          Alternative options (uncomment one if you’d like to try):
+                          
+                          // Option 2:
+                          // In CSS:
+                          // .timeSlot { background-color: #9e9e9e; }
+                          // .openIndicator { background-color: #eeeeee; }
+                          // .timeSlot:hover .openIndicator { background-color: #e0e0e0; }
+                          
+                          // Option 3:
+                          // .timeSlot { background-color: #757575; }
+                          // .openIndicator { background-color: #bdbdbd; }
+                          // .timeSlot:hover .openIndicator { background-color: #a8a8a8; }
+                        */}
+                        {openFraction > 0 && (
+                          <div
+                            className={styles.openIndicator}
+                            style={{
+                              top: `${openOffset}%`,
+                              height: `${openFraction * 100}%`,
+                            }}
+                          ></div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  {positionedAppointments.map(appt => (
+                    <div
+                      key={appt.id}
+                      className={styles.appointmentBlock}
+                      style={{
+                        top: `${appt.top}%`,
+                        height: `${appt.height}%`,
+                        left: `${appt.left}%`,
+                        width: `${appt.width}%`,
+                      }}
+                      onClick={() => {
+                        if (onAppointmentClick) onAppointmentClick(appt);
+                      }}
+                    >
+                      {appt.title}
+                    </div>
+                  ))}
+                </div>
               </div>
             );
           })}
         </div>
-        {/* Each day column */}
-        {weekDays.map(day => {
-          // Get opening hours for the day (if any)
-          const dayOpening = openingHours.find(oh => oh.dayName === day);
-          let openMinutes: number | null = null;
-          let closeMinutes: number | null = null;
-          if (dayOpening) {
-            const openAbs = timeStringToMinutes(dayOpening.open);
-            const closeAbs = timeStringToMinutes(dayOpening.close);
-            if (openAbs !== null && closeAbs !== null) {
-              // Convert to minutes relative to CALENDAR_START_HOUR
-              openMinutes = Math.max(0, openAbs - CALENDAR_START_HOUR * 60);
-              closeMinutes = Math.min(TOTAL_MINUTES, closeAbs - CALENDAR_START_HOUR * 60);
-            }
-          }
-
-          // Get and process appointments for this day
-          const dayAppointments = appointmentsByDay[day] || [];
-          const positionedAppointments = computePositionedAppointments(dayAppointments);
-
-          return (
-            <div key={day} className={styles.dayColumn}>
-              <div className={styles.dayGrid}>
-                {Array.from({ length: NUM_SLOTS }).map((_, slotIndex) => {
-                  const slotStart = slotIndex * SLOT_DURATION;
-                  const slotEnd = slotStart + SLOT_DURATION;
-                  // Determine if (and how much of) this slot falls within the opening hours.
-                  let openFraction = 0;
-                  let openOffset = 0;
-                  if (openMinutes !== null && closeMinutes !== null) {
-                    const overlapStart = Math.max(slotStart, openMinutes);
-                    const overlapEnd = Math.min(slotEnd, closeMinutes);
-                    const overlap = Math.max(0, overlapEnd - overlapStart);
-                    openFraction = overlap / SLOT_DURATION;
-                    openOffset = ((overlapStart - slotStart) / SLOT_DURATION) * 100;
-                  }
-                  return (
-                    <div
-                      key={slotIndex}
-                      className={styles.timeSlot}
-                      onDoubleClick={() => {
-                        // When the user double-clicks on this slot, log its time values.
-                        const slotTimeInMinutes = CALENDAR_START_HOUR * 60 + slotIndex * SLOT_DURATION;
-                        const hour = Math.floor(slotTimeInMinutes / 60);
-                        const minute = slotTimeInMinutes % 60;
-                        console.log(`Double clicked on ${day} at ${hour}:${minute < 10 ? "0" : ""}${minute}`);
-                        // In the future, pass these values to an appointment creation form.
-                      }}
-                    >
-                      {/* Render an indicator for open hours (it may cover a fraction of the slot) */}
-                      {openFraction > 0 && (
-                        <div
-                          className={styles.openIndicator}
-                          style={{
-                            top: `${openOffset}%`,
-                            height: `${openFraction * 100}%`,
-                          }}
-                        ></div>
-                      )}
-                    </div>
-                  );
-                })}
-                {/* Overlay appointment blocks */}
-                {positionedAppointments.map(appt => (
-                  <div
-                    key={appt.id}
-                    className={styles.appointmentBlock}
-                    style={{
-                      top: `${appt.top}%`,
-                      height: `${appt.height}%`,
-                      left: `${appt.left}%`,
-                      width: `${appt.width}%`,
-                    }}
-                    onClick={() => {
-                      console.log("Clicked appointment:", appt);
-                      // In the future, use this data to view/edit the appointment.
-                    }}
-                  >
-                    {appt.title}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
       </div>
-    </div>
-  );
+    );
+  }
+  // --- Render for Month View ---
+  else if (view === "month") {
+    // Compute a simple month grid
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const firstDayOfMonth = new Date(year, month, 1);
+    const lastDayOfMonth = new Date(year, month + 1, 0);
+    // Start from the Sunday before (or equal to) the first day of the month
+    const start = new Date(firstDayOfMonth);
+    start.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
+    // End on the Saturday after (or equal to) the last day of the month
+    const end = new Date(lastDayOfMonth);
+    end.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
+    const weeks: Date[][] = [];
+    let week: Date[] = [];
+    let d = new Date(start);
+    while (d <= end) {
+      week.push(new Date(d));
+      if (d.getDay() === 6) {
+        weeks.push(week);
+        week = [];
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return (
+      <div className={styles.monthContainer}>
+        {weeks.map((week, index) => (
+          <div key={index} className={styles.weekRow}>
+            {week.map((day, idx) => (
+              <div key={idx} className={styles.monthDay}>
+                <div className={styles.monthDayHeader}>{day.getDate()}</div>
+                {/* Optionally, add a summary of appointments for this day */}
+              </div>
+            ))}
+          </div>
+        ))}
+      </div>
+    );
+  }
+  return null;
 };
 
 export default AppointmentCalendar;
