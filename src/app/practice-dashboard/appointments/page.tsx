@@ -2,24 +2,13 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import AppointmentCalendar, { ViewType } from "@/components/practice/AppointmentCalendar/AppointmentCalendar";
+import AppointmentCalendar from "@/components/practice/AppointmentCalendar/AppointmentCalendar";
+import AppointmentPopup from "@/components/practice/AppointmentPopup/AppointmentPopup";
+import { Appointment, OpeningHoursItem } from "@/types/practice";
+import { ViewType } from "@/types/practice";
 import styles from "./AppointmentsPage.module.css";
 
-interface Appointment {
-  id: number;
-  title: string;
-  start: string; // ISO string
-  end: string;   // ISO string
-}
-
-interface OpeningHoursItem {
-  open: string;    // e.g. "closed" or "08:15"
-  close: string;   // e.g. "closed" or "17:30"
-  dayName: string; // e.g. "Monday"
-}
-
 const AppointmentsPage: React.FC = () => {
-  // Retrieve view from localStorage if available, else default to "calendarWeek"
   const initialView =
     typeof window !== "undefined" && localStorage.getItem("appointmentView")
       ? (localStorage.getItem("appointmentView") as ViewType)
@@ -36,41 +25,46 @@ const AppointmentsPage: React.FC = () => {
     { open: "08:00", close: "16:00", dayName: "Friday" },
     { open: "closed", close: "closed", dayName: "Saturday" },
     { open: "closed", close: "closed", dayName: "Sunday" }
-]);
+  ]);
+
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
 
   useEffect(() => {
     // BACKEND CALLS TO DO XYZ:
     console.log("Fetching appointments for view:", view, "and date:", currentDate);
-    // For demonstration, using mocked appointment data:
+    // For demonstration, we use mocked appointment data (note the 'booked' field):
     setAppointments([
       {
         id: 1,
         title: "Appointment 1",
-        start: "2025-02-17T08:00:00", // Monday 8:00 AM (example)
+        start: "2025-02-17T08:00:00",
         end: "2025-02-17T08:30:00",
+        booked: false,
       },
       {
         id: 2,
         title: "Appointment 2",
-        start: "2025-02-17T08:00:00", // overlapping appointment on Monday
+        start: "2025-02-17T08:00:00",
         end: "2025-02-17T08:30:00",
+        booked: true,
       },
       {
         id: 3,
         title: "Appointment 3",
-        start: "2025-02-17T08:00:00", // overlapping appointment on Monday
+        start: "2025-02-17T08:00:00",
         end: "2025-02-17T08:30:00",
+        booked: false,
       },
       {
         id: 4,
         title: "Appointment 4",
-        start: "2025-02-18T09:15:00", // Tuesday appointment
+        start: "2025-02-18T09:15:00",
         end: "2025-02-18T10:00:00",
+        booked: false,
       },
     ]);
   }, [view, currentDate]);
 
-  // Save the view selection to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem("appointmentView", view);
   }, [view]);
@@ -103,12 +97,13 @@ const AppointmentsPage: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // Callback when an appointment is clicked
+  // When an appointment is clicked, store it as the selected appointment.
   const handleAppointmentClick = (appointment: Appointment) => {
     console.log("Appointment clicked:", appointment);
+    setSelectedAppointment(appointment);
   };
 
-  // Callback when an empty slot is clicked
+  // Log the start and end time when a time slot is clicked.
   const handleSlotClick = (start: Date, end: Date) => {
     console.log("Empty slot clicked:", start, end);
   };
@@ -137,6 +132,12 @@ const AppointmentsPage: React.FC = () => {
         onAppointmentClick={handleAppointmentClick}
         onSlotClick={handleSlotClick}
       />
+      {selectedAppointment && (
+        <AppointmentPopup
+          appointment={selectedAppointment}
+          onClose={() => setSelectedAppointment(null)}
+        />
+      )}
     </div>
   );
 };

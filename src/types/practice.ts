@@ -20,3 +20,19 @@ export interface Address {
   postcode: string;
   country: string;
 }
+
+export interface Appointment {
+  id: number;
+  title: string;
+  start: string; // ISO string
+  end: string;   // ISO string
+  booked: boolean;
+}
+
+export interface OpeningHoursItem {
+  open: string;    // e.g., "closed" or "08:15"
+  close: string;   // e.g., "closed" or "17:30"
+  dayName: string; // e.g., "Monday"
+}
+
+export type ViewType = "day" | "calendarWeek" | "workWeek" | "month";
