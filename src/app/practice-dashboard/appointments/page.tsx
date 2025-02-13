@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { useUser } from "@/hooks/useUser";
+import { usePractice } from "@/hooks/usePractice";
 import AppointmentCalendar from "@/components/practice/AppointmentCalendar/AppointmentCalendar";
 import AppointmentPopup from "@/components/practice/AppointmentPopup/AppointmentPopup";
+import CreateAppointmentPopup from "@/components/practice/CreateAppointmentPopup/CreateAppointmentPopup";
 import { Appointment, OpeningHoursItem } from "@/types/practice";
 import { ViewType } from "@/types/practice";
 import styles from "./AppointmentsPage.module.css";
 
 const AppointmentsPage: React.FC = () => {
+  const { user, loading: userLoading } = useUser();
+  // Use the user’s practice_id to fetch practice data from the DB
+  const { practice, loading: practiceLoading, error: practiceError } = usePractice(user?.practice_id);
+  // Retrieve view from localStorage (default to "calendarWeek")
   const initialView =
     typeof window !== "undefined" && localStorage.getItem("appointmentView")
       ? (localStorage.getItem("appointmentView") as ViewType)
@@ -25,14 +32,21 @@ const AppointmentsPage: React.FC = () => {
     { open: "08:00", close: "16:00", dayName: "Friday" },
     { open: "closed", close: "closed", dayName: "Saturday" },
     { open: "closed", close: "closed", dayName: "Sunday" }
-  ]);
-
+]);
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [showCreatePopup, setShowCreatePopup] = useState(false);
+  // Default start/end for the creation popup (will be overridden if a slot is clicked)
+  const [createDefaults, setCreateDefaults] = useState<{ start: Date; end: Date }>({
+    start: new Date(),
+    end: new Date(new Date().getTime() + 30 * 60000),
+  });
+
+  // Dummy practice ID (in a real app, you’d fetch this based on your verified practice user)
 
   useEffect(() => {
     // BACKEND CALLS TO DO XYZ:
     console.log("Fetching appointments for view:", view, "and date:", currentDate);
-    // For demonstration, we use mocked appointment data (note the 'booked' field):
+    // Replace the mocked data with a real fetch (for now we use mocked data)
     setAppointments([
       {
         id: 1,
@@ -97,15 +111,22 @@ const AppointmentsPage: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // When an appointment is clicked, store it as the selected appointment.
+  // When an appointment is clicked, open the detail popup.
   const handleAppointmentClick = (appointment: Appointment) => {
     console.log("Appointment clicked:", appointment);
     setSelectedAppointment(appointment);
   };
 
-  // Log the start and end time when a time slot is clicked.
+  // When an empty slot is clicked, open the creation popup with default start/end times.
   const handleSlotClick = (start: Date, end: Date) => {
     console.log("Empty slot clicked:", start, end);
+    setCreateDefaults({ start, end });
+    setShowCreatePopup(true);
+  };
+
+  // After creation, refresh appointments without changing the current view.
+  const handleAppointmentCreated = (newAppointment: Appointment) => {
+    setAppointments(prev => [...prev, newAppointment]);
   };
 
   return (
@@ -123,6 +144,17 @@ const AppointmentsPage: React.FC = () => {
         </select>
         <button onClick={goToPrevious}>Previous</button>
         <button onClick={goToNext}>Next</button>
+        {/* Create Appointment button in the top right */}
+        <button onClick={() => {
+          // Set default times to “now” (or you could choose a rounded slot)
+          setCreateDefaults({
+            start: new Date(),
+            end: new Date(new Date().getTime() + 30 * 60000)
+          });
+          setShowCreatePopup(true);
+        }} className={styles.createButton}>
+          Create Appointment
+        </button>
       </div>
       <AppointmentCalendar
         view={view}
@@ -136,6 +168,16 @@ const AppointmentsPage: React.FC = () => {
         <AppointmentPopup
           appointment={selectedAppointment}
           onClose={() => setSelectedAppointment(null)}
+        />
+      )}
+      {showCreatePopup && (
+        <CreateAppointmentPopup
+          practiceId={practice?.practice_id || ""}
+          openingHours={openingHours}
+          defaultStart={createDefaults.start}
+          defaultEnd={createDefaults.end}
+          onClose={() => setShowCreatePopup(false)}
+          onCreated={handleAppointmentCreated}
         />
       )}
     </div>

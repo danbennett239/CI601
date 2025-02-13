@@ -24,8 +24,8 @@ export interface Address {
 export interface Appointment {
   id: number;
   title: string;
-  start: string; // ISO string
-  end: string;   // ISO string
+  start: string;
+  end: string;
   booked: boolean;
 }
 
