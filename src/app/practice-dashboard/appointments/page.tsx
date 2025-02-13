@@ -1,3 +1,4 @@
+// app/practice-dashboard/appointments/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -9,13 +10,41 @@ import AppointmentPopup from "@/components/practice/AppointmentPopup/Appointment
 import CreateAppointmentPopup from "@/components/practice/CreateAppointmentPopup/CreateAppointmentPopup";
 import { Appointment, OpeningHoursItem } from "@/types/practice";
 import { ViewType } from "@/types/practice";
+import { getMonday } from "@/lib/utils/calendar"; // utility used in computing week ranges
 import styles from "./AppointmentsPage.module.css";
+
+type TimeRange = { start_time: string; end_time: string };
+
+function computeTimeRange(date: Date, view: ViewType): TimeRange {
+  let start: Date, end: Date;
+  if (view === "day") {
+    start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(date);
+    end.setHours(23, 59, 59, 999);
+  } else if (view === "calendarWeek" || view === "workWeek") {
+    const monday = getMonday(date);
+    start = new Date(monday);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(monday);
+    // workWeek: Monday to Friday, calendarWeek: Monday to Sunday
+    const addDays = view === "workWeek" ? 4 : 6;
+    end.setDate(end.getDate() + addDays);
+    end.setHours(23, 59, 59, 999);
+  } else if (view === "month") {
+    start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
+    end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
+  } else {
+    start = date;
+    end = date;
+  }
+  return { start_time: start.toISOString().split("Z")[0], end_time: end.toISOString().split("Z")[0] };
+}
 
 const AppointmentsPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
-  // Use the user’s practice_id to fetch practice data from the DB
-  const { practice, loading: practiceLoading, error: practiceError } = usePractice(user?.practice_id);
-  // Retrieve view from localStorage (default to "calendarWeek")
+  const { practice, loading: practiceLoading } = usePractice(user?.practice_id);
+
   const initialView =
     typeof window !== "undefined" && localStorage.getItem("appointmentView")
       ? (localStorage.getItem("appointmentView") as ViewType)
@@ -24,7 +53,15 @@ const AppointmentsPage: React.FC = () => {
   const [view, setView] = useState<ViewType>(initialView);
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [appointments, setAppointments] = useState<Appointment[]>([]);
-  const [openingHours, setOpeningHours] = useState<OpeningHoursItem[]>([
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
+  const [showCreatePopup, setShowCreatePopup] = useState(false);
+  const [createDefaults, setCreateDefaults] = useState<{ start: Date; end: Date }>({
+    start: new Date(),
+    end: new Date(new Date().getTime() + 30 * 60000),
+  });
+
+  // Use practice opening_hours if available; otherwise fall back to defaults.
+  const openingHours: OpeningHoursItem[] = practice?.opening_hours || [
     { open: "08:00", close: "16:00", dayName: "Monday" },
     { open: "08:00", close: "16:00", dayName: "Tuesday" },
     { open: "08:00", close: "16:00", dayName: "Wednesday" },
@@ -32,52 +69,29 @@ const AppointmentsPage: React.FC = () => {
     { open: "08:00", close: "16:00", dayName: "Friday" },
     { open: "closed", close: "closed", dayName: "Saturday" },
     { open: "closed", close: "closed", dayName: "Sunday" }
-]);
-  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null);
-  const [showCreatePopup, setShowCreatePopup] = useState(false);
-  // Default start/end for the creation popup (will be overridden if a slot is clicked)
-  const [createDefaults, setCreateDefaults] = useState<{ start: Date; end: Date }>({
-    start: new Date(),
-    end: new Date(new Date().getTime() + 30 * 60000),
-  });
-
-  // Dummy practice ID (in a real app, you’d fetch this based on your verified practice user)
+  ];
 
   useEffect(() => {
-    // BACKEND CALLS TO DO XYZ:
-    console.log("Fetching appointments for view:", view, "and date:", currentDate);
-    // Replace the mocked data with a real fetch (for now we use mocked data)
-    setAppointments([
-      {
-        id: 1,
-        title: "Appointment 1",
-        start: "2025-02-17T08:00:00",
-        end: "2025-02-17T08:30:00",
-        booked: false,
-      },
-      {
-        id: 2,
-        title: "Appointment 2",
-        start: "2025-02-17T08:00:00",
-        end: "2025-02-17T08:30:00",
-        booked: true,
-      },
-      {
-        id: 3,
-        title: "Appointment 3",
-        start: "2025-02-17T08:00:00",
-        end: "2025-02-17T08:30:00",
-        booked: false,
-      },
-      {
-        id: 4,
-        title: "Appointment 4",
-        start: "2025-02-18T09:15:00",
-        end: "2025-02-18T10:00:00",
-        booked: false,
-      },
-    ]);
-  }, [view, currentDate]);
+    if (!practice?.practice_id) return;
+    const { start_time, end_time } = computeTimeRange(currentDate, view);
+    fetch(
+      `/api/appointment?practiceId=${practice.practice_id}&start_time=${encodeURIComponent(
+        start_time
+      )}&end_time=${encodeURIComponent(end_time)}`
+    )
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.error) {
+          console.error("Error fetching appointments:", data.error);
+        } else {
+          console.log('Appointment data', data);
+          setAppointments(data.appointments);
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching appointments:", err);
+      });
+  }, [view, currentDate, practice?.practice_id]);
 
   useEffect(() => {
     localStorage.setItem("appointmentView", view);
@@ -111,23 +125,24 @@ const AppointmentsPage: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // When an appointment is clicked, open the detail popup.
   const handleAppointmentClick = (appointment: Appointment) => {
-    console.log("Appointment clicked:", appointment);
     setSelectedAppointment(appointment);
   };
 
-  // When an empty slot is clicked, open the creation popup with default start/end times.
   const handleSlotClick = (start: Date, end: Date) => {
-    console.log("Empty slot clicked:", start, end);
     setCreateDefaults({ start, end });
     setShowCreatePopup(true);
   };
 
-  // After creation, refresh appointments without changing the current view.
   const handleAppointmentCreated = (newAppointment: Appointment) => {
-    setAppointments(prev => [...prev, newAppointment]);
+    // Optionally, you might choose to refetch appointments here.
+    setAppointments((prev) => [...prev, newAppointment]);
   };
+
+  if (userLoading || practiceLoading) return <div>Loading...</div>;
+  if (!user || user.role !== "verified-practice") {
+    return <div>Access Denied: You are not authorized to view this page.</div>;
+  }
 
   return (
     <div className={styles.appointmentsPage}>
@@ -144,15 +159,16 @@ const AppointmentsPage: React.FC = () => {
         </select>
         <button onClick={goToPrevious}>Previous</button>
         <button onClick={goToNext}>Next</button>
-        {/* Create Appointment button in the top right */}
-        <button onClick={() => {
-          // Set default times to “now” (or you could choose a rounded slot)
-          setCreateDefaults({
-            start: new Date(),
-            end: new Date(new Date().getTime() + 30 * 60000)
-          });
-          setShowCreatePopup(true);
-        }} className={styles.createButton}>
+        <button
+          onClick={() => {
+            setCreateDefaults({
+              start: new Date(),
+              end: new Date(new Date().getTime() + 30 * 60000),
+            });
+            setShowCreatePopup(true);
+          }}
+          className={styles.createButton}
+        >
           Create Appointment
         </button>
       </div>

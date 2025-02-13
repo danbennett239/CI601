@@ -1,4 +1,4 @@
-// components/AppointmentPopup.tsx
+// components/practice/AppointmentPopup/AppointmentPopup.tsx
 import React, { useEffect } from 'react';
 import styles from './AppointmentPopup.module.css';
 import { Appointment } from '../../../types/practice';
@@ -9,7 +9,6 @@ interface AppointmentPopupProps {
 }
 
 const AppointmentPopup: React.FC<AppointmentPopupProps> = ({ appointment, onClose }) => {
-  // Close the popup if the user clicks outside the popup content.
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
       onClose();
@@ -34,8 +33,8 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({ appointment, onClos
         <button className={styles.closeButton} onClick={onClose}>×</button>
         <h2>Appointment Details</h2>
         <p><strong>Title:</strong> {appointment.title}</p>
-        <p><strong>Start:</strong> {new Date(appointment.start).toLocaleString()}</p>
-        <p><strong>End:</strong> {new Date(appointment.end).toLocaleString()}</p>
+        <p><strong>Start:</strong> {new Date(appointment.start_time).toLocaleString()}</p>
+        <p><strong>End:</strong> {new Date(appointment.end_time).toLocaleString()}</p>
         <p><strong>Status:</strong> {appointment.booked ? "Booked" : "Available"}</p>
         { !appointment.booked && (
           <>
@@ -44,7 +43,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({ appointment, onClos
               Title:
               <input type="text" defaultValue={appointment.title} />
             </label>
-            {/* Add additional form fields as needed */}
             <button className={styles.saveButton}>Save</button>
           </>
         )}

@@ -20,14 +20,18 @@ export interface Address {
   postcode: string;
   country: string;
 }
-
 export interface Appointment {
-  id: number;
+  appointment_id: string;
+  practice_id: string;
+  user_id: string;
   title: string;
-  start: string;
-  end: string;
+  start_time: string;
+  end_time: string;
   booked: boolean;
+  created_at: string;
+  updated_at: string;
 }
+
 
 export interface OpeningHoursItem {
   open: string;    // e.g., "closed" or "08:15"

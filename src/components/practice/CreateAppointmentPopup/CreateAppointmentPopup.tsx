@@ -1,9 +1,9 @@
+// components/practice/CreateAppointmentPopup/CreateAppointmentPopup.tsx
 import React, { useState } from 'react';
 import styles from './CreateAppointmentPopup.module.css';
-import { Appointment, OpeningHoursItem } from '@/types/practice';
-import { createAppointment } from '@/lib/services/appointmentService';
+import { OpeningHoursItem, Appointment } from '@/types/practice';
 
-interface AppointmentCreatePopupProps {
+interface CreateAppointmentPopupProps {
   practiceId: string;
   openingHours: OpeningHoursItem[];
   defaultStart: Date;
@@ -12,7 +12,7 @@ interface AppointmentCreatePopupProps {
   onCreated: (appointment: Appointment) => void;
 }
 
-const AppointmentCreatePopup: React.FC<AppointmentCreatePopupProps> = ({
+const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   practiceId,
   openingHours,
   defaultStart,
@@ -21,7 +21,7 @@ const AppointmentCreatePopup: React.FC<AppointmentCreatePopupProps> = ({
   onCreated,
 }) => {
   const [title, setTitle] = useState('');
-  // Format dates to local datetime string format ("YYYY-MM-DDTHH:MM")
+  // Format dates to "YYYY-MM-DDTHH:MM"
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ const AppointmentCreatePopup: React.FC<AppointmentCreatePopupProps> = ({
       setError(`The practice is closed on ${dayName}`);
       return;
     }
-    // Create Date objects for the opening and closing times on the same day.
+    // Build Date objects for the opening and closing times on the same day.
     const [openHour, openMinute] = dayOpening.open.split(':').map(Number);
     const [closeHour, closeMinute] = dayOpening.close.split(':').map(Number);
     const openDate = new Date(startDate);
@@ -49,13 +49,23 @@ const AppointmentCreatePopup: React.FC<AppointmentCreatePopupProps> = ({
       return;
     }
     try {
-      const newAppointment = await createAppointment({
-        practice_id: practiceId,
-        title,
-        start_time: start,
-        end_time: end,
+      const response = await fetch('/api/appointment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          practice_id: practiceId,
+          title,
+          start_time: start,
+          end_time: end
+        })
       });
-      onCreated(newAppointment);
+      const result = await response.json();
+      if (!response.ok || result.error) {
+        throw new Error(result.error || "Error creating appointment");
+      }
+      onCreated(result.appointment);
       onClose();
     } catch (err: any) {
       setError(err.message || "Error creating appointment");
@@ -92,4 +102,4 @@ const AppointmentCreatePopup: React.FC<AppointmentCreatePopupProps> = ({
   );
 };
 
-export default AppointmentCreatePopup;
+export default CreateAppointmentPopup;

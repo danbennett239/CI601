@@ -11,12 +11,11 @@ export async function getAppointments(filters: {
   booked?: string;
 }) {
   const query = `
-    query GetAppointments($practiceId: uuid, $start_time: timestamptz, $end_time: timestamptz, $booked: Boolean) {
+    query GetAppointments($practiceId: uuid, $start_time: timestamp, $end_time: timestamp) {
       appointments(where: {
          practice_id: { _eq: $practiceId },
          start_time: { _gte: $start_time },
          end_time: { _lte: $end_time },
-         booked: { _eq: $booked }
       }) {
          appointment_id
          practice_id

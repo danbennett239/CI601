@@ -1,4 +1,4 @@
-// components/AppointmentCalendar.tsx
+// components/practice/AppointmentCalendar/AppointmentCalendar.tsx
 import React from "react";
 import styles from "./AppointmentCalendar.module.css";
 import { Appointment, OpeningHoursItem, ViewType } from "../../../types/practice";
@@ -22,7 +22,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
   onAppointmentClick,
   onSlotClick,
 }) => {
-  // Determine which days to display based on the selected view.
+  // Determine the days to display based on view
   let days: Date[] = [];
   if (view === "day") {
     days = [new Date(currentDate)];
@@ -56,7 +56,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     }
   }
 
-  // Render time‑grid views (day, calendarWeek, workWeek).
+  // Render time‑grid views (day, calendarWeek, workWeek)
   if (view === "day" || view === "calendarWeek" || view === "workWeek") {
     return (
       <div className={styles.calendarContainer}>
@@ -100,7 +100,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
               }
             }
             const dayAppointments = appointments.filter(appt => {
-              const apptDate = new Date(appt.start);
+              const apptDate = new Date(appt.start_time);
               return apptDate.toDateString() === day.toDateString();
             });
             const positionedAppointments = computePositionedAppointments(dayAppointments);
@@ -145,7 +145,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                   })}
                   {positionedAppointments.map((appt) => (
                     <div
-                      key={appt.id}
+                      key={appt.appointment_id}
                       className={styles.appointmentBlock}
                       style={{
                         top: `${appt.top}%`,
@@ -153,8 +153,8 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
                         left: `${appt.left}%`,
                         width: `${appt.width}%`,
                         backgroundColor: appt.booked
-                          ? "rgba(244,67,54,0.8)"  // e.g. red-ish for booked
-                          : "rgba(76,175,80,0.8)", // e.g. green-ish for available
+                          ? "rgba(244,67,54,0.8)"
+                          : "rgba(76,175,80,0.8)",
                       }}
                       onClick={() => {
                         if (onAppointmentClick) onAppointmentClick(appt);
@@ -171,7 +171,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
       </div>
     );
   }
-  // Render a simple month grid if view === "month"
+  // Render a simple month grid for month view
   else if (view === "month") {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
