@@ -7,10 +7,14 @@ import {
 
 export async function GET(
   request: NextRequest,
-  context: { params: { appointmentId: string } }
+  context: { params: Promise<{ appointmentId: string }> }
 ) {
   try {
-    const { appointmentId } = context.params;
+    const { appointmentId } = await context.params; // Await params
+    if (!appointmentId) {
+      return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
+    }
+
     const appointment = await getAppointmentById(appointmentId);
     return NextResponse.json({ appointment });
   } catch (error: unknown) {
@@ -22,10 +26,14 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  context: { params: { appointmentId: string } }
+  context: { params: Promise<{ appointmentId: string }> }
 ) {
   try {
-    const { appointmentId } = context.params;
+    const { appointmentId } = await context.params;
+    if (!appointmentId) {
+      return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
+    }
+
     const body = await request.json();
     if (!body) {
       return NextResponse.json({ error: 'Request body is missing' }, { status: 400 });
@@ -42,10 +50,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  context: { params: { appointmentId: string } }
+  context: { params: Promise<{ appointmentId: string }> }
 ) {
   try {
-    const { appointmentId } = context.params;
+    const { appointmentId } = await context.params;
+    if (!appointmentId) {
+      return NextResponse.json({ error: 'Missing appointmentId' }, { status: 400 });
+    }
+
     await deleteAppointment(appointmentId);
     return NextResponse.json({ success: true });
   } catch (error: unknown) {

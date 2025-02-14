@@ -1,20 +1,22 @@
-// app/api/practices/[practiceId]/route.ts
 import { NextResponse } from 'next/server';
 import { fetchPracticeById } from '@/lib/services/practiceService';
 
 export async function GET(
   request: Request,
-  { params }: { params: { practiceId: string } }
+  context: { params: Promise<{ practiceId: string }> }
 ) {
-  if (!params.practiceId) {
-    return NextResponse.json({ error: 'Practice ID is required' }, { status: 400 });
-  }
-
   try {
-    const practice = await fetchPracticeById(params.practiceId);
+    const { practiceId } = await context.params;
+
+    if (!practiceId) {
+      return NextResponse.json({ error: 'Practice ID is required' }, { status: 400 });
+    }
+
+    const practice = await fetchPracticeById(practiceId);
     if (!practice) {
       return NextResponse.json({ error: 'Practice not found' }, { status: 404 });
     }
+
     return NextResponse.json({ practice });
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Failed to fetch practice.';
