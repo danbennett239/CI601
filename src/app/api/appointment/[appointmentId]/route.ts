@@ -7,8 +7,9 @@ export async function GET(request: Request, { params }: { params: { id: string }
   try {
     const appointment = await getAppointmentById(params.id);
     return NextResponse.json({ appointment });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch appointment.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -17,8 +18,9 @@ export async function PUT(request: Request, { params }: { params: { id: string }
     const body = await request.json();
     const appointment = await updateAppointment(params.id, body);
     return NextResponse.json({ appointment });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to update appointment.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -26,7 +28,8 @@ export async function DELETE(request: Request, { params }: { params: { id: strin
   try {
     await deleteAppointment(params.id);
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to delete appointment.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -55,9 +55,10 @@ export async function getAppointments(filters: {
       throw new Error(result.errors?.[0]?.message || "Error fetching appointments");
     }
     return result.data.appointments;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in getAppointments:", error);
-    throw new Error(error.message || "Error fetching appointments");
+    const message = error instanceof Error ? error.message : "Error fetching appointments";
+    throw new Error(message);
   }
 }
 
@@ -91,9 +92,10 @@ export async function getAppointmentById(appointmentId: string) {
       throw new Error(result.errors?.[0]?.message || "Error fetching appointment");
     }
     return result.data.appointments_by_pk;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in getAppointmentById:", error);
-    throw new Error(error.message || "Error fetching appointment");
+    const message = error instanceof Error ? error.message : "Error fetching appointment";
+    throw new Error(message);
   }
 }
 
@@ -129,9 +131,10 @@ export async function createAppointment(appointment: {
       throw new Error(result.errors?.[0]?.message || "Error creating appointment");
     }
     return result.data.insert_appointments_one;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in createAppointment:", error);
-    throw new Error(error.message || "Error creating appointment");
+    const message = error instanceof Error ? error.message : "Error creating appointment";
+    throw new Error(message);
   }
 }
 
@@ -165,9 +168,10 @@ export async function updateAppointment(appointmentId: string, appointment: Part
       throw new Error(result.errors?.[0]?.message || "Error updating appointment");
     }
     return result.data.update_appointments_by_pk;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in updateAppointment:", error);
-    throw new Error(error.message || "Error updating appointment");
+    const message = error instanceof Error ? error.message : "Error updating appointment";
+    throw new Error(message);
   }
 }
 
@@ -193,8 +197,9 @@ export async function deleteAppointment(appointmentId: string) {
       throw new Error(result.errors?.[0]?.message || "Error deleting appointment");
     }
     return result.data.delete_appointments_by_pk;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in deleteAppointment:", error);
-    throw new Error(error.message || "Error deleting appointment");
+    const message = error instanceof Error ? error.message : "Error deleting appointment";
+    throw new Error(message);
   }
 }

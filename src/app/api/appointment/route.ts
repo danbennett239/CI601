@@ -11,8 +11,9 @@ export async function GET(request: Request) {
   try {
     const appointments = await getAppointments({ practiceId, start_time, end_time, booked });
     return NextResponse.json({ appointments });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch appointments.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
     const body = await request.json();
     const appointment = await createAppointment(body);
     return NextResponse.json({ appointment });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to create appointment.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

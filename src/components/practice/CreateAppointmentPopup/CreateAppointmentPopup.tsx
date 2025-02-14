@@ -67,8 +67,9 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
       }
       onCreated(result.appointment);
       onClose();
-    } catch (err: any) {
-      setError(err.message || "Error creating appointment");
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Error creating appointment";
+      setError(message);
     }
   };
 
@@ -85,15 +86,15 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
         <form onSubmit={handleSubmit} className={styles.form}>
           <label>
             Title:
-            <input type="text" value={title} onChange={(e)=>setTitle(e.target.value)} required />
+            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
           </label>
           <label>
             Start:
-            <input type="datetime-local" value={start} onChange={(e)=>setStart(e.target.value)} required />
+            <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
           </label>
           <label>
             End:
-            <input type="datetime-local" value={end} onChange={(e)=>setEnd(e.target.value)} required />
+            <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required />
           </label>
           <button type="submit" className={styles.saveButton}>Create</button>
         </form>

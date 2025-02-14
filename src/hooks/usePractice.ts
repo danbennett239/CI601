@@ -30,8 +30,9 @@ export function usePractice(practiceId?: string): UsePracticeReturn {
         }
         const data = await res.json();
         setPractice(data.practice);
-      } catch (err: any) {
-        setError(err.message);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to fetch practice";
+        setError(message);
         setPractice(null);
       } finally {
         setLoading(false);

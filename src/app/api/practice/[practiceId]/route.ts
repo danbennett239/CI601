@@ -16,7 +16,8 @@ export async function GET(
       return NextResponse.json({ error: 'Practice not found' }, { status: 404 });
     }
     return NextResponse.json({ practice });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Failed to fetch practice.';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

@@ -49,7 +49,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     start.setDate(firstDayOfMonth.getDate() - firstDayOfMonth.getDay());
     const end = new Date(lastDayOfMonth);
     end.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
-    let d = new Date(start);
+    const d = new Date(start);
     while (d <= end) {
       days.push(new Date(d));
       d.setDate(d.getDate() + 1);
@@ -183,7 +183,7 @@ const AppointmentCalendar: React.FC<AppointmentCalendarProps> = ({
     end.setDate(lastDayOfMonth.getDate() + (6 - lastDayOfMonth.getDay()));
     const weeks: Date[][] = [];
     let week: Date[] = [];
-    let d = new Date(start);
+    const d = new Date(start);
     while (d <= end) {
       week.push(new Date(d));
       if (d.getDay() === 6) {

@@ -1,4 +1,5 @@
 // lib/utils/calendar.ts
+// import { CALENDAR_START_HOUR, SLOT_DURATION, TOTAL_MINUTES } from "../../constants/calendarConstants";
 import { CALENDAR_START_HOUR, SLOT_DURATION, TOTAL_MINUTES } from "../../constants/calendarConstants";
 import { Appointment } from "../../types/practice";
 
