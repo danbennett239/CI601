@@ -12,7 +12,7 @@ import AppointmentPopup from "@/components/practice/AppointmentPopup/Appointment
 import CreateAppointmentPopup from "@/components/practice/CreateAppointmentPopup/CreateAppointmentPopup";
 import { Appointment, OpeningHoursItem } from "@/types/practice";
 import { ViewType } from "@/types/practice";
-import { getMonday } from "@/lib/utils/calendar"; // utility used in computing week ranges
+import { getMonday } from "@/lib/utils/calendar";
 import styles from "./AppointmentsPage.module.css";
 
 type TimeRange = { start_time: string; end_time: string };
@@ -40,8 +40,33 @@ function computeTimeRange(date: Date, view: ViewType): TimeRange {
     start = date;
     end = date;
   }
-  // Remove the trailing "Z" so that our backend accepts the format (if needed)
   return { start_time: start.toISOString().split("Z")[0], end_time: end.toISOString().split("Z")[0] };
+}
+
+// --- Controller-level update and delete functions ---
+
+async function updateAppointmentAPI(appointmentId: string, updateData: Partial<Appointment>) {
+  const response = await fetch(`/api/appointment/${appointmentId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(updateData),
+  });
+  const result = await response.json();
+  if (!response.ok || result.error) {
+    throw new Error(result.error || "Error updating appointment");
+  }
+  return result.appointment;
+}
+
+async function deleteAppointmentAPI(appointmentId: string) {
+  const response = await fetch(`/api/appointment/${appointmentId}`, {
+    method: "DELETE",
+  });
+  const result = await response.json();
+  if (!response.ok || result.error) {
+    throw new Error(result.error || "Error deleting appointment");
+  }
+  return true;
 }
 
 const AppointmentsPage: React.FC = () => {
@@ -62,11 +87,8 @@ const AppointmentsPage: React.FC = () => {
     start: new Date(),
     end: new Date(new Date().getTime() + 30 * 60000),
   });
-
-  // New state for the booked filter dropdown.
   const [bookedFilter, setBookedFilter] = useState<string>("all");
 
-  // Use practice opening_hours if available; otherwise fall back to defaults.
   const openingHours: OpeningHoursItem[] = practice?.opening_hours || [
     { open: "08:00", close: "16:00", dayName: "Monday" },
     { open: "08:00", close: "16:00", dayName: "Tuesday" },
@@ -80,7 +102,6 @@ const AppointmentsPage: React.FC = () => {
   useEffect(() => {
     if (!practice?.practice_id) return;
     const { start_time, end_time } = computeTimeRange(currentDate, view);
-    // Build the URL and include the booked parameter if not "all"
     let url = `/api/appointment?practiceId=${practice.practice_id}&start_time=${encodeURIComponent(
       start_time
     )}&end_time=${encodeURIComponent(end_time)}`;
@@ -94,13 +115,10 @@ const AppointmentsPage: React.FC = () => {
         if (data.error) {
           console.error("Error fetching appointments:", data.error);
         } else {
-          console.log("Appointment data", data);
           setAppointments(data.appointments);
         }
       })
-      .catch((err) => {
-        console.error("Error fetching appointments:", err);
-      });
+      .catch((err) => console.error("Error fetching appointments:", err));
   }, [view, currentDate, practice?.practice_id, bookedFilter]);
 
   useEffect(() => {
@@ -139,7 +157,6 @@ const AppointmentsPage: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  // When clicking an empty slot in the calendar, check if the time is within opening hours.
   const handleSlotClick = (start: Date, end: Date) => {
     const dayName = start.toLocaleDateString("en-US", { weekday: "long" });
     const dayOpening = openingHours.find((oh) => oh.dayName === dayName);
@@ -161,12 +178,39 @@ const AppointmentsPage: React.FC = () => {
     setShowCreatePopup(true);
   };
 
-  const handleAppointmentClick = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
+  const handleAppointmentClick = (appt: Appointment) => {
+    setSelectedAppointment(appt);
+  };
+
+  // --- Controller update & delete functions ---
+  const handleUpdate = async (updateData: Partial<Appointment>) => {
+    if (!selectedAppointment) return;
+    try {
+      const updated = await updateAppointmentAPI(selectedAppointment.appointment_id, updateData);
+      setAppointments((prev) =>
+        prev.map((appt) =>
+          appt.appointment_id === updated.appointment_id ? updated : appt
+        )
+      );
+      setSelectedAppointment(updated);
+      toast.success("Appointment updated successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Error updating appointment");
+    }
+  };
+
+  const handleDelete = async (appointmentId: string) => {
+    try {
+      await deleteAppointmentAPI(appointmentId);
+      setAppointments((prev) => prev.filter((appt) => appt.appointment_id !== appointmentId));
+      setSelectedAppointment(null);
+      toast.success("Appointment deleted successfully");
+    } catch (err: any) {
+      toast.error(err.message || "Error deleting appointment");
+    }
   };
 
   const handleAppointmentCreated = (newAppointment: Appointment) => {
-    // Optionally, you might refetch appointments instead.
     setAppointments((prev) => [...prev, newAppointment]);
   };
 
@@ -230,16 +274,8 @@ const AppointmentsPage: React.FC = () => {
           appointment={selectedAppointment}
           openingHours={openingHours}
           onClose={() => setSelectedAppointment(null)}
-          onUpdated={(updated) => {
-            setAppointments((prev) =>
-              prev.map((appt) => (appt.appointment_id === updated.appointment_id ? updated : appt))
-            );
-            setSelectedAppointment(updated);
-          }}
-          onDeleted={() => {
-            setAppointments((prev) => prev.filter((appt) => appt.appointment_id !== selectedAppointment.appointment_id));
-            setSelectedAppointment(null);
-          }}
+          onUpdate={handleUpdate}
+          onDelete={handleDelete}
         />
       )}
       {showCreatePopup && (

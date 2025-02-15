@@ -31,11 +31,17 @@ export async function getAppointments(filters: {
     }
   `;
 
-  const variables: Record<string, any> = {
+  const variables: {
+    practiceId?: string;
+    start_time?: string;
+    end_time?: string;
+    booked?: boolean;
+  } = {
     practiceId: filters.practiceId,
     start_time: filters.start_time,
     end_time: filters.end_time,
   };
+  
 
   // Only add `booked` if it's explicitly true or false
   if (filters.booked !== undefined) {
