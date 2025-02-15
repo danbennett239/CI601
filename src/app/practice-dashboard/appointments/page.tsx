@@ -228,7 +228,18 @@ const AppointmentsPage: React.FC = () => {
       {selectedAppointment && (
         <AppointmentPopup
           appointment={selectedAppointment}
+          openingHours={openingHours}
           onClose={() => setSelectedAppointment(null)}
+          onUpdated={(updated) => {
+            setAppointments((prev) =>
+              prev.map((appt) => (appt.appointment_id === updated.appointment_id ? updated : appt))
+            );
+            setSelectedAppointment(updated);
+          }}
+          onDeleted={() => {
+            setAppointments((prev) => prev.filter((appt) => appt.appointment_id !== selectedAppointment.appointment_id));
+            setSelectedAppointment(null);
+          }}
         />
       )}
       {showCreatePopup && (
