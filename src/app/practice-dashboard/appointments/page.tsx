@@ -194,8 +194,10 @@ const AppointmentsPage: React.FC = () => {
       );
       setSelectedAppointment(updated);
       toast.success("Appointment updated successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Error updating appointment");
+    } catch (error: unknown) {
+      console.error("Error updating appointment:", error);
+      const message = error instanceof Error ? error.message : "Error updating appointment";
+      toast.error(message);
     }
   };
 
@@ -205,8 +207,10 @@ const AppointmentsPage: React.FC = () => {
       setAppointments((prev) => prev.filter((appt) => appt.appointment_id !== appointmentId));
       setSelectedAppointment(null);
       toast.success("Appointment deleted successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Error deleting appointment");
+    } catch (error: unknown) {
+      console.error("Error deleting appointment:", error);
+      const message = error instanceof Error ? error.message : "Error deleting appointment";
+      toast.error(message);
     }
   };
 

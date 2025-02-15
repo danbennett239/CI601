@@ -30,7 +30,7 @@ const ConfirmDeletePopup: React.FC<ConfirmDeletePopupProps> = ({
         <p>Are you sure you want to delete this appointment?</p>
         <label className={styles.checkboxLabel}>
           <input type="checkbox" checked={dontShow} onChange={handleCheckboxChange} />
-          Don't show this again
+          Don&apos;t show this again
         </label>
         <div className={styles.buttonRow}>
           <button className={styles.confirmButton} onClick={handleConfirm}>Yes</button>

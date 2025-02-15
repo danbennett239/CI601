@@ -33,7 +33,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const [formStart, setFormStart] = useState(appointment.start_time.slice(0, 16));
   const [formEnd, setFormEnd] = useState(appointment.end_time.slice(0, 16));
   const [error, setError] = useState<string>('');
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<Record<string, string> | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Calculate original duration in ms.
@@ -107,8 +107,10 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
         end_time: formEnd,
       });
       setEditMode(false);
-    } catch (err: any) {
-      setError(err.message || 'Error updating appointment');
+    } catch (error: unknown) {
+      console.error('Error updating appointment:', error);
+      const message = error instanceof Error ? error.message : 'Error updating appointment';
+      setError(message);
     }
   };
 
@@ -116,8 +118,10 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     setError('');
     try {
       await onUpdate({ booked: true });
-    } catch (err: any) {
-      setError(err.message || 'Error marking appointment as booked');
+    } catch (error: unknown) {
+      console.error('Error marking appointment as booked:', error);
+      const message = error instanceof Error ? error.message : 'Error marking appointment as booked';
+      setError(message);
     }
   };
 
@@ -128,9 +132,12 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const handleConfirmDelete = async () => {
     try {
       await onDelete(appointment.appointment_id);
-    } catch (err: any) {
-      setError(err.message || 'Error deleting appointment');
+    } catch (error: unknown) {
+      console.error('Error deleting appointment:', error);
+      const message = error instanceof Error ? error.message : 'Error deleting appointment';
+      setError(message);
     }
+    
   };
 
   // Auto-adjust end time when start changes.
