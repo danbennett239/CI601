@@ -3,6 +3,8 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { toast, ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import { useUser } from "@/hooks/useUser";
 import { usePractice } from "@/hooks/usePractice";
 import AppointmentCalendar from "@/components/practice/AppointmentCalendar/AppointmentCalendar";
@@ -38,6 +40,7 @@ function computeTimeRange(date: Date, view: ViewType): TimeRange {
     start = date;
     end = date;
   }
+  // Remove the trailing "Z" so that our backend accepts the format (if needed)
   return { start_time: start.toISOString().split("Z")[0], end_time: end.toISOString().split("Z")[0] };
 }
 
@@ -60,6 +63,9 @@ const AppointmentsPage: React.FC = () => {
     end: new Date(new Date().getTime() + 30 * 60000),
   });
 
+  // New state for the booked filter dropdown.
+  const [bookedFilter, setBookedFilter] = useState<string>("all");
+
   // Use practice opening_hours if available; otherwise fall back to defaults.
   const openingHours: OpeningHoursItem[] = practice?.opening_hours || [
     { open: "08:00", close: "16:00", dayName: "Monday" },
@@ -74,24 +80,28 @@ const AppointmentsPage: React.FC = () => {
   useEffect(() => {
     if (!practice?.practice_id) return;
     const { start_time, end_time } = computeTimeRange(currentDate, view);
-    fetch(
-      `/api/appointment?practiceId=${practice.practice_id}&start_time=${encodeURIComponent(
-        start_time
-      )}&end_time=${encodeURIComponent(end_time)}`
-    )
+    // Build the URL and include the booked parameter if not "all"
+    let url = `/api/appointment?practiceId=${practice.practice_id}&start_time=${encodeURIComponent(
+      start_time
+    )}&end_time=${encodeURIComponent(end_time)}`;
+    if (bookedFilter !== "all") {
+      const bookedParam = bookedFilter === "booked" ? "true" : "false";
+      url += `&booked=${bookedParam}`;
+    }
+    fetch(url)
       .then((res) => res.json())
       .then((data) => {
         if (data.error) {
           console.error("Error fetching appointments:", data.error);
         } else {
-          console.log('Appointment data', data);
+          console.log("Appointment data", data);
           setAppointments(data.appointments);
         }
       })
       .catch((err) => {
         console.error("Error fetching appointments:", err);
       });
-  }, [view, currentDate, practice?.practice_id]);
+  }, [view, currentDate, practice?.practice_id, bookedFilter]);
 
   useEffect(() => {
     localStorage.setItem("appointmentView", view);
@@ -99,6 +109,10 @@ const AppointmentsPage: React.FC = () => {
 
   const handleViewChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setView(e.target.value as ViewType);
+  };
+
+  const handleBookedFilterChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setBookedFilter(e.target.value);
   };
 
   const goToPrevious = () => {
@@ -125,17 +139,34 @@ const AppointmentsPage: React.FC = () => {
     setCurrentDate(newDate);
   };
 
-  const handleAppointmentClick = (appointment: Appointment) => {
-    setSelectedAppointment(appointment);
-  };
-
+  // When clicking an empty slot in the calendar, check if the time is within opening hours.
   const handleSlotClick = (start: Date, end: Date) => {
+    const dayName = start.toLocaleDateString("en-US", { weekday: "long" });
+    const dayOpening = openingHours.find((oh) => oh.dayName === dayName);
+    if (!dayOpening || dayOpening.open.toLowerCase() === "closed" || dayOpening.close.toLowerCase() === "closed") {
+      toast.error(`Appointments cannot be created on ${dayName} as the practice is closed.`);
+      return;
+    }
+    const [openHour, openMinute] = dayOpening.open.split(":").map(Number);
+    const [closeHour, closeMinute] = dayOpening.close.split(":").map(Number);
+    const openDate = new Date(start);
+    openDate.setHours(openHour, openMinute, 0, 0);
+    const closeDate = new Date(start);
+    closeDate.setHours(closeHour, closeMinute, 0, 0);
+    if (start < openDate || end > closeDate) {
+      toast.error(`Appointments must be within opening hours: ${dayOpening.open} - ${dayOpening.close}`);
+      return;
+    }
     setCreateDefaults({ start, end });
     setShowCreatePopup(true);
   };
 
+  const handleAppointmentClick = (appointment: Appointment) => {
+    setSelectedAppointment(appointment);
+  };
+
   const handleAppointmentCreated = (newAppointment: Appointment) => {
-    // Optionally, you might choose to refetch appointments here.
+    // Optionally, you might refetch appointments instead.
     setAppointments((prev) => [...prev, newAppointment]);
   };
 
@@ -146,31 +177,45 @@ const AppointmentsPage: React.FC = () => {
 
   return (
     <div className={styles.appointmentsPage}>
+      <ToastContainer />
       <Link href="/practice-dashboard" className={styles.backButton}>
         Back to Practice Dashboard
       </Link>
       <h1>Manage Appointments</h1>
       <div className={styles.controls}>
-        <select value={view} onChange={handleViewChange}>
-          <option value="day">Day</option>
-          <option value="calendarWeek">Calendar Week (Mon–Sun)</option>
-          <option value="workWeek">Work Week (Mon–Fri)</option>
-          <option value="month">Month</option>
-        </select>
-        <button onClick={goToPrevious}>Previous</button>
-        <button onClick={goToNext}>Next</button>
-        <button
-          onClick={() => {
-            setCreateDefaults({
-              start: new Date(),
-              end: new Date(new Date().getTime() + 30 * 60000),
-            });
-            setShowCreatePopup(true);
-          }}
-          className={styles.createButton}
-        >
-          Create Appointment
-        </button>
+        <div className={styles.leftControls}>
+          <select value={view} onChange={handleViewChange} className={styles.dropdown}>
+            <option value="day">Day</option>
+            <option value="calendarWeek">Calendar Week (Mon–Sun)</option>
+            <option value="workWeek">Work Week (Mon–Fri)</option>
+            <option value="month">Month</option>
+          </select>
+          <select value={bookedFilter} onChange={handleBookedFilterChange} className={styles.dropdown}>
+            <option value="all">All Appointments</option>
+            <option value="booked">Booked Appointments</option>
+            <option value="unbooked">Unbooked Appointments</option>
+          </select>
+          <button onClick={goToPrevious} className={styles.navButton}>
+            Previous
+          </button>
+          <button onClick={goToNext} className={styles.navButton}>
+            Next
+          </button>
+        </div>
+        <div className={styles.rightControls}>
+          <button
+            onClick={() => {
+              setCreateDefaults({
+                start: new Date(),
+                end: new Date(new Date().getTime() + 30 * 60000),
+              });
+              setShowCreatePopup(true);
+            }}
+            className={styles.createButton}
+          >
+            Create Appointment
+          </button>
+        </div>
       </div>
       <AppointmentCalendar
         view={view}

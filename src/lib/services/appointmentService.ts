@@ -11,11 +11,12 @@ export async function getAppointments(filters: {
   booked?: string;
 }) {
   const query = `
-    query GetAppointments($practiceId: uuid, $start_time: timestamp, $end_time: timestamp) {
+    query GetAppointments($practiceId: uuid, $start_time: timestamp, $end_time: timestamp, $booked: Boolean) {
       appointments(where: {
          practice_id: { _eq: $practiceId },
          start_time: { _gte: $start_time },
          end_time: { _lte: $end_time },
+         ${filters.booked !== undefined ? `booked: { _eq: $booked }` : ""}
       }) {
          appointment_id
          practice_id
@@ -29,17 +30,17 @@ export async function getAppointments(filters: {
       }
     }
   `;
-  const variables = {
+
+  const variables: Record<string, any> = {
     practiceId: filters.practiceId,
     start_time: filters.start_time,
     end_time: filters.end_time,
-    booked:
-      filters.booked === "true"
-        ? true
-        : filters.booked === "false"
-        ? false
-        : undefined,
   };
+
+  // Only add `booked` if it's explicitly true or false
+  if (filters.booked !== undefined) {
+    variables.booked = filters.booked === "true";
+  }
 
   try {
     const response = await fetch(HASURA_GRAPHQL_URL, {
@@ -61,6 +62,7 @@ export async function getAppointments(filters: {
     throw new Error(message);
   }
 }
+
 
 export async function getAppointmentById(appointmentId: string) {
   const query = `
