@@ -20,13 +20,23 @@ export default function PracticeDashboard() {
   return (
     <div className={styles.dashboard}>
       <h1>Practice Dashboard</h1>
-      <p>{practice?.practice_name}</p>
       <div className={styles.cardsContainer}>
         <PanelCard
           title="Manage Appointments"
           link="/practice-dashboard/appointments"
         />
-        {/* You can add more cards for Analytics, Settings, etc. */}
+        <PanelCard
+          title="Manage Practice Information and Preferences"
+          link="/practice-dashboard/settings"
+        />
+        <PanelCard
+          title="Analytics Dashboard"
+          link="/practice-dashboard/analytics"
+        />
+        <PanelCard
+          title="Add an Additional Practice User"
+          link="/practice-dashboard/additional-user"
+        />
       </div>
     </div>
   );

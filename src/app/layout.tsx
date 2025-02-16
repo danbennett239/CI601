@@ -31,7 +31,6 @@ export default async function RootLayout({
       <body>
         <DeviceProvider>
           <Banner />
-          {user ? (<p>Welcome</p>) : (<p>Sign in</p>)}
           {children}
           <ToastContainer />
         </DeviceProvider>
