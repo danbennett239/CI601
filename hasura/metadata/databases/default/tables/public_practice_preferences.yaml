@@ -1,0 +1,3 @@
+table:
+  name: practice_preferences
+  schema: public

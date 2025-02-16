@@ -1,3 +1,4 @@
 - "!include public_appointments.yaml"
+- "!include public_practice_preferences.yaml"
 - "!include public_practices.yaml"
 - "!include public_users.yaml"
