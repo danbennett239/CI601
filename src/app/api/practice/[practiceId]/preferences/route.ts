@@ -2,21 +2,20 @@
 import { NextResponse } from "next/server";
 import { updatePracticePreferences } from "@/lib/services/practiceService";
 
-interface Context {
-  params: { practiceId: string };
-}
-
-export async function PUT(request: Request, { params }: Context) {
-  const practiceId = params.practiceId;
-  if (!practiceId) {
-    return NextResponse.json({ error: "Missing practiceId" }, { status: 400 });
-  }
+export async function PUT(request: Request, context: { params: Promise<{ practiceId: string }> }) {
   try {
+    const { practiceId } = await context.params;
+
+    if (!practiceId) {
+      return NextResponse.json({ error: "Missing practiceId" }, { status: 400 });
+    }
+
     const body = await request.json();
     const { prefs } = body;
     if (prefs === undefined) {
       return NextResponse.json({ error: "Missing preferences" }, { status: 400 });
     }
+
     const updatedPrefs = await updatePracticePreferences(practiceId, prefs);
     return NextResponse.json({ preferences: updatedPrefs });
   } catch (error: unknown) {
@@ -24,3 +23,4 @@ export async function PUT(request: Request, { params }: Context) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
+
