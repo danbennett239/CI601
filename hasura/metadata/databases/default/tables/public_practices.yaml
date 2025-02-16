@@ -1,7 +1,24 @@
 table:
   name: practices
   schema: public
+object_relationships:
+  - name: practice_preferences
+    using:
+      manual_configuration:
+        column_mapping:
+          practice_id: practice_id
+        insertion_order: null
+        remote_table:
+          name: practice_preferences
+          schema: public
 array_relationships:
+  - name: appointments
+    using:
+      foreign_key_constraint_on:
+        column: practice_id
+        table:
+          name: appointments
+          schema: public
   - name: users
     using:
       foreign_key_constraint_on:

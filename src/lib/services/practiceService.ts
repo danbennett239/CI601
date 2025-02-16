@@ -1,5 +1,7 @@
 import { hashPassword } from "@/lib/utils/auth";
 
+import { Practice, PracticePreferences } from "@/types/practice";
+
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
 
@@ -305,4 +307,158 @@ export async function fetchPracticeById(practiceId: string) {
     console.error("Error fetching practice details:", error);
     throw new Error("Fetching practice details failed.");
   }
+}
+
+export async function fetchPracticeAndPreferencesById(practiceId: string) {
+  const query = `
+    query GetPracticeAndPreferences($practiceId: uuid!) {
+      practice: practices_by_pk(practice_id: $practiceId) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        verified
+        created_at
+        updated_at
+        verified_at
+        practice_preferences {
+          enable_notifications
+          enable_mobile_notifications
+          enable_email_notifications
+          notify_on_new_booking
+          hide_delete_confirmation
+          created_at
+          updated_at
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables: { practiceId } }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error fetching practice data");
+    }
+
+    return result.data.practice;
+  } catch (error: unknown) {
+    console.error("Error in fetchPracticeAndPreferencesById:", error);
+    return null;
+  }
+}
+
+export async function updatePracticeSettings(practiceId: string, settings: any) {
+  const mutation = `
+    mutation UpdatePracticeSettings($practiceId: uuid!, $settings: practices_set_input!) {
+      update_practices_by_pk(pk_columns: { practice_id: $practiceId }, _set: $settings) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+      }
+    }
+  `;
+  const response = await fetch(HASURA_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+    },
+    body: JSON.stringify({ query: mutation, variables: { practiceId, settings } }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.errors) {
+    throw new Error(result.errors?.[0]?.message || "Error updating practice settings");
+  }
+  return result.data.update_practices_by_pk;
+}
+
+export async function validateOpeningHours(practiceId: string, newOpeningHours: any) {
+  // For simplicity, call the appointments API with a wide date range and check each appointment.
+  // In production you might create a dedicated API endpoint.
+  const query = `
+    query GetAppointments($practiceId: uuid!) {
+      appointments(where: { practice_id: { _eq: $practiceId } }) {
+        appointment_id
+        start_time
+        end_time
+      }
+    }
+  `;
+  const response = await fetch(HASURA_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+    },
+    body: JSON.stringify({ query, variables: { practiceId } }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.errors) {
+    throw new Error(result.errors?.[0]?.message || "Error validating opening hours");
+  }
+  const appointments = result.data.appointments;
+  // For each appointment, check if its time falls within the new opening hours for that day.
+  for (const appt of appointments) {
+    const startDate = new Date(appt.start_time);
+    const dayName = startDate.toLocaleDateString("en-US", { weekday: "long" });
+    const dayOH = newOpeningHours.find((oh: any) => oh.dayName === dayName);
+    if (!dayOH || dayOH.open.toLowerCase() === "closed" || dayOH.close.toLowerCase() === "closed") {
+      throw new Error(`Appointment ${appt.appointment_id} falls on ${dayName} which is now closed`);
+    }
+    const [openHour, openMinute] = dayOH.open.split(":").map(Number);
+    const [closeHour, closeMinute] = dayOH.close.split(":").map(Number);
+    const openDate = new Date(startDate);
+    openDate.setHours(openHour, openMinute, 0, 0);
+    const closeDate = new Date(startDate);
+    closeDate.setHours(closeHour, closeMinute, 0, 0);
+    if (startDate < openDate || new Date(appt.end_time) > closeDate) {
+      throw new Error(`Appointment ${appt.appointment_id} falls outside new opening hours for ${dayName}`);
+    }
+  }
+  return true;
+}
+
+export async function updatePracticePreferences(practiceId: string, prefs: Partial<any>) {
+  const mutation = `
+    mutation UpdatePracticePreferences($practiceId: uuid!, $prefs: practice_preferences_set_input!) {
+      update_practice_preferences_by_pk(pk_columns: { practice_id: $practiceId }, _set: $prefs) {
+        practice_id
+        enable_notifications
+        enable_mobile_notifications
+        enable_email_notifications
+        notify_on_new_booking
+        hide_delete_confirmation
+      }
+    }
+  `;
+  const response = await fetch(HASURA_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+    },
+    body: JSON.stringify({ query: mutation, variables: { practiceId, prefs } }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.errors) {
+    throw new Error(result.errors?.[0]?.message || "Error updating practice preferences");
+  }
+  return result.data.update_practice_preferences_by_pk;
 }

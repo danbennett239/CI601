@@ -7,10 +7,23 @@ export interface Practice {
   address: Address
   opening_hours: Array<{ dayName: string; open: string; close: string }>;
   verified: boolean;
+  verified_at?: string;
+  practice_preferences: PracticePreferences;
   created_at?: string;
   updated_at?: string;
-  verified_at?: string;
 }
+
+export interface PracticePreferences {
+  practice_id: string;
+  enable_notifications: boolean;
+  enable_mobile_notifications: boolean;
+  enable_email_notifications: boolean;
+  notify_on_new_booking: boolean;
+  hide_delete_confirmation: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Address {
   line1: string;
   line2?: string;

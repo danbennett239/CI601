@@ -1,0 +1,18 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- -- 1) Drop constraints if they exist (so we can re-add cleanly)
+-- ALTER TABLE public.practice_preferences
+--   DROP CONSTRAINT IF EXISTS practice_preferences_pkey,
+--   DROP CONSTRAINT IF EXISTS practice_preferences_practice_id_fkey;
+--
+-- -- 2) Make practice_id the PRIMARY KEY in practice_preferences
+-- ALTER TABLE public.practice_preferences
+--   ADD CONSTRAINT practice_preferences_pkey PRIMARY KEY (practice_id);
+--
+-- -- 3) Add a FOREIGN KEY constraint that references the practices table
+-- ALTER TABLE public.practice_preferences
+--   ADD CONSTRAINT practice_preferences_practice_id_fkey
+--     FOREIGN KEY (practice_id)
+--     REFERENCES public.practices (practice_id)
+--     ON UPDATE CASCADE
+--     ON DELETE CASCADE;

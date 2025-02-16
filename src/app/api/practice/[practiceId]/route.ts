@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchPracticeById } from '@/lib/services/practiceService';
+import { fetchPracticeAndPreferencesById } from '@/lib/services/practiceService';
 
 export async function GET(
   request: Request,
@@ -12,7 +12,7 @@ export async function GET(
       return NextResponse.json({ error: 'Practice ID is required' }, { status: 400 });
     }
 
-    const practice = await fetchPracticeById(practiceId);
+    const practice = await fetchPracticeAndPreferencesById(practiceId);
     if (!practice) {
       return NextResponse.json({ error: 'Practice not found' }, { status: 404 });
     }
