@@ -1,22 +1,24 @@
-// app/practice-dashboard/appointments/page.tsx
 "use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+
 import { useUser } from "@/hooks/useUser";
 import { usePractice } from "@/hooks/usePractice";
 import AppointmentCalendar from "@/components/practice/AppointmentCalendar/AppointmentCalendar";
 import AppointmentPopup from "@/components/practice/AppointmentPopup/AppointmentPopup";
 import CreateAppointmentPopup from "@/components/practice/CreateAppointmentPopup/CreateAppointmentPopup";
-import { Appointment, OpeningHoursItem } from "@/types/practice";
+
+import { Appointment, OpeningHoursItem, PracticePreferences } from "@/types/practice";
 import { ViewType } from "@/types/practice";
 import { getMonday } from "@/lib/utils/calendar";
 import styles from "./AppointmentsPage.module.css";
 
 type TimeRange = { start_time: string; end_time: string };
 
+// -- Utility for date/time ranges --
 function computeTimeRange(date: Date, view: ViewType): TimeRange {
   let start: Date, end: Date;
   if (view === "day") {
@@ -29,21 +31,24 @@ function computeTimeRange(date: Date, view: ViewType): TimeRange {
     start = new Date(monday);
     start.setHours(0, 0, 0, 0);
     end = new Date(monday);
-    // workWeek: Monday to Friday, calendarWeek: Monday to Sunday
-    const addDays = view === "workWeek" ? 4 : 6;
+    const addDays = view === "workWeek" ? 4 : 6; // workWeek: Mon-Fri, otherwise Mon-Sun
     end.setDate(end.getDate() + addDays);
     end.setHours(23, 59, 59, 999);
   } else if (view === "month") {
     start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
     end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
   } else {
+    // fallback for any other view
     start = date;
     end = date;
   }
-  return { start_time: start.toISOString().split("Z")[0], end_time: end.toISOString().split("Z")[0] };
+  return {
+    start_time: start.toISOString().split("Z")[0],
+    end_time: end.toISOString().split("Z")[0],
+  };
 }
 
-// --- Controller-level update and delete functions ---
+// -- Controller-level update/delete preferences calls --
 
 async function updateAppointmentAPI(appointmentId: string, updateData: Partial<Appointment>) {
   const response = await fetch(`/api/appointment/${appointmentId}`, {
@@ -69,9 +74,27 @@ async function deleteAppointmentAPI(appointmentId: string) {
   return true;
 }
 
+/** Updates the practice preferences on the server. */
+async function updatePracticePreferences(
+  practiceId: string,
+  partialPrefs: Partial<PracticePreferences>
+) {
+  const response = await fetch(`/api/practice/${practiceId}/preferences`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ prefs: partialPrefs }),
+  });
+  const result = await response.json();
+  if (!response.ok || result.error) {
+    throw new Error(result.error || "Error updating practice preferences");
+  }
+  return result.preferences;
+}
+
 const AppointmentsPage: React.FC = () => {
   const { user, loading: userLoading } = useUser();
-  const { practice, loading: practiceLoading } = usePractice(user?.practice_id);
+  const { practice, loading: practiceLoading, error: practiceError, refreshPractice } =
+    usePractice(user?.practice_id);
 
   const initialView =
     typeof window !== "undefined" && localStorage.getItem("appointmentView")
@@ -89,6 +112,7 @@ const AppointmentsPage: React.FC = () => {
   });
   const [bookedFilter, setBookedFilter] = useState<string>("all");
 
+  // If practice is not yet loaded, fallback to default opening hours
   const openingHours: OpeningHoursItem[] = practice?.opening_hours || [
     { open: "08:00", close: "16:00", dayName: "Monday" },
     { open: "08:00", close: "16:00", dayName: "Tuesday" },
@@ -96,12 +120,13 @@ const AppointmentsPage: React.FC = () => {
     { open: "08:00", close: "16:00", dayName: "Thursday" },
     { open: "08:00", close: "16:00", dayName: "Friday" },
     { open: "closed", close: "closed", dayName: "Saturday" },
-    { open: "closed", close: "closed", dayName: "Sunday" }
+    { open: "closed", close: "closed", dayName: "Sunday" },
   ];
 
   useEffect(() => {
     if (!practice?.practice_id) return;
     const { start_time, end_time } = computeTimeRange(currentDate, view);
+
     let url = `/api/appointment?practiceId=${practice.practice_id}&start_time=${encodeURIComponent(
       start_time
     )}&end_time=${encodeURIComponent(end_time)}`;
@@ -109,6 +134,7 @@ const AppointmentsPage: React.FC = () => {
       const bookedParam = bookedFilter === "booked" ? "true" : "false";
       url += `&booked=${bookedParam}`;
     }
+
     fetch(url)
       .then((res) => res.json())
       .then((data) => {
@@ -158,9 +184,14 @@ const AppointmentsPage: React.FC = () => {
   };
 
   const handleSlotClick = (start: Date, end: Date) => {
+    // Check if practice is closed for that day
     const dayName = start.toLocaleDateString("en-US", { weekday: "long" });
     const dayOpening = openingHours.find((oh) => oh.dayName === dayName);
-    if (!dayOpening || dayOpening.open.toLowerCase() === "closed" || dayOpening.close.toLowerCase() === "closed") {
+    if (
+      !dayOpening ||
+      dayOpening.open.toLowerCase() === "closed" ||
+      dayOpening.close.toLowerCase() === "closed"
+    ) {
       toast.error(`Appointments cannot be created on ${dayName} as the practice is closed.`);
       return;
     }
@@ -182,15 +213,13 @@ const AppointmentsPage: React.FC = () => {
     setSelectedAppointment(appt);
   };
 
-  // --- Controller update & delete functions ---
+  // -- Controller update & delete for appointments --
   const handleUpdate = async (updateData: Partial<Appointment>) => {
     if (!selectedAppointment) return;
     try {
       const updated = await updateAppointmentAPI(selectedAppointment.appointment_id, updateData);
       setAppointments((prev) =>
-        prev.map((appt) =>
-          appt.appointment_id === updated.appointment_id ? updated : appt
-        )
+        prev.map((appt) => (appt.appointment_id === updated.appointment_id ? updated : appt))
       );
       setSelectedAppointment(updated);
       toast.success("Appointment updated successfully");
@@ -214,6 +243,26 @@ const AppointmentsPage: React.FC = () => {
     }
   };
 
+  /** Called when user checks "Don't show this again" and clicks Yes on ConfirmDeletePopup. */
+  const handleDontShowAgain = async (dontShow: boolean) => {
+    if (!practice?.practice_id) return;
+    try {
+      // We only care if they set 'dontShow' to true => hide_delete_confirmation: true
+      if (dontShow) {
+        await updatePracticePreferences(practice.practice_id, {
+          hide_delete_confirmation: true,
+        });
+        // Refresh the practice so that local state is up-to-date
+        await refreshPractice();
+        toast.success("Preference updated: Hide delete confirmation");
+      }
+    } catch (err: unknown) {
+      console.error("Error updating hide_delete_confirmation preference:", err);
+      const message = err instanceof Error ? err.message : "Error updating preference";
+      toast.error(message);
+    }
+  };
+
   const handleAppointmentCreated = (newAppointment: Appointment) => {
     setAppointments((prev) => [...prev, newAppointment]);
   };
@@ -222,14 +271,22 @@ const AppointmentsPage: React.FC = () => {
   if (!user || user.role !== "verified-practice") {
     return <div>Access Denied: You are not authorized to view this page.</div>;
   }
+  if (practiceError) {
+    return <div>Error: {practiceError}</div>;
+  }
+  if (!practice) {
+    return <div>No practice found</div>;
+  }
 
   return (
     <div className={styles.appointmentsPage}>
       <ToastContainer />
+
       <Link href="/practice-dashboard" className={styles.backButton}>
         Back to Practice Dashboard
       </Link>
       <h1>Manage Appointments</h1>
+
       <div className={styles.controls}>
         <div className={styles.leftControls}>
           <select value={view} onChange={handleViewChange} className={styles.dropdown}>
@@ -265,6 +322,7 @@ const AppointmentsPage: React.FC = () => {
           </button>
         </div>
       </div>
+
       <AppointmentCalendar
         view={view}
         currentDate={currentDate}
@@ -273,18 +331,22 @@ const AppointmentsPage: React.FC = () => {
         onAppointmentClick={handleAppointmentClick}
         onSlotClick={handleSlotClick}
       />
+
       {selectedAppointment && (
         <AppointmentPopup
           appointment={selectedAppointment}
           openingHours={openingHours}
+          hideDeleteConfirmation={practice.practice_preferences.hide_delete_confirmation}
           onClose={() => setSelectedAppointment(null)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
+          onDontShowAgain={handleDontShowAgain} 
         />
       )}
+
       {showCreatePopup && (
         <CreateAppointmentPopup
-          practiceId={practice?.practice_id || ""}
+          practiceId={practice.practice_id}
           openingHours={openingHours}
           defaultStart={createDefaults.start}
           defaultEnd={createDefaults.end}

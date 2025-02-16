@@ -1,4 +1,3 @@
-// components/practice/AppointmentPopup/ConfirmDeletePopup.tsx
 import React, { useState } from 'react';
 import styles from './ConfirmDeletePopup.module.css';
 
@@ -20,6 +19,7 @@ const ConfirmDeletePopup: React.FC<ConfirmDeletePopupProps> = ({
   };
 
   const handleConfirm = () => {
+    // Let the parent know if user wants "Don't show again"
     onDontShowAgain(dontShow);
     onConfirm();
   };
@@ -28,13 +28,19 @@ const ConfirmDeletePopup: React.FC<ConfirmDeletePopupProps> = ({
     <div className={styles.confirmOverlay}>
       <div className={styles.confirmContent}>
         <p>Are you sure you want to delete this appointment?</p>
+
         <label className={styles.checkboxLabel}>
           <input type="checkbox" checked={dontShow} onChange={handleCheckboxChange} />
           Don&apos;t show this again
         </label>
+
         <div className={styles.buttonRow}>
-          <button className={styles.confirmButton} onClick={handleConfirm}>Yes</button>
-          <button className={styles.cancelButton} onClick={onCancel}>No</button>
+          <button className={styles.confirmButton} onClick={handleConfirm}>
+            Yes
+          </button>
+          <button className={styles.cancelButton} onClick={onCancel}>
+            No
+          </button>
         </div>
       </div>
     </div>

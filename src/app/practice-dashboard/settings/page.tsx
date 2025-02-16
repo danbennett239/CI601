@@ -71,7 +71,10 @@ const PracticeSettings: React.FC = () => {
     return <div>Loading practice details...</div>;
   }
 
-  const handleFieldChange = (field: string, value: any) => {
+  const handleFieldChange = <T extends keyof typeof info>(
+    field: T,
+    value: typeof info[T]
+  ) => {
     setUnsavedChanges(true);
     setInfo((prev) => (prev ? { ...prev, [field]: value } : null));
   };
@@ -103,8 +106,9 @@ const PracticeSettings: React.FC = () => {
         toast.error(validateData.error || "Opening hours validation failed");
         return;
       }
-    } catch (err: any) {
-      toast.error(err.message || "Error validating opening hours");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error validating opening hours";
+      toast.error(message);
       return;
     }
 
@@ -142,8 +146,9 @@ const PracticeSettings: React.FC = () => {
       await refreshPractice();
       setUnsavedChanges(false);
       toast.success("Settings saved successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Error saving settings");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Error saving settings";
+      toast.error(message);
     }
   };
 

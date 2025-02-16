@@ -1,8 +1,7 @@
-// components/practice/AppointmentPopup/AppointmentPopup.tsx
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import styles from './AppointmentPopup.module.css';
-import { Appointment, OpeningHoursItem } from '../../../types/practice';
+import { Appointment, OpeningHoursItem } from '@/types/practice'; // Adjust import paths
 import ConfirmDeletePopup from '../ConfirmDeletePopup/ConfirmDeletePopup';
 
 const editSchema = z.object({
@@ -16,17 +15,21 @@ const editSchema = z.object({
 interface AppointmentPopupProps {
   appointment: Appointment;
   openingHours: OpeningHoursItem[];
+  hideDeleteConfirmation: boolean;  // <<--- New prop
   onClose: () => void;
   onUpdate: (updateData: Partial<Appointment>) => Promise<void>;
   onDelete: (appointmentId: string) => Promise<void>;
+  onDontShowAgain: (dontShow: boolean) => void;  // <<--- New prop
 }
 
 const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   appointment,
   openingHours,
+  hideDeleteConfirmation,
   onClose,
   onUpdate,
   onDelete,
+  onDontShowAgain,
 }) => {
   const [editMode, setEditMode] = useState(false);
   const [formTitle, setFormTitle] = useState(appointment.title);
@@ -34,12 +37,15 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const [formEnd, setFormEnd] = useState(appointment.end_time.slice(0, 16));
   const [error, setError] = useState<string>('');
   const [userInfo, setUserInfo] = useState<Record<string, string> | null>(null);
+
+  // For the "Delete" confirmation popup
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Calculate original duration in ms.
-  const originalDuration = new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime();
+  // Calculate original duration for start/end sync
+  const originalDuration =
+    new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime();
 
-  // Fetch user info if appointment is booked and user_id is non-null.
+  // If appointment is booked, fetch user info
   useEffect(() => {
     if (appointment.booked && appointment.user_id) {
       fetch(`/api/user/${appointment.user_id}`)
@@ -53,12 +59,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     }
   }, [appointment]);
 
-  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
-      onClose();
-    }
-  };
-
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -67,6 +67,13 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     return () => document.removeEventListener('keydown', handleEsc);
   }, [onClose]);
 
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
+      onClose();
+    }
+  };
+
+  // Validate within opening hours
   const validateWithinOpeningHours = (startISO: string, endISO: string): boolean => {
     const startDate = new Date(startISO);
     const dayName = startDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -88,6 +95,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     return true;
   };
 
+  // Handle edits
   const handleSave = async () => {
     setError('');
     const parseResult = editSchema.safeParse({
@@ -100,6 +108,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
       return;
     }
     if (!validateWithinOpeningHours(formStart, formEnd)) return;
+
     try {
       await onUpdate({
         title: formTitle,
@@ -108,7 +117,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
       });
       setEditMode(false);
     } catch (error: unknown) {
-      console.error('Error updating appointment:', error);
       const message = error instanceof Error ? error.message : 'Error updating appointment';
       setError(message);
     }
@@ -119,28 +127,33 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     try {
       await onUpdate({ booked: true });
     } catch (error: unknown) {
-      console.error('Error marking appointment as booked:', error);
       const message = error instanceof Error ? error.message : 'Error marking appointment as booked';
       setError(message);
     }
   };
 
-  const handleDelete = async () => {
-    setShowDeleteConfirm(true);
+  // Check preference before showing the ConfirmDeletePopup
+  const handleDeleteClick = () => {
+    if (hideDeleteConfirmation) {
+      // If user set "hide_delete_confirmation", then no popup; just delete
+      handleConfirmDelete();
+    } else {
+      setShowDeleteConfirm(true);
+    }
   };
 
+  // Called when user confirms "Yes" in the confirm dialog
   const handleConfirmDelete = async () => {
+    setShowDeleteConfirm(false);
     try {
       await onDelete(appointment.appointment_id);
     } catch (error: unknown) {
-      console.error('Error deleting appointment:', error);
       const message = error instanceof Error ? error.message : 'Error deleting appointment';
       setError(message);
     }
-    
   };
 
-  // Auto-adjust end time when start changes.
+  // Sync the end time with the adjusted start time
   const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStart = e.target.value;
     setFormStart(newStart);
@@ -153,6 +166,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     <div className={styles.popupOverlay} onClick={handleOverlayClick}>
       <div className={styles.popupContent}>
         <button className={styles.closeButton} onClick={onClose}>×</button>
+
         {!editMode ? (
           <>
             <h2>Appointment Details</h2>
@@ -171,21 +185,28 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
               </div>
               <div className={styles.detailRow}>
                 <label>Status:</label>
-                <span>{appointment.booked ? 'Booked' : 'Available'}</span>
+                <span>{appointment.booked ? "Booked" : "Available"}</span>
               </div>
             </div>
+
             <div className={styles.buttonRow}>
               {!appointment.booked && (
                 <>
-                  <button className={styles.editButton} onClick={() => setEditMode(true)}>Edit</button>
-                  <button className={styles.markBookedButton} onClick={handleMarkBooked}>Mark as Booked</button>
-                  <button className={styles.deleteButton} onClick={handleDelete}>Delete</button>
+                  <button className={styles.editButton} onClick={() => setEditMode(true)}>
+                    Edit
+                  </button>
+                  <button className={styles.markBookedButton} onClick={handleMarkBooked}>
+                    Mark as Booked
+                  </button>
+                  <button className={styles.deleteButton} onClick={handleDeleteClick}>
+                    Delete
+                  </button>
                 </>
               )}
             </div>
+
             {appointment.booked && (
               <div className={styles.userInfoContainer}>
-                {/* Divider */}
                 <div className={styles.divider} />
                 <h2 className={styles.userInfoTitle}>Patient Information</h2>
                 <div className={styles.detailsForm}>
@@ -221,7 +242,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
               </div>
             )}
 
-
             {error && <p className={styles.error}>{error}</p>}
           </>
         ) : (
@@ -229,26 +249,45 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             <h2>Edit Appointment</h2>
             <div className={styles.editForm}>
               <label>Title:</label>
-              <input type="text" value={formTitle} onChange={(e) => setFormTitle(e.target.value)} />
+              <input
+                type="text"
+                value={formTitle}
+                onChange={(e) => setFormTitle(e.target.value)}
+              />
+
               <label>Start:</label>
               <input type="datetime-local" value={formStart} onChange={handleStartChange} />
+
               <label>End:</label>
-              <input type="datetime-local" value={formEnd} onChange={(e) => setFormEnd(e.target.value)} />
+              <input
+                type="datetime-local"
+                value={formEnd}
+                onChange={(e) => setFormEnd(e.target.value)}
+              />
             </div>
+
             {error && <p className={styles.error}>{error}</p>}
+
             <div className={styles.buttonRow}>
-              <button className={styles.saveButton} onClick={handleSave}>Save</button>
-              <button className={styles.cancelButton} onClick={() => setEditMode(false)}>Cancel</button>
+              <button className={styles.saveButton} onClick={handleSave}>
+                Save
+              </button>
+              <button className={styles.cancelButton} onClick={() => setEditMode(false)}>
+                Cancel
+              </button>
             </div>
           </>
         )}
       </div>
+
       {showDeleteConfirm && (
         <ConfirmDeletePopup
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteConfirm(false)}
           onDontShowAgain={(dontShow) => {
-            localStorage.setItem('hideDeleteConfirmation', dontShow ? 'true' : 'false');
+            // If user checks "Don't show again" and confirms,
+            // we call the parent's callback to update preferences.
+            onDontShowAgain(dontShow);
           }}
         />
       )}

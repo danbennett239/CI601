@@ -1,6 +1,5 @@
 import { hashPassword } from "@/lib/utils/auth";
-
-import { Practice, PracticePreferences } from "@/types/practice";
+import { OpeningHoursItem, Practice, PracticePreferences } from "@/types/practice";
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
@@ -360,7 +359,7 @@ export async function fetchPracticeAndPreferencesById(practiceId: string) {
   }
 }
 
-export async function updatePracticeSettings(practiceId: string, settings: any) {
+export async function updatePracticeSettings(practiceId: string, settings: Partial<Practice>) {
   const mutation = `
     mutation UpdatePracticeSettings($practiceId: uuid!, $settings: practices_set_input!) {
       update_practices_by_pk(pk_columns: { practice_id: $practiceId }, _set: $settings) {
@@ -389,7 +388,7 @@ export async function updatePracticeSettings(practiceId: string, settings: any) 
   return result.data.update_practices_by_pk;
 }
 
-export async function validateOpeningHours(practiceId: string, newOpeningHours: any) {
+export async function validateOpeningHours(practiceId: string, newOpeningHours: OpeningHoursItem[]) {
   // For simplicity, call the appointments API with a wide date range and check each appointment.
   // In production you might create a dedicated API endpoint.
   const query = `
@@ -418,7 +417,7 @@ export async function validateOpeningHours(practiceId: string, newOpeningHours: 
   for (const appt of appointments) {
     const startDate = new Date(appt.start_time);
     const dayName = startDate.toLocaleDateString("en-US", { weekday: "long" });
-    const dayOH = newOpeningHours.find((oh: any) => oh.dayName === dayName);
+    const dayOH = newOpeningHours.find((oh: OpeningHoursItem) => oh.dayName === dayName);
     if (!dayOH || dayOH.open.toLowerCase() === "closed" || dayOH.close.toLowerCase() === "closed") {
       throw new Error(`Appointment ${appt.appointment_id} falls on ${dayName} which is now closed`);
     }
@@ -435,7 +434,7 @@ export async function validateOpeningHours(practiceId: string, newOpeningHours: 
   return true;
 }
 
-export async function updatePracticePreferences(practiceId: string, prefs: Partial<any>) {
+export async function updatePracticePreferences(practiceId: string, prefs: Partial<PracticePreferences>) {
   const mutation = `
     mutation UpdatePracticePreferences($practiceId: uuid!, $prefs: practice_preferences_set_input!) {
       update_practice_preferences_by_pk(pk_columns: { practice_id: $practiceId }, _set: $prefs) {
