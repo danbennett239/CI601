@@ -97,18 +97,22 @@
   margin-top: 1.5rem;
 }
 
-.saveButton,
+.saveButton {
+  background: #ccc;
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border: none;
+  border-radius: 4px;
+}
+
+.saveButtonActive,
 .cancelButton {
   padding: 0.75rem 1.5rem;
   font-size: 1rem;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-}
-
-.saveButton {
-  background: #ccc;
-  color: #fff;
 }
 
 .saveButtonActive {

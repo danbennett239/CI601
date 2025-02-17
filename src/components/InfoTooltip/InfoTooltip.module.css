@@ -1,0 +1,80 @@
+.tooltipContainer {
+  position: relative;         /* Needed for the absolutely-positioned tooltip */
+  display: inline-block;      /* So the hover is only on the icon */
+  margin-left: 0.25rem;       /* Optional spacing from label text */
+}
+
+.infoIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 0.75rem;
+  background-color: var(--primary-color, #0070f3);
+  color: #fff;
+  border-radius: 50%;
+  cursor: help;
+}
+
+/* The tooltip box that appears on hover */
+.tooltipBox {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 8px);  /* Show it to the right of the icon with an 8px gap */
+  transform: translateY(-50%);
+  min-width: 140px;
+  max-width: 240px;
+  padding: 0.5rem 0.75rem;
+  background: #333;
+  color: #fff;
+  font-size: 0.875rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  opacity: 0;             /* Hide by default */
+  visibility: hidden;     /* Hide by default */
+  transition: opacity 0.2s ease-in-out, visibility 0.2s ease-in-out;
+  z-index: 999;
+}
+
+/* Optional small arrow pointing at the icon */
+.tooltipBox::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -5px;
+  transform: translateY(-50%);
+  border-width: 5px;
+  border-style: solid;
+  border-color: transparent #333 transparent transparent;
+}
+
+/* When hovering over the container, display the tooltip */
+.tooltipContainer:hover .tooltipBox {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* Title style */
+.tooltipBox h4 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1rem;
+  color: #fff; /* or var(--primary-color, #0070f3) if preferred */
+}
+
+/* Description style */
+.tooltipBox p {
+  margin: 0;
+  color: #fff;
+  line-height: 1.3;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .tooltipBox {
+    max-width: 90vw;
+    left: auto;             /* Override the left positioning */
+    right: 0;               /* So it doesn't overflow the screen on small devices */
+    transform: translateY(-50%);
+  }
+}

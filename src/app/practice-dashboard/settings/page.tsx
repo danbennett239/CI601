@@ -9,14 +9,19 @@ import { useUser } from "@/hooks/useUser";
 import { usePractice } from "@/hooks/usePractice";
 import { OpeningHoursItem, PracticePreferences } from "@/types/practice";
 import ConfirmUnsavedPopup from "@/components/practice/settings/ConfirmUnsavedPopup/ConfirmUnsavedPopup";
+import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";  // Adjust import path
 import styles from "./PracticeSettingsPage.module.css";
 
 const PracticeSettings: React.FC = () => {
   const { user, loading: userLoading } = useUser();
+  const {
+    practice,
+    loading: practiceLoading,
+    error: practiceError,
+    refreshPractice,
+  } = usePractice(user?.practice_id);
 
-  const { practice, loading: practiceLoading, error: practiceError, refreshPractice } =
-    usePractice(user?.practice_id);
-
+  // Local "info" state
   const [info, setInfo] = useState<{
     practice_name: string;
     email: string;
@@ -25,27 +30,50 @@ const PracticeSettings: React.FC = () => {
     opening_hours: OpeningHoursItem[];
   } | null>(null);
 
+  // Local "prefs" state
   const [prefs, setPrefs] = useState<PracticePreferences | null>(null);
 
-  const [unsavedChanges, setUnsavedChanges] = useState(false);
-  const [showUnsavedPopup, setShowUnsavedPopup] = useState(false);
+  // Original states for comparison
+  const [originalInfo, setOriginalInfo] = useState<
+    | {
+        practice_name: string;
+        email: string;
+        phone_number: string;
+        photo?: string | null;
+        opening_hours: OpeningHoursItem[];
+      }
+    | null
+  >(null);
+
+  const [originalPrefs, setOriginalPrefs] = useState<PracticePreferences | null>(null);
+
+  // Each preference individually controlled in local state
+  const [hideDeleteConfirmation, setHideDeleteConfirmation] = useState<boolean>(false);
   const [enableNotifications, setEnableNotifications] = useState<boolean>(true);
   const [enableMobile, setEnableMobile] = useState<boolean>(false);
   const [enableEmail, setEnableEmail] = useState<boolean>(true);
   const [notifyOnBooking, setNotifyOnBooking] = useState<boolean>(true);
-  const [hideDeleteConfirmation, setHideDeleteConfirmation] = useState<boolean>(false);
+
+  // Trigger for unsaved changes
+  const [unsavedChanges, setUnsavedChanges] = useState(false);
+  // For the popup that appears when navigating away with unsaved changes
+  const [showUnsavedPopup, setShowUnsavedPopup] = useState(false);
 
   useEffect(() => {
     if (practice) {
-      setInfo({
+      // Set local state from practice
+      const newInfo = {
         practice_name: practice.practice_name,
         email: practice.email,
         phone_number: practice.phone_number,
         photo: practice.photo ?? "",
         opening_hours: practice.opening_hours,
-      });
+      };
+      setInfo(newInfo);
+      setOriginalInfo(newInfo); // store copy for comparison
 
       setPrefs(practice.practice_preferences);
+      setOriginalPrefs(practice.practice_preferences);
 
       // Initialize local checkboxes from preferences
       setHideDeleteConfirmation(practice.practice_preferences.hide_delete_confirmation);
@@ -55,6 +83,40 @@ const PracticeSettings: React.FC = () => {
       setNotifyOnBooking(practice.practice_preferences.notify_on_new_booking);
     }
   }, [practice]);
+
+  // Compare the current state with the original state to determine unsaved changes
+  useEffect(() => {
+    if (!practice || !originalInfo || !originalPrefs || !info || !prefs) return;
+
+    // Compare info
+    const infoEqual =
+      info.practice_name === originalInfo.practice_name &&
+      info.email === originalInfo.email &&
+      info.phone_number === originalInfo.phone_number &&
+      (info.photo || "") === (originalInfo.photo || "") &&
+      JSON.stringify(info.opening_hours) === JSON.stringify(originalInfo.opening_hours);
+
+    // Compare prefs
+    const prefsEqual =
+      hideDeleteConfirmation === originalPrefs.hide_delete_confirmation &&
+      enableNotifications === originalPrefs.enable_notifications &&
+      enableMobile === originalPrefs.enable_mobile_notifications &&
+      enableEmail === originalPrefs.enable_email_notifications &&
+      notifyOnBooking === originalPrefs.notify_on_new_booking;
+
+    setUnsavedChanges(!(infoEqual && prefsEqual));
+  }, [
+    info,
+    hideDeleteConfirmation,
+    enableNotifications,
+    enableMobile,
+    enableEmail,
+    notifyOnBooking,
+    practice,
+    originalInfo,
+    originalPrefs,
+    prefs,
+  ]);
 
   if (userLoading || practiceLoading) return <div>Loading...</div>;
   if (!user || user.role !== "verified-practice") {
@@ -66,22 +128,21 @@ const PracticeSettings: React.FC = () => {
   if (!practice) {
     return <div>No Practice Found</div>;
   }
-
   if (!info || !prefs) {
     return <div>Loading practice details...</div>;
   }
 
+  // Field updates
   const handleFieldChange = <T extends keyof typeof info>(
     field: T,
     value: typeof info[T]
   ) => {
-    setUnsavedChanges(true);
     setInfo((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
+  // If notifications are turned off, also turn off sub-options
   const handleToggleNotifications = (value: boolean) => {
     setEnableNotifications(value);
-    setUnsavedChanges(true);
     if (!value) {
       setEnableMobile(false);
       setEnableEmail(false);
@@ -107,7 +168,8 @@ const PracticeSettings: React.FC = () => {
         return;
       }
     } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Error validating opening hours";
+      const message =
+        error instanceof Error ? error.message : "Error validating opening hours";
       toast.error(message);
       return;
     }
@@ -144,7 +206,6 @@ const PracticeSettings: React.FC = () => {
       }
 
       await refreshPractice();
-      setUnsavedChanges(false);
       toast.success("Settings saved successfully");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error saving settings";
@@ -153,31 +214,32 @@ const PracticeSettings: React.FC = () => {
   };
 
   const handleCancel = () => {
+    if (!practice || !originalInfo || !originalPrefs) return;
+
     setInfo({
-      practice_name: practice.practice_name,
-      email: practice.email,
-      phone_number: practice.phone_number,
-      photo: practice.photo ?? "",
-      opening_hours: practice.opening_hours,
+      practice_name: originalInfo.practice_name,
+      email: originalInfo.email,
+      phone_number: originalInfo.phone_number,
+      photo: originalInfo.photo,
+      opening_hours: originalInfo.opening_hours,
     });
 
-    setHideDeleteConfirmation(practice.practice_preferences.hide_delete_confirmation);
-    setEnableNotifications(practice.practice_preferences.enable_notifications);
-    setEnableMobile(practice.practice_preferences.enable_mobile_notifications);
-    setEnableEmail(practice.practice_preferences.enable_email_notifications);
-    setNotifyOnBooking(practice.practice_preferences.notify_on_new_booking);
-
-    setUnsavedChanges(false);
+    setHideDeleteConfirmation(originalPrefs.hide_delete_confirmation);
+    setEnableNotifications(originalPrefs.enable_notifications);
+    setEnableMobile(originalPrefs.enable_mobile_notifications);
+    setEnableEmail(originalPrefs.enable_email_notifications);
+    setNotifyOnBooking(originalPrefs.notify_on_new_booking);
   };
 
   return (
     <div className={styles.settingsPage}>
       <ToastContainer />
       <div className={styles.header}>
-        <Link href="/practice-dashboard"
+        <Link
+          href="/practice-dashboard"
           onClick={(e) => {
             if (unsavedChanges) {
-              e.preventDefault();       // Stop Link from auto-navigating
+              e.preventDefault(); // Stop Link from auto-navigating
               setShowUnsavedPopup(true);
             }
           }}
@@ -258,62 +320,66 @@ const PracticeSettings: React.FC = () => {
         {/* Notification Preferences Section */}
         <section className={styles.section}>
           <h2>Notification Preferences</h2>
+
           <div className={styles.fieldGroup}>
-            <label>Enable Notifications</label>
+            <label>
+              Enable Notifications{" "}
+              <InfoTooltip
+                title="Enable Notifications"
+                description="Master switch to enable or disable all notifications."
+              />
+            </label>
             <input
               type="checkbox"
               checked={enableNotifications}
               onChange={(e) => handleToggleNotifications(e.target.checked)}
             />
           </div>
+
           <div className={styles.fieldGroup}>
             <label>
               Enable Mobile Notifications{" "}
-              <span className={styles.infoIcon} title="Enable push/SMS notifications on your mobile device.">
-                i
-              </span>
+              <InfoTooltip
+                title="Enable Mobile Notifications"
+                description="Enable push/SMS notifications on your mobile device."
+              />
             </label>
             <input
               type="checkbox"
               checked={enableMobile}
-              onChange={(e) => {
-                setEnableMobile(e.target.checked);
-                setUnsavedChanges(true);
-              }}
+              onChange={(e) => setEnableMobile(e.target.checked)}
               disabled={!enableNotifications}
             />
           </div>
+
           <div className={styles.fieldGroup}>
             <label>
               Enable Email Notifications{" "}
-              <span className={styles.infoIcon} title="Receive email notifications for important updates.">
-                i
-              </span>
+              <InfoTooltip
+                title="Enable Email Notifications"
+                description="Receive email notifications for important updates."
+              />
             </label>
             <input
               type="checkbox"
               checked={enableEmail}
-              onChange={(e) => {
-                setEnableEmail(e.target.checked);
-                setUnsavedChanges(true);
-              }}
+              onChange={(e) => setEnableEmail(e.target.checked)}
               disabled={!enableNotifications}
             />
           </div>
+
           <div className={styles.fieldGroup}>
             <label>
               Notify on New Booking{" "}
-              <span className={styles.infoIcon} title="Receive a notification when a new appointment is booked.">
-                i
-              </span>
+              <InfoTooltip
+                title="Notify on New Booking"
+                description="Receive a notification when a new appointment is booked."
+              />
             </label>
             <input
               type="checkbox"
               checked={notifyOnBooking}
-              onChange={(e) => {
-                setNotifyOnBooking(e.target.checked);
-                setUnsavedChanges(true);
-              }}
+              onChange={(e) => setNotifyOnBooking(e.target.checked)}
               disabled={!enableNotifications}
             />
           </div>
@@ -321,18 +387,21 @@ const PracticeSettings: React.FC = () => {
 
         <hr className={styles.divider} />
 
-        {/* Delete Confirmation Section */}
+        {/* System Preferences Section */}
         <section className={styles.section}>
-          <h2>Delete Confirmation</h2>
+          <h2>System Preferences</h2>
           <div className={styles.fieldGroup}>
-            <label>Hide Delete Confirmation</label>
+            <label>
+              Hide Delete Confirmation{" "}
+              <InfoTooltip
+                title="Hide Delete Confirmation"
+                description="Enable this to bypass the 'Are you sure?' prompt when deleting items."
+              />
+            </label>
             <input
               type="checkbox"
               checked={hideDeleteConfirmation}
-              onChange={(e) => {
-                setHideDeleteConfirmation(e.target.checked);
-                setUnsavedChanges(true);
-              }}
+              onChange={(e) => setHideDeleteConfirmation(e.target.checked)}
             />
           </div>
         </section>
@@ -345,7 +414,7 @@ const PracticeSettings: React.FC = () => {
             Save
           </button>
           <button className={styles.cancelButton} onClick={handleCancel}>
-            Cancel
+            Revert
           </button>
         </div>
       </div>
