@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { updatePracticeSettings } from "@/lib/services/practiceService";
+import { updatePracticeSettings } from "@/lib/services/practice/practiceService";
 
 export async function PUT(request: Request, context: { params: Promise<{ practiceId: string }> }) {
   try {

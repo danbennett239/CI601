@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { fetchApprovedDentalPractices } from "@/lib/services/practiceService";
+import { fetchApprovedDentalPractices } from "@/lib/services/practice/practiceService";
 
 export async function GET() {
   try {

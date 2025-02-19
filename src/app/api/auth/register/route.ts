@@ -1,6 +1,6 @@
 // app/api/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { registerUser, loginUser } from '@/lib/services/authService';
+import { registerUser, loginUser } from '@/lib/services/auth/authService';
 
 export async function POST(req: NextRequest) {
   try {

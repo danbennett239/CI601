@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { approvePractice } from "@/lib/services/practiceService";
+import { approvePractice } from "@/lib/services/practice/practiceService";
 
 export async function POST(req: NextRequest) {
   try {

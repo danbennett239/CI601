@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { denyPractice } from "@/lib/services/practiceService";
+import { denyPractice } from "@/lib/services/practice/practiceService";
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,6 +1,6 @@
 // /app/api/auth/forgot-password/route.ts
 import { NextResponse } from "next/server";
-import { sendForgotPasswordEmail } from "@/lib/services/passwordService";
+import { sendForgotPasswordEmail } from "@/lib/services/auth/passwordService";
 
 export async function POST(request: Request) {
   try {

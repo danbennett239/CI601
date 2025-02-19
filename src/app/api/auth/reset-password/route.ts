@@ -1,6 +1,6 @@
 // /app/api/auth/reset-password/route.ts
 import { NextResponse } from "next/server";
-import { resetPassword } from "@/lib/services/passwordService";
+import { resetPassword } from "@/lib/services/auth/passwordService";
 
 export async function POST(request: Request) {
   try {

@@ -1,6 +1,6 @@
 // app/api/practice/[practiceId]/preferences/route.ts
 import { NextResponse } from "next/server";
-import { updatePracticePreferences } from "@/lib/services/practiceService";
+import { updatePracticePreferences } from "@/lib/services/practice/practiceService";
 
 export async function PUT(request: Request, context: { params: Promise<{ practiceId: string }> }) {
   try {

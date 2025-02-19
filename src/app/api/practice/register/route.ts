@@ -1,7 +1,7 @@
 // app/api/practice/register/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { createPracticeWithUser } from '@/lib/services/practiceService';
-import { loginUser } from '@/lib/services/authService';
+import { createPracticeWithUser } from '@/lib/services/practice/practiceService';
+import { loginUser } from '@/lib/services/auth/authService';
 
 export async function POST(req: NextRequest) {
   try {

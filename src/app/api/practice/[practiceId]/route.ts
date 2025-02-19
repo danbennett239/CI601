@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { fetchPracticeAndPreferencesById } from '@/lib/services/practiceService';
+import { fetchPracticeAndPreferencesById } from '@/lib/services/practice/practiceService';
 
 export async function GET(
   request: Request,

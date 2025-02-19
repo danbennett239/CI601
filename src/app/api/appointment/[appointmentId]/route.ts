@@ -3,7 +3,7 @@ import {
   getAppointmentById,
   updateAppointment,
   deleteAppointment,
-} from '@/lib/services/appointmentService';
+} from '@/lib/services/appointment/appointmentService';
 
 export async function GET(
   request: NextRequest,

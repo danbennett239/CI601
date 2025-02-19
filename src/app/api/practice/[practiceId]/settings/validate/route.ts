@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { validateOpeningHours } from "@/lib/services/practiceService";
+import { validateOpeningHours } from "@/lib/services/practice/practiceService";
 
 export async function POST(request: Request, context: { params: Promise<{ practiceId: string }> }) {
   try {

@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import { insertInviteToken } from "./tokenService";
-import { sendEmail } from "./emailService";
+import { sendEmail } from "../emailService";
 
 export async function inviteUser(email: string, practiceId: string): Promise<void> {
   // 1) Generate token + expiry
