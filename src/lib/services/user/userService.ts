@@ -111,3 +111,31 @@ export async function registerInvitedPracticeUser({
 
   return result.data.insert_users_one;
 }
+
+export async function checkUserExists(email: string): Promise<boolean> {
+  const query = `
+    query CheckUserExists($email: String!) {
+      users(where: { email: { _eq: $email } }) {
+        user_id
+      }
+    }
+  `;
+
+  const response = await fetch(HASURA_GRAPHQL_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+    },
+    body: JSON.stringify({ query, variables: { email } }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok || result.errors) {
+    console.error("Error checking user existence:", result.errors);
+    throw new Error("Error checking if user exists.");
+  }
+
+  return result.data.users.length > 0; // Returns `true` if user exists
+}

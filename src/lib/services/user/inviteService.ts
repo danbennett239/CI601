@@ -1,8 +1,14 @@
 import crypto from "crypto";
 import { insertInviteToken, getInviteToken } from "./tokenService";
 import { sendInviteEmail } from "../email/emailService";
+import { checkUserExists } from "./userService";
 
 export async function inviteUser(email: string, practiceId: string): Promise<void> {
+  const userExists = await checkUserExists(email);
+  if (userExists) {
+    throw new Error("A user with this email already exists.");
+  }
+  
   const token = generateInviteToken();
   const expiresAt = getExpiryDate();
 
