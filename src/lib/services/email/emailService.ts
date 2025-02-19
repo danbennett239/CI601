@@ -32,3 +32,15 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
     ],
   });
 }
+
+export async function sendInviteEmail(email: string, token: string): Promise<void> {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+  const inviteLink = `${baseUrl}/signin/invited?token=${token}`;
+
+  await sendEmail({
+    to: email,
+    subject: "You have been invited to join a practice",
+    textPart: `You've been invited. Complete your sign-up: ${inviteLink}`,
+    htmlPart: `<p>You've been invited. Complete your sign-up here:</p><a href="${inviteLink}">${inviteLink}</a>`,
+  });
+}

@@ -19,6 +19,13 @@ array_relationships:
         table:
           name: appointments
           schema: public
+  - name: practice_invites
+    using:
+      foreign_key_constraint_on:
+        column: practice_id
+        table:
+          name: practice_invites
+          schema: public
   - name: users
     using:
       foreign_key_constraint_on:
