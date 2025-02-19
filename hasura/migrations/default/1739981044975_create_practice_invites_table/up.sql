@@ -1,0 +1,12 @@
+CREATE TABLE IF NOT EXISTS practice_invites (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  email TEXT NOT NULL,
+  token TEXT NOT NULL,
+  practice_id UUID NOT NULL,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used BOOLEAN NOT NULL DEFAULT false,
+  CONSTRAINT fk_practice
+    FOREIGN KEY (practice_id)
+    REFERENCES practices (practice_id)
+    ON DELETE CASCADE
+);
