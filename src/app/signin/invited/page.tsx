@@ -1,50 +1,52 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import styles from "./InvitedPage.module.css";
-import { z } from "zod";
-
-const passwordSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters."),
-  repeatPassword: z.string(),
-}).refine((data) => data.password === data.repeatPassword, {
-  message: "Passwords do not match",
-  path: ["repeatPassword"],
-});
+import { FaEye, FaEyeSlash } from "react-icons/fa";
+import { invitedPasswordSchema } from "@/schemas/inviteSchemas";
 
 export default function InvitedUserSignupPage() {
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<boolean>(false);
-
+  const [showPassword, setShowPassword] = useState(false);
+  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [repeatPasswordError, setRepeatPasswordError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
+  const router = useRouter();
 
-  // Check if there's no token in the URL
   useEffect(() => {
     if (!token) {
-      setError("Invalid or missing invite token.");
+      setFormError("Invalid or missing invite token.");
     }
   }, [token]);
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
 
-    if (!token) {
-      setError("Invite token is required.");
-      return;
-    }
+    setPasswordError(null);
+    setRepeatPasswordError(null);
+    setFormError(null);
 
-    // 1) Validate in the client with Zod
-    const result = passwordSchema.safeParse({ password, repeatPassword });
+    const result = invitedPasswordSchema.safeParse({ password, repeatPassword });
+
     if (!result.success) {
-      setError(result.error.issues[0].message);
+      const errorMap = result.error.format();
+
+      setPasswordError(errorMap.password?._errors[0] || null);
+      setRepeatPasswordError(errorMap.repeatPassword?._errors[0] || null);
       return;
     }
 
-    // 2) Call our finalize route
+    if (!token) {
+      setFormError("Invite token is required.");
+      return;
+    }
+
     try {
       const res = await fetch("/api/practice/additional-user", {
         method: "POST",
@@ -54,55 +56,92 @@ export default function InvitedUserSignupPage() {
 
       if (!res.ok) {
         const data = await res.json();
-        setError(data.error ?? "Registration failed.");
+        setFormError(data.error ?? "Registration failed.");
         return;
       }
 
       setSuccess(true);
-      setError(null);
       setPassword("");
       setRepeatPassword("");
     } catch (err) {
       console.error("Error finalizing invite:", err);
-      setError("An unexpected error occurred.");
+      setFormError("An unexpected error occurred.");
     }
   }
 
   return (
-    <div className={styles.formWrapper}>
-      <h2 className={styles.title}>Complete Your Invitation</h2>
-      <form onSubmit={handleSubmit} className={styles.form}>
-        <label htmlFor="password" className={styles.label}>
-          Password:
-        </label>
-        <input
-          id="password"
-          type="password"
-          className={styles.input}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          disabled={!token}
-        />
+    <div className={styles.container}>
+      <div className={styles.formWrapper}>
+        <h2 className={styles.title}>Complete Your Registration</h2>
 
-        <label htmlFor="repeatPassword" className={styles.label}>
-          Confirm Password:
-        </label>
-        <input
-          id="repeatPassword"
-          type="password"
-          className={styles.input}
-          value={repeatPassword}
-          onChange={(e) => setRepeatPassword(e.target.value)}
-          disabled={!token}
-        />
+        {!success ? (
+          <form onSubmit={handleSubmit} className={styles.form}>
+            <label htmlFor="password" className={styles.label}>
+              Password:
+            </label>
+            <div className={styles.inputWrapper}>
+              <input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                className={styles.inputWithIcon}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                disabled={!token}
+              />
+              <span
+                onClick={() => setShowPassword(!showPassword)}
+                className={styles.eyeIcon}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+            {passwordError && <p className={styles.error}>{passwordError}</p>}
 
-        {error && <p className={styles.error}>{error}</p>}
-        {success && <p style={{ color: "green" }}>User registered successfully! You can now log in.</p>}
+            <label htmlFor="repeatPassword" className={styles.label}>
+              Confirm Password:
+            </label>
+            <div className={styles.inputWrapper}>
+              <input
+                id="repeatPassword"
+                type={showRepeatPassword ? "text" : "password"}
+                className={styles.inputWithIcon}
+                value={repeatPassword}
+                onChange={(e) => setRepeatPassword(e.target.value)}
+                disabled={!token}
+              />
+              <span
+                onClick={() => setShowRepeatPassword(!showRepeatPassword)}
+                className={styles.eyeIcon}
+              >
+                {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
+              </span>
+            </div>
+            {repeatPasswordError && (
+              <p className={styles.error}>{repeatPasswordError}</p>
+            )}
 
-        <button type="submit" className={styles.button} disabled={!token}>
-          Register
-        </button>
-      </form>
+            {formError && <p className={styles.error}>{formError}</p>}
+
+            <button type="submit" className={styles.button} disabled={!token}>
+              Register
+            </button>
+          </form>
+        ) : (
+          <div className={styles.successMessage}>
+            <p className={styles.successText}>
+              Your account has been successfully created!
+              <br />
+              You may now sign in using your new credentials.
+            </p>
+            <button
+              className={styles.button}
+              onClick={() => router.push("/signin")}
+            >
+              Go to Sign In
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

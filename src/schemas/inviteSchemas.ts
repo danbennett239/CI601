@@ -1,12 +1,20 @@
 import { z } from "zod";
 
-// For the invite route
-export const inviteUserSchema = z.object({
-  email: z.string().email("Must be a valid email"),
+export const inviteFormSchema = z.object({
+  email: z.string().email("Invalid email address"),
 });
 
-// For finalizing (token + password)
-export const finalizeInviteSchema = z.object({
-  token: z.string().min(1, "Missing token"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
-});
+export const invitedPasswordSchema = z
+  .object({
+    password: z
+      .string()
+      .min(8, "Password must be at least 8 characters long")
+      .nonempty("Password is required"),
+    repeatPassword: z
+      .string()
+      .nonempty("Please confirm your password"),
+  })
+  .refine((data) => data.password === data.repeatPassword, {
+    message: "Passwords do not match",
+    path: ["repeatPassword"],
+  });
