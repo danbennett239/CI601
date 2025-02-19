@@ -7,6 +7,7 @@ import { usePractice } from "@/hooks/usePractice";
 import dynamic from "next/dynamic";
 import { toast } from "react-toastify";
 import { analyticsDateSchema } from "@/schemas/analyticsSchemas";
+import { Appointment } from "@/types/practice";
 
 const AppointmentsLineChart = dynamic(
   () => import("../../../components/practice/analytics/AppointmentsLineChart/AppointmentsLineChart"),
@@ -18,7 +19,10 @@ const AppointmentsOverview = dynamic(
   { ssr: false }
 );
 
-// Timeframe options
+interface FetchAppointmentsResponse {
+  appointments: Appointment[];
+}
+
 const TIMEFRAMES = [
   { label: "Last 7 Days", value: "7d" },
   { label: "Last Month", value: "1m" },
@@ -28,25 +32,24 @@ const TIMEFRAMES = [
   { label: "Custom", value: "custom" },
 ];
 
-
 export default function AnalyticsPage() {
   const { user } = useUser();
   const { practice } = usePractice(user?.practice_id);
-  const [appointments, setAppointments] = useState<any[]>([]);
-  const [timeframe, setTimeframe] = useState("7d");
+  const [appointments, setAppointments] = useState<Appointment[]>([]);
+  const [timeframe, setTimeframe] = useState<string>("7d");
   const [customStartDate, setCustomStartDate] = useState<string>("");
   const [customEndDate, setCustomEndDate] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const practiceId = user?.practice_id;
-  const practiceCreatedAt = practice?.created_at?.split("T")[0] || null; // Extract YYYY-MM-DD
+  const practiceCreatedAt = practice?.created_at?.split("T")[0] || null;
 
   /**
    * Returns an object containing `start` and `end` dates
    * based on the selected timeframe.
    */
-  function getDateRange() {
+  function getDateRange(): { start: string; end: string } {
     const now = new Date();
     let startDate = "";
     let endDate = now.toISOString().split("T")[0]; // Today
@@ -97,10 +100,12 @@ export default function AnalyticsPage() {
         throw new Error(data.error || "Failed to fetch appointments.");
       }
 
-      const data = await res.json();
+      const data: FetchAppointmentsResponse = await res.json();
       setAppointments(data.appointments || []);
-    } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : "Failed to fetch appointments.";
+      setError(message);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

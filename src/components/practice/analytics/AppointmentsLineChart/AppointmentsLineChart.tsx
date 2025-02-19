@@ -27,6 +27,8 @@ interface AppointmentsLineChartProps {
 
 function generateDateRange(startDate: string, endDate: string): string[] {
   const dateArray: string[] = [];
+  // `let` is required because we modify `currentDate` in the loop
+  // eslint-disable-next-line prefer-const
   let currentDate = new Date(startDate);
   const stopDate = new Date(endDate);
 
