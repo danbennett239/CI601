@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import Link from "next/link";
 import { toast, ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
@@ -9,8 +9,17 @@ import { useUser } from "@/hooks/useUser";
 import { usePractice } from "@/hooks/usePractice";
 import { OpeningHoursItem, PracticePreferences } from "@/types/practice";
 import ConfirmUnsavedPopup from "@/components/practice/settings/ConfirmUnsavedPopup/ConfirmUnsavedPopup";
-import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";  // Adjust import path
+import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";
 import styles from "./PracticeSettingsPage.module.css";
+
+/** The shape of the local "info" for practice data */
+interface PracticeInfoState {
+  practice_name: string;
+  email: string;
+  phone_number: string;
+  photo?: string | null;
+  opening_hours: OpeningHoursItem[];
+}
 
 const PracticeSettings: React.FC = () => {
   const { user, loading: userLoading } = useUser();
@@ -21,74 +30,67 @@ const PracticeSettings: React.FC = () => {
     refreshPractice,
   } = usePractice(user?.practice_id);
 
-  // Local "info" state
-  const [info, setInfo] = useState<{
-    practice_name: string;
-    email: string;
-    phone_number: string;
-    photo?: string | null;
-    opening_hours: OpeningHoursItem[];
-  } | null>(null);
-
-  // Local "prefs" state
+  // Local info/prefs states
+  const [info, setInfo] = useState<PracticeInfoState | null>(null);
   const [prefs, setPrefs] = useState<PracticePreferences | null>(null);
 
-  // Original states for comparison
-  const [originalInfo, setOriginalInfo] = useState<
-    | {
-        practice_name: string;
-        email: string;
-        phone_number: string;
-        photo?: string | null;
-        opening_hours: OpeningHoursItem[];
-      }
-    | null
-  >(null);
-
+  // Original snapshots (for revert comparison)
+  const [originalInfo, setOriginalInfo] = useState<PracticeInfoState | null>(null);
   const [originalPrefs, setOriginalPrefs] = useState<PracticePreferences | null>(null);
 
-  // Each preference individually controlled in local state
-  const [hideDeleteConfirmation, setHideDeleteConfirmation] = useState<boolean>(false);
-  const [enableNotifications, setEnableNotifications] = useState<boolean>(true);
-  const [enableMobile, setEnableMobile] = useState<boolean>(false);
-  const [enableEmail, setEnableEmail] = useState<boolean>(true);
-  const [notifyOnBooking, setNotifyOnBooking] = useState<boolean>(true);
+  // Photo states: the newly selected file & preview
+  const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
 
-  // Trigger for unsaved changes
+  // Each preference in local state
+  const [hideDeleteConfirmation, setHideDeleteConfirmation] = useState(false);
+  const [enableNotifications, setEnableNotifications] = useState(true);
+  const [enableMobile, setEnableMobile] = useState(false);
+  const [enableEmail, setEnableEmail] = useState(true);
+  const [notifyOnBooking, setNotifyOnBooking] = useState(true);
+
+  // Track unsaved changes
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  // For the popup that appears when navigating away with unsaved changes
+  // Popup for unsaved changes
   const [showUnsavedPopup, setShowUnsavedPopup] = useState(false);
 
+  // For clickable circle
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  /** On mount / when practice changes, populate local states */
   useEffect(() => {
     if (practice) {
-      // Set local state from practice
-      const newInfo = {
+      const newInfo: PracticeInfoState = {
         practice_name: practice.practice_name,
         email: practice.email,
         phone_number: practice.phone_number,
-        photo: practice.photo ?? "",
+        photo: practice.photo ?? null,
         opening_hours: practice.opening_hours,
       };
       setInfo(newInfo);
-      setOriginalInfo(newInfo); // store copy for comparison
+      setOriginalInfo(newInfo);
 
       setPrefs(practice.practice_preferences);
       setOriginalPrefs(practice.practice_preferences);
 
-      // Initialize local checkboxes from preferences
+      // Set preference checkboxes
       setHideDeleteConfirmation(practice.practice_preferences.hide_delete_confirmation);
       setEnableNotifications(practice.practice_preferences.enable_notifications);
       setEnableMobile(practice.practice_preferences.enable_mobile_notifications);
       setEnableEmail(practice.practice_preferences.enable_email_notifications);
       setNotifyOnBooking(practice.practice_preferences.notify_on_new_booking);
+
+      // Reset any new photo states
+      setNewPhotoFile(null);
+      setPhotoPreview("");
     }
   }, [practice]);
 
-  // Compare the current state with the original state to determine unsaved changes
+  /** Compare local states to original for unsaved changes */
   useEffect(() => {
-    if (!practice || !originalInfo || !originalPrefs || !info || !prefs) return;
+    if (!info || !prefs || !originalInfo || !originalPrefs) return;
 
-    // Compare info
+    // Compare "info" fields
     const infoEqual =
       info.practice_name === originalInfo.practice_name &&
       info.email === originalInfo.email &&
@@ -96,7 +98,7 @@ const PracticeSettings: React.FC = () => {
       (info.photo || "") === (originalInfo.photo || "") &&
       JSON.stringify(info.opening_hours) === JSON.stringify(originalInfo.opening_hours);
 
-    // Compare prefs
+    // Compare "prefs" checkboxes
     const prefsEqual =
       hideDeleteConfirmation === originalPrefs.hide_delete_confirmation &&
       enableNotifications === originalPrefs.enable_notifications &&
@@ -104,18 +106,20 @@ const PracticeSettings: React.FC = () => {
       enableEmail === originalPrefs.enable_email_notifications &&
       notifyOnBooking === originalPrefs.notify_on_new_booking;
 
-    setUnsavedChanges(!(infoEqual && prefsEqual));
+    const photoChanged = newPhotoFile !== null;
+
+    setUnsavedChanges(!(infoEqual && prefsEqual && !photoChanged));
   }, [
     info,
+    prefs,
+    newPhotoFile,
     hideDeleteConfirmation,
     enableNotifications,
     enableMobile,
     enableEmail,
     notifyOnBooking,
-    practice,
     originalInfo,
     originalPrefs,
-    prefs,
   ]);
 
   if (userLoading || practiceLoading) return <div>Loading...</div>;
@@ -132,10 +136,10 @@ const PracticeSettings: React.FC = () => {
     return <div>Loading practice details...</div>;
   }
 
-  // Field updates
-  const handleFieldChange = <T extends keyof typeof info>(
+  // Helpers to update local state
+  const handleFieldChange = <T extends keyof PracticeInfoState>(
     field: T,
-    value: typeof info[T]
+    value: PracticeInfoState[T]
   ) => {
     setInfo((prev) => (prev ? { ...prev, [field]: value } : null));
   };
@@ -150,9 +154,35 @@ const PracticeSettings: React.FC = () => {
     }
   };
 
+  /** On-click circle => trigger hidden file input */
+  const handlePhotoCircleClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
+  /** Read new file and set local preview + store the file. */
+  const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setNewPhotoFile(file);
+
+      // Generate a base64 preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (reader.result) {
+          setPhotoPreview(reader.result as string);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  /** Actual "Save" logic: if new photo is selected, upload & update DB, else just update DB. */
   const handleSave = async () => {
     if (!info) return;
 
+    // (Optional) Validate opening hours
     try {
       const validateRes = await fetch(
         `/api/practice/${practice.practice_id}/settings/validate`,
@@ -174,18 +204,64 @@ const PracticeSettings: React.FC = () => {
       return;
     }
 
-    try {
-      const settingsRes = await fetch(`/api/practice/${practice.practice_id}/settings`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ settings: info }),
-      });
-      const settingsData = await settingsRes.json();
-      if (!settingsRes.ok || settingsData.error) {
-        toast.error(settingsData.error || "Error updating settings");
+    // 1) If there's a new photo, handle the upload & DB update on the server side
+    //    so we can also delete the old photo from S3.
+    let finalPhotoUrl = info.photo ?? ""; // existing
+    if (newPhotoFile) {
+      try {
+        // We'll send everything to a single route that handles uploading, deleting old,
+        // and updating the practice record in one step. For example, /api/practice/[practiceId] with PUT.
+        const formData = new FormData();
+        formData.append("file", newPhotoFile);
+
+        // We also need the rest of the "settings" so the route can update them in DB. Could send them as JSON:
+        const settingsPayload = {
+          practice_name: info.practice_name,
+          email: info.email,
+          phone_number: info.phone_number,
+          opening_hours: info.opening_hours,
+        };
+        formData.append("settings", JSON.stringify(settingsPayload));
+
+        const uploadRes = await fetch(`/api/practice/${practice.practice_id}`, {
+          method: "PUT",
+          body: formData,
+        });
+        const uploadData = await uploadRes.json();
+        if (!uploadRes.ok || uploadData.error) {
+          throw new Error(uploadData.error || "Error updating photo");
+        }
+        // This is the new photo URL from server
+        finalPhotoUrl = uploadData.photoUrl || "";
+      } catch (error: unknown) {
+        toast.error(
+          error instanceof Error ? error.message : "Failed to upload/update photo"
+        );
         return;
       }
+    } else {
+      // 2) If no new photo, then just do a normal PUT of the rest of the settings
+      try {
+        const body = { settings: info }; // existing data with no new photo
+        const res = await fetch(`/api/practice/${practice.practice_id}/settings`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        const data = await res.json();
+        if (!res.ok || data.error) {
+          throw new Error(data.error || "Error updating settings");
+        }
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : "Error updating practice settings"
+        );
+        return;
+      }
+    }
 
+    // 3) Save preferences
+    try {
       const prefsRes = await fetch(`/api/practice/${practice.practice_id}/preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -201,21 +277,28 @@ const PracticeSettings: React.FC = () => {
       });
       const prefsData = await prefsRes.json();
       if (!prefsRes.ok || prefsData.error) {
-        toast.error(prefsData.error || "Error updating preferences");
-        return;
+        throw new Error(prefsData.error || "Error updating preferences");
       }
 
+      // On success:
+      // Refresh the practice data so the UI shows the updated photo and info
       await refreshPractice();
       toast.success("Settings saved successfully");
+
+      // Clear out the newPhotoFile since it's now used
+      setNewPhotoFile(null);
+      setPhotoPreview("");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error saving settings";
       toast.error(message);
     }
   };
 
+  /** Revert changes => revert photo too */
   const handleCancel = () => {
     if (!practice || !originalInfo || !originalPrefs) return;
 
+    // Revert info
     setInfo({
       practice_name: originalInfo.practice_name,
       email: originalInfo.email,
@@ -224,6 +307,11 @@ const PracticeSettings: React.FC = () => {
       opening_hours: originalInfo.opening_hours,
     });
 
+    // Revert new photo states
+    setNewPhotoFile(null);
+    setPhotoPreview("");
+
+    // Revert prefs
     setHideDeleteConfirmation(originalPrefs.hide_delete_confirmation);
     setEnableNotifications(originalPrefs.enable_notifications);
     setEnableMobile(originalPrefs.enable_mobile_notifications);
@@ -239,7 +327,7 @@ const PracticeSettings: React.FC = () => {
           href="/practice-dashboard"
           onClick={(e) => {
             if (unsavedChanges) {
-              e.preventDefault(); // Stop Link from auto-navigating
+              e.preventDefault();
               setShowUnsavedPopup(true);
             }
           }}
@@ -249,11 +337,39 @@ const PracticeSettings: React.FC = () => {
         </Link>
         <h1>Manage Practice Information & Preferences</h1>
       </div>
-
       <div className={styles.formContainer}>
         {/* Practice Information Section */}
         <section className={styles.section}>
           <h2>Practice Information</h2>
+          <div className={styles.fieldGroup}>
+            <label>Practice Photo</label>
+            <div className={styles.photoSection}>
+              <div className={styles.photoCircle} onClick={handlePhotoCircleClick}>
+                {photoPreview ? (
+                  <img
+                    className={styles.photoPreview}
+                    src={photoPreview}
+                    alt="New Practice"
+                  />
+                ) : info.photo ? (
+                  <img
+                    className={styles.photoPreview}
+                    src={info.photo}
+                    alt="Current Practice"
+                  />
+                ) : (
+                  <span className={styles.photoIcon}>📷</span>
+                )}
+              </div>
+              <input
+                ref={fileInputRef}
+                type="file"
+                style={{ display: "none" }}
+                onChange={handlePhotoChange}
+                accept="image/*"
+              />
+            </div>
+          </div>
           <div className={styles.fieldGroup}>
             <label>Practice Name</label>
             <input
@@ -276,14 +392,6 @@ const PracticeSettings: React.FC = () => {
               type="text"
               value={info.phone_number}
               onChange={(e) => handleFieldChange("phone_number", e.target.value)}
-            />
-          </div>
-          <div className={styles.fieldGroup}>
-            <label>Photo URL</label>
-            <input
-              type="text"
-              value={info.photo || ""}
-              onChange={(e) => handleFieldChange("photo", e.target.value)}
             />
           </div>
           <div className={styles.fieldGroup}>
@@ -335,7 +443,6 @@ const PracticeSettings: React.FC = () => {
               onChange={(e) => handleToggleNotifications(e.target.checked)}
             />
           </div>
-
           <div className={styles.fieldGroup}>
             <label>
               Enable Mobile Notifications{" "}
@@ -351,7 +458,6 @@ const PracticeSettings: React.FC = () => {
               disabled={!enableNotifications}
             />
           </div>
-
           <div className={styles.fieldGroup}>
             <label>
               Enable Email Notifications{" "}
@@ -367,7 +473,6 @@ const PracticeSettings: React.FC = () => {
               disabled={!enableNotifications}
             />
           </div>
-
           <div className={styles.fieldGroup}>
             <label>
               Notify on New Booking{" "}

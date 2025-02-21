@@ -461,3 +461,42 @@ export async function updatePracticePreferences(practiceId: string, prefs: Parti
   }
   return result.data.update_practice_preferences_by_pk;
 }
+
+export async function updatePractice(practiceId: string, fields: Partial<Practice>) {
+  const mutation = `
+    mutation UpdatePractice($practiceId: uuid!, $fields: practices_set_input!) {
+      update_practices_by_pk(pk_columns: { practice_id: $practiceId }, _set: $fields) {
+        practice_id
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        updated_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query: mutation, variables: { practiceId, fields } }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error updating practice");
+    }
+
+    return result.data.update_practices_by_pk;
+  } catch (error) {
+    console.error("Error updating practice:", error);
+    throw new Error("Practice update failed. Please try again.");
+  }
+}
