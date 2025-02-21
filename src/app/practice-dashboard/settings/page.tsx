@@ -204,13 +204,8 @@ const PracticeSettings: React.FC = () => {
       return;
     }
 
-    // 1) If there's a new photo, handle the upload & DB update on the server side
-    //    so we can also delete the old photo from S3.
-    let finalPhotoUrl = info.photo ?? ""; // existing
     if (newPhotoFile) {
       try {
-        // We'll send everything to a single route that handles uploading, deleting old,
-        // and updating the practice record in one step. For example, /api/practice/[practiceId] with PUT.
         const formData = new FormData();
         formData.append("file", newPhotoFile);
 
@@ -231,8 +226,6 @@ const PracticeSettings: React.FC = () => {
         if (!uploadRes.ok || uploadData.error) {
           throw new Error(uploadData.error || "Error updating photo");
         }
-        // This is the new photo URL from server
-        finalPhotoUrl = uploadData.photoUrl || "";
       } catch (error: unknown) {
         toast.error(
           error instanceof Error ? error.message : "Failed to upload/update photo"
@@ -240,7 +233,7 @@ const PracticeSettings: React.FC = () => {
         return;
       }
     } else {
-      // 2) If no new photo, then just do a normal PUT of the rest of the settings
+      // If no new photo, then just do a normal PUT of the rest of the settings
       try {
         const body = { settings: info }; // existing data with no new photo
         const res = await fetch(`/api/practice/${practice.practice_id}/settings`, {
@@ -260,7 +253,6 @@ const PracticeSettings: React.FC = () => {
       }
     }
 
-    // 3) Save preferences
     try {
       const prefsRes = await fetch(`/api/practice/${practice.practice_id}/preferences`, {
         method: "PUT",

@@ -520,7 +520,7 @@ export async function updatePractice(practiceId: string, fields: Partial<Practic
  */
 export async function updatePracticeSettingsWithPhoto(
   practiceId: string,
-  settings: any,
+  settings: Partial<Practice>,
   file?: File | null
 ): Promise<{ photoUrl: string | null }> {
   const existingPractice = await fetchPracticeAndPreferencesById(practiceId);
