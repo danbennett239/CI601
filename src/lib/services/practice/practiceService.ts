@@ -91,6 +91,8 @@ export async function createPracticeWithUser({
       throw new Error(result.errors?.[0]?.message || "Practice registration failed.");
     }
 
+    await insertPracticePreferences(result.data.insert_practices_one.practice_id);
+
     return {
       practice_id: result.data.insert_practices_one.practice_id,
       practice_name: result.data.insert_practices_one.practice_name,
@@ -101,6 +103,66 @@ export async function createPracticeWithUser({
     throw new Error("Practice registration failed. Please try again.");
   }
 }
+
+/**
+ * Inserts a practice preferences record with default values for a given practice.
+ * 
+ * @param practiceId - The UUID of the practice.
+ * @returns The inserted practice preferences.
+ * @throws Error if the insertion fails.
+ */
+export async function insertPracticePreferences(practiceId: string): Promise<PracticePreferences> {
+  const mutation = `
+    mutation InsertPracticePreferences($prefsData: practice_preferences_insert_input!) {
+      insert_practice_preferences_one(object: $prefsData) {
+        practice_id
+        enable_notifications
+        enable_mobile_notifications
+        enable_email_notifications
+        notify_on_new_booking
+        hide_delete_confirmation
+        created_at
+        updated_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: {
+          prefsData: {
+            practice_id: practiceId,
+            enable_notifications: true,
+            enable_mobile_notifications: true,
+            enable_email_notifications: true,
+            notify_on_new_booking: true,
+            hide_delete_confirmation: false,
+          },
+        },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Failed to insert practice preferences.");
+    }
+
+    return result.data.insert_practice_preferences_one;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error inserting practice preferences";
+    console.error("Insert Practice Preferences Error:", message);
+    throw new Error(message);
+  }
+}
+
 
 export async function fetchPendingDentalPractices() {
   const query = `
@@ -199,8 +261,14 @@ export async function approvePractice(practiceId: string) {
         verified
         verified_at
       }
+      update_users(
+        where: { practice_id: { _eq: $practiceId } }
+        _set: { role: "verified-practice" }
+      ) {
+        affected_rows
+      }
     }
-  `;
+    `;
 
   try {
     const response = await fetch(HASURA_GRAPHQL_URL, {
