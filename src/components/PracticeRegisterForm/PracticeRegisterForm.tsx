@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, ChangeEvent } from "react";
+import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
 import styles from "./PracticeRegisterForm.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 
@@ -14,10 +14,6 @@ function isValidTime(t: string): boolean {
   return /^\d{2}:\d{2}$/.test(t);
 }
 
-interface PracticeRegisterFormProps {
-  onSuccess?: () => void;
-}
-
 interface DayHours {
   dayName: string;
   open: string;
@@ -25,10 +21,24 @@ interface DayHours {
   closed: boolean;
 }
 
+interface AddressFormData {
+  line1: string;
+  line2: string;
+  line3: string;
+  city: string;
+  county: string;
+  postcode: string;
+  country: string;
+}
+
+interface PracticeRegisterFormProps {
+  onSuccess?: () => void;
+}
+
 export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterFormProps) {
   // Photo Upload
   const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const [photoPreview, setPhotoPreview] = useState<string>(""); // base64 preview
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Basic Fields
@@ -65,20 +75,20 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
   // Error handling
   const [error, setError] = useState("");
 
-  /** Handle photo circle click */
+  /** Handle photo circle click -> triggers file input */
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  /** Handle photo file selection */
+  /** Handle photo file selection (just for local preview) */
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhoto(file);
 
-      // Generate a preview
+      // Generate a local base64 preview
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
@@ -126,7 +136,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       updated[index][field] = value;
       return updated;
     });
-    // After setting, re-validate
+    // After setting, re-validate asynchronously
     setTimeout(() => validateTimes(index, field), 0);
   };
 
@@ -140,87 +150,105 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         updated[index].close = "";
         updated[index].closed = true;
       } else {
-        // If user unchecked, set to false => day is open
+        // If user unchecked, set day as open
         updated[index].closed = false;
       }
       return updated;
     });
   };
 
-  /** Handle form submission */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+/** Handle form submission */
+const handleSubmit = async (e: FormEvent) => {
+  e.preventDefault();
 
-    // Basic validation
-    if (password !== repeatPassword) {
-      setError("Passwords do not match!");
+  if (password !== repeatPassword) {
+    setError("Passwords do not match!");
+    return;
+  }
+
+  setError("");
+
+  // Transform openingHours to place "closed" if day is closed
+  const finalHours = openingHours.map((dayObj) => {
+    if (dayObj.closed) {
+      return { dayName: dayObj.dayName, open: "closed", close: "closed" };
+    }
+    return { dayName: dayObj.dayName, open: dayObj.open, close: dayObj.close };
+  });
+
+  // Prepare address object
+  const address: AddressFormData = {
+    line1: addressLine1,
+    line2: addressLine2,
+    line3: addressLine3,
+    city,
+    county,
+    postcode,
+    country,
+  };
+
+  // 1) If a photo is selected, call our Next.js route that does server-side S3 uploading
+  let photoUrl = "";
+  if (photo) {
+    try {
+      // Build a FormData object with the file
+      const formData = new FormData();
+      formData.append("file", photo);
+
+      // Make the request to our route
+      const uploadRes = await fetch("/api/integrations/upload", {
+        method: "PUT", // or "POST"
+        body: formData,
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to server");
+      }
+
+      const { fileUrl } = await uploadRes.json();
+      photoUrl = fileUrl;
+    } catch (err) {
+      console.error("Error uploading photo to Next.js route:", err);
+      setError("Failed to upload photo. Please try again.");
+      return;
+    }
+  }
+
+  // 2) Now send the entire form data (including photoUrl if uploaded) to your /api/practice/register
+  try {
+    const res = await fetch("/api/practice/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        practiceName,
+        email,
+        password,
+        phoneNumber,
+        photo: photoUrl,
+        address,
+        openingHours: finalHours,
+      }),
+    });
+
+    if (res.redirected) {
+      window.location.href = res.url;
       return;
     }
 
-    setError("");
-
-    // Transform openingHours to place "closed" if day is closed
-    const finalHours = openingHours.map((dayObj) => {
-      if (dayObj.closed) {
-        return {
-          dayName: dayObj.dayName,
-          open: "closed",
-          close: "closed",
-        };
-      } else {
-        return {
-          dayName: dayObj.dayName,
-          open: dayObj.open,
-          close: dayObj.close,
-        };
-      }
-    });
-
-    // Construct the practice data (adapt as needed for your API)
-    const formData = {
-      practiceName,
-      email,
-      password,
-      phoneNumber,
-      photo,
-      address: {
-        line1: addressLine1,
-        line2: addressLine2,
-        line3: addressLine3,
-        city,
-        county,
-        postcode,
-        country,
-      },
-      openingHours: finalHours,
-    };
-
-    console.log("Practice Register Form Data:", formData);
-
-    try {
-      const res = await fetch("/api/practice/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Registration failed");
-
-      console.log("Practice registered:", data);
-
-      // If success:
-      if (onSuccess) onSuccess();
-    } catch (err: unknown) {
-      console.error("Error during registration:", err);
-      setError("Registration failed. Please try again.");
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Registration failed");
     }
-  };
+
+    console.log("Practice registered:", data);
+    // If success, optionally reset form or route away
+    if (onSuccess) onSuccess();
+  } catch (err) {
+    console.error("Error during registration:", err);
+    setError("Registration failed. Please try again.");
+  }
+};
+
 
   return (
     <div className={styles.formWrapper}>
@@ -433,7 +461,6 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
           {openingHours.map((dayObj, index) => (
             <div key={dayObj.dayName} className={styles.dayRow}>
               <div className={styles.dayLabel}>{dayObj.dayName}:</div>
-
               <input
                 type="time"
                 value={dayObj.open}
@@ -449,7 +476,6 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 className={styles.inputTime}
                 disabled={dayObj.closed}
               />
-
               <label className={styles.closedCheckbox}>
                 <input
                   type="checkbox"
@@ -458,7 +484,6 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 />
                 Closed
               </label>
-
             </div>
           ))}
         </div>
