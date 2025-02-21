@@ -1,5 +1,6 @@
 import { hashPassword } from "@/lib/utils/auth";
 import { OpeningHoursItem, Practice, PracticePreferences } from "@/types/practice";
+import { uploadFileBuffer, deleteFileFromS3, extractKeyFromS3Url } from '@/lib/integrations/s3Service';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
@@ -354,7 +355,8 @@ export async function fetchPracticeAndPreferencesById(practiceId: string) {
 
     return result.data.practice;
   } catch (error: unknown) {
-    console.error("Error in fetchPracticeAndPreferencesById:", error);
+    const message = error instanceof Error ? error.message : "Failed to fetch practice data";
+    console.error("Error in fetchPracticeAndPreferencesById:", message);
     return null;
   }
 }
@@ -495,8 +497,61 @@ export async function updatePractice(practiceId: string, fields: Partial<Practic
     }
 
     return result.data.update_practices_by_pk;
-  } catch (error) {
-    console.error("Error updating practice:", error);
-    throw new Error("Practice update failed. Please try again.");
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error updating practice";
+    console.error("Error updating practice:", message);
+    throw new Error(message);
   }
+}
+
+/**
+ * Updates the practice settings and, if a new file is provided,
+ * uploads it to S3 while deleting the existing photo (if applicable).
+ * 
+ * - Retrieves existing practice data to maintain other fields.
+ * - Uploads a new file if provided, replacing the old photo in S3.
+ * - Updates the practice record in the database with new settings.
+ * 
+ * @param practiceId - The unique identifier of the practice.
+ * @param settings - The updated practice settings (partial update).
+ * @param file - Optional file for practice photo upload.
+ * @returns The updated photo URL or null if unchanged.
+ * @throws Error if the practice is not found.
+ */
+export async function updatePracticeSettingsWithPhoto(
+  practiceId: string,
+  settings: any,
+  file?: File | null
+): Promise<{ photoUrl: string | null }> {
+  const existingPractice = await fetchPracticeAndPreferencesById(practiceId);
+  if (!existingPractice) {
+    throw new Error("Practice not found");
+  }
+
+  let photoUrl = existingPractice.photo || null;
+
+  if (file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const fileBuffer = Buffer.from(arrayBuffer);
+    photoUrl = await uploadFileBuffer(fileBuffer, file.name, file.type);
+
+    // If an old photo exists, delete it from S3.
+    if (existingPractice.photo) {
+      const keyToDelete = extractKeyFromS3Url(existingPractice.photo);
+      if (keyToDelete) {
+        await deleteFileFromS3(keyToDelete);
+      }
+    }
+  }
+
+  const updatedFields = {
+    practice_name: settings.practice_name || existingPractice.practice_name,
+    email: settings.email || existingPractice.email,
+    phone_number: settings.phone_number || existingPractice.phone_number,
+    opening_hours: settings.opening_hours || existingPractice.opening_hours,
+    photo: photoUrl,
+  };
+
+  await updatePractice(practiceId, updatedFields);
+  return { photoUrl };
 }
