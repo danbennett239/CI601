@@ -7,10 +7,9 @@ import { fetchPracticeAndPreferencesById, updatePractice, updatePracticeSettings
  */
 export async function GET(
   request: Request,
-  context: { params: { practiceId: string } }
-) {
+  context: { params: Promise<{ practiceId: string }> }) {
   try {
-    const { practiceId } = context.params;
+    const { practiceId } = await context.params;
     if (!practiceId) {
       return NextResponse.json({ error: 'Practice ID is required' }, { status: 400 });
     }
@@ -33,10 +32,9 @@ export async function GET(
  */
 export async function PUT(
   request: Request,
-  context: { params: { practiceId: string } }
-) {
+  context: { params: Promise<{ practiceId: string }> }) {
   try {
-    const { practiceId } = context.params;
+    const { practiceId } = await context.params;
     if (!practiceId) {
       return NextResponse.json({ error: "Practice ID is required" }, { status: 400 });
     }
