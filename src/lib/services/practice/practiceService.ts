@@ -121,8 +121,6 @@ export async function insertPracticePreferences(practiceId: string): Promise<Pra
         enable_email_notifications
         notify_on_new_booking
         hide_delete_confirmation
-        created_at
-        updated_at
       }
     }
   `;

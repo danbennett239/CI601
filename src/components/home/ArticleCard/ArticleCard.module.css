@@ -1,0 +1,20 @@
+/* components/home/ArticleCard.module.css */
+.card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  overflow: hidden;
+}
+
+.image {
+  object-fit: cover;
+  width: 100%;
+  height: 160px;
+}
+
+.title {
+  padding: 1rem;
+  font-size: 1.25rem;
+  color: #333;
+}
