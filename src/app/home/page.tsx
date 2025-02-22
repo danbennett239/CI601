@@ -26,19 +26,19 @@ export default async function Home() {
     { id: 4, title: "Understanding Cavities", image: "/dummy5.jpg", excerpt: "What you need to know." },
   ];
 
-  const featuredDentist = {
-    name: "Dr. Jane Smith",
-    practice: "Smile Dental",
-    specialty: "Cosmetic Dentistry",
-    image: "/dummy4.jpg",
-  };
+  // const featuredDentist = {
+  //   name: "Dr. Jane Smith",
+  //   practice: "Smile Dental",
+  //   specialty: "Cosmetic Dentistry",
+  //   image: "/dummy4.jpg",
+  // };
 
   return (
     <HomeDashboard
       appointments={appointmentsData}
       topPractices={practicesData}
       articles={articlesData}
-      featuredDentist={featuredDentist}
+      // featuredDentist={featuredDentist}
     />
   );
 }
