@@ -10,10 +10,11 @@ interface HomeDashboardProps {
   appointments: Array<{ id: number; practice: string; time: string; type: string; price: number; image: string }>;
   topPractices: Array<{ id: number; name: string; rating: number; reviews: number; image: string }>;
   articles: Array<{ id: number; title: string; image: string; excerpt: string }>;
-  featuredDentist: { name: string; practice: string; specialty: string; image: string };
+  // featuredDentist: { name: string; practice: string; specialty: string; image: string };
 }
 
-export function HomeDashboard({ appointments, topPractices, articles, featuredDentist }: HomeDashboardProps) {
+// export function HomeDashboard({ appointments, topPractices, articles, featuredDentist }: HomeDashboardProps) {
+export function HomeDashboard({ appointments, topPractices, articles }: HomeDashboardProps) {
   return (
     <>
       <header className={styles.header}>
