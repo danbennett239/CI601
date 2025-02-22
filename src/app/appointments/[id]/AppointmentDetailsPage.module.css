@@ -1,0 +1,105 @@
+.detailPage {
+  width: 100vw;
+  min-height: 100vh;
+  background: #fff;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.header {
+  padding: 4rem 0;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(0, 123, 255, 0.1) 0%, rgba(0, 123, 255, 0.05) 100%);
+}
+
+.title {
+  font-size: 3rem;
+  font-weight: 800;
+  margin-bottom: 1rem;
+}
+
+.subtitle {
+  font-size: 1.5rem;
+  opacity: 0.8;
+}
+
+.content {
+  max-width: 800px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.image {
+  width: 100%;
+  max-width: 400px;
+  height: auto;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.details {
+  flex: 1;
+  min-width: 300px;
+}
+
+.details p {
+  font-size: 1.1rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.details strong {
+  color: #000;
+}
+
+.actions {
+  display: flex;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.bookButton {
+  padding: 1rem 2rem;
+  background: #007bff;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.bookButton:hover {
+  background: #0056b3;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
+.backButton {
+  padding: 1rem 2rem;
+  background: #f8f9fa;
+  color: #007bff;
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.backButton:hover {
+  background: #e9ecef;
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .content { flex-direction: column; padding: 0 0.5rem; }
+  .title { font-size: 2.5rem; }
+  .subtitle { font-size: 1.2rem; }
+  .image { max-width: 100%; }
+  .actions { flex-direction: column; }
+  .bookButton, .backButton { padding: 0.75rem 1.5rem; font-size: 1rem; }
+}
