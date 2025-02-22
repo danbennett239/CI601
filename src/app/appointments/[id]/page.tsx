@@ -13,8 +13,9 @@ const appointments = [
   { id: 5, practice: "Healthy Smiles", time: "2025-02-27 15:00", type: "Check-up", price: 70, distance: 4.5, image: "/dummy5.jpg", description: "Routine dental health check." },
 ];
 
-export default function AppointmentDetail({ params }: { params: { id: string } }) {
-  const appointment = appointments.find((appt) => appt.id === Number(params.id));
+export default async function AppointmentDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const appointment = appointments.find((appt) => appt.id === Number(id));
 
   if (!appointment) {
     notFound();
