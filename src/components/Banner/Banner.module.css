@@ -1,14 +1,20 @@
-/* Banner Container */
+/* Banner.module.css */
 .banner {
   background-color: var(--primary-color);
   color: var(--white);
   display: flex;
   align-items: center;
-  justify-content: space-between; /* Logo on the left, Sign In on the right */
+  justify-content: space-between;
   padding: 10px 20px;
+  position: fixed; /* Pin to top */
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000; /* Above other content */
+  height: 60px; /* Fixed height for consistency */
 }
 
-/* Logo Section */
+/* Adjust existing styles as needed */
 .logoSection {
   display: flex;
   align-items: center;
@@ -32,7 +38,6 @@
   gap: 15px;
 }
 
-/* Sign In Section */
 .navItem {
   color: var(--white);
   background-color: var(--primary-color);
@@ -43,17 +48,17 @@
   transition: background-color 0.3s, color 0.3s;
 }
 
-/* Hover Effect for Sign In Section */
 .navItem:hover {
   background-color: var(--white);
   color: var(--primary-color);
 }
 
-/* Mobile Responsiveness */
 @media (max-width: 768px) {
   .banner {
     flex-direction: column;
     text-align: center;
+    height: auto;
+    padding: 10px;
   }
 
   .navItem {

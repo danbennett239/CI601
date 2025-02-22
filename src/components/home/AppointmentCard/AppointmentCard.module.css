@@ -1,29 +1,55 @@
-/* components/home/AppointmentCard.module.css */
+/* Example adjustment for AppointmentCard.module.css */
 .card {
-  padding: 1.5rem;
-  border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: 16px;
+  overflow: hidden;
   background: white;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease;
+  width: 100%; /* Ensure it fits the container */
+  max-width: 300px; /* Keep a reasonable max width */
+  margin: 0 auto; /* Center within grid */
+}
+
+.card:hover {
+  transform: translateY(-5px);
+}
+
+.image {
+  object-fit: cover;
+  width: 100%;
+  height: 180px;
+}
+
+.content {
+  padding: 1.5rem;
 }
 
 .practice {
-  font-size: 1.25rem;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
   margin-bottom: 0.5rem;
-  color: #333;
 }
 
 .time {
   color: #666;
-  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+  margin-bottom: 0.75rem;
+}
+
+.details {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 .type {
   color: #007bff;
-  margin-bottom: 0.25rem;
+  font-weight: 500;
 }
 
 .price {
-  font-weight: bold;
-  color: #333;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #000;
 }
