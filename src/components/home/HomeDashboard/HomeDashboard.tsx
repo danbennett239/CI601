@@ -2,7 +2,7 @@
 import { AppointmentCard } from "../AppointmentCard/AppointmentCard";
 import { PracticeCard } from "../PracticeCard/PracticeCard";
 import { ArticleCard } from "../ArticleCard/ArticleCard";
-import { FeaturedDentist } from "../FeaturedDentist/FeaturedDentist";
+// import { FeaturedDentist } from "../FeaturedDentist/FeaturedDentist";
 import styles from "./HomeDashboard.module.css";
 import Link from "next/link";
 

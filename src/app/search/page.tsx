@@ -103,7 +103,7 @@ export default function SearchPage() {
     <div className={styles.searchPage}>
       <header className={styles.header}>
         <h1 className={styles.title}>Find Your Appointment</h1>
-        <p className={styles.subtitle}>Filter and book available dental slots</p>
+        <p className={styles.subtitle}>Filter&#44; view and book available dental slots</p>
       </header>
 
       <div className={styles.content}>
