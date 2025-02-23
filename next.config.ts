@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  basePath: "/home", // Sets the base URL to /home
   async redirects() {
     return [
       {
