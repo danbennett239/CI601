@@ -1,10 +1,38 @@
-/* app/admin-panel/AdminPanelPage.module.css */
 .container {
   padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; /* Consistent font */
+  background: #fff;
+  min-height: 100vh;
 }
 
 .cardsContainer {
   display: flex;
-  gap: 20px;
   flex-wrap: wrap;
+  gap: 30px;
+  justify-content: flex-start;
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding-top: 15px;
+  padding-left: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 20px;
+  }
+
+  .cardsContainer {
+    gap: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 15px;
+  }
+
+  .cardsContainer {
+    gap: 15px;
+  }
 }

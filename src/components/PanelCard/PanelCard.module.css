@@ -1,23 +1,72 @@
-/* components/admin/AdminPanelCard/AdminPanelCard.module.css */
 .card {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 150px;
-  height: 150px;
-  background-color: #ccc;
+  width: 200px;
+  height: 200px;
+  background: linear-gradient(135deg, #ccc 0%, #aaa 100%);
   text-decoration: none;
-  border-radius: 8px;
-  transition: background-color 0.3s ease;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+  position: relative;
 }
 
 .card:hover {
-  background-color: #bbb;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+}
+
+.cardContent {
+  text-align: center;
+  padding: 1rem;
+  z-index: 1;
 }
 
 .cardContent h2 {
-  color: var(--primary-color);
-  text-align: center;
-  font-size: 16px;
+  color: #333;
+  font-size: 1.25rem;
+  font-weight: 600;
   margin: 0;
+  line-height: 1.2;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.2);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.card:hover::before {
+  opacity: 1;
+}
+
+@media (max-width: 768px) {
+  .card {
+    width: 150px;
+    height: 150px;
+  }
+
+  .cardContent h2 {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    width: 120px;
+    height: 120px;
+  }
+
+  .cardContent h2 {
+    font-size: 0.875rem;
+  }
 }
