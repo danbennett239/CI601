@@ -44,7 +44,7 @@ export default function MyAppointmentsPage() {
           throw new Error(errorData.error || "Failed to fetch appointments");
         }
         const data = await response.json();
-        const fetchedAppointments: Appointment[] = data.appointments.map((appt: any) => ({
+        const fetchedAppointments: Appointment[] = data.appointments.map((appt: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
           appointmentId: appt.appointment_id,
           dateTime: appt.start_time,
           service: appt.title,

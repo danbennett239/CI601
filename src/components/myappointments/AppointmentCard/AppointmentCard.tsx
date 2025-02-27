@@ -1,4 +1,3 @@
-// components/myappointments/AppointmentCard/AppointmentCard.tsx
 "use client";
 
 import React from "react";
@@ -14,9 +13,9 @@ interface AppointmentCardProps {
   practiceId: string;
   review?: { rating: number; comment: string; reviewId?: string };
   disputed?: boolean;
-  onReview?: () => void; // Made optional
-  onEditReview?: () => void; // Made optional
-  onDispute?: (appointmentId: string) => void; // Made optional
+  onReview?: () => void;
+  onEditReview?: () => void;
+  onDispute?: (appointmentId: string) => void;
 }
 
 export default function AppointmentCard({
@@ -25,7 +24,6 @@ export default function AppointmentCard({
   service,
   practice,
   practiceAddress,
-  practiceId,
   review,
   disputed,
   onReview,
