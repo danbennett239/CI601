@@ -65,9 +65,14 @@ const Banner: React.FC = () => {
       ) : user ? (
         <>
           {user.role === "user" && (
+            <>
+            <Link href="/my-appointments" onClick={closeMenu}>
+              <div className={styles.navItem}>My Appointments</div>
+            </Link>
             <Link href="/profile" onClick={closeMenu}>
               <div className={styles.navItem}>Profile Management</div>
             </Link>
+            </>
           )}
           {user.role === "admin" && (
             <Link href="/admin-panel" onClick={closeMenu}>

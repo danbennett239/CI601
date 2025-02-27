@@ -1,0 +1,88 @@
+/* components/my-appointments/AppointmentCard.module.css */
+.card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 1.5rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.details {
+  flex: 2;
+}
+
+.practice {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #000;
+  margin-bottom: 0.5rem;
+}
+
+.dateTime, .service, .address {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 0.25rem;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-end;
+}
+
+.reviewButton, .disputeButton {
+  padding: 0.5rem 1rem;
+  background: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: 50px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.reviewButton:hover, .disputeButton:not(.disabled):hover {
+  background: var(--primary-color-dark);
+  transform: translateY(-2px);
+}
+
+.rating {
+  font-size: 1.25rem;
+  color: #ffb400;
+}
+
+.disputeContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.disputeButton.disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+@media (max-width: 768px) {
+  .card {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .actions {
+    align-items: flex-start;
+    margin-top: 1rem;
+  }
+}
