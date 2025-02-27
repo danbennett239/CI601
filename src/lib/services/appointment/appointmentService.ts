@@ -1,21 +1,20 @@
-// lib/services/appointmentService.ts
 import { Appointment } from '@/types/practice';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
 
-export async function getAppointments(filters: { 
-  practiceId?: string; 
-  start_time?: string; 
-  end_time?: string; 
+export async function getAppointments(filters: {
+  practiceId?: string;
+  startTime?: string;
+  endTime?: string;
   booked?: string;
 }) {
   const query = `
-    query GetAppointments($practiceId: uuid, $start_time: timestamp, $end_time: timestamp, $booked: Boolean) {
+    query GetAppointments($practiceId: uuid, $startTime: timestamp, $endTime: timestamp, $booked: Boolean) {
       appointments(where: {
          practice_id: { _eq: $practiceId },
-         start_time: { _gte: $start_time },
-         end_time: { _lte: $end_time },
+         start_time: { _gte: $startTime },
+         end_time: { _lte: $endTime },
          ${filters.booked !== undefined ? `booked: { _eq: $booked }` : ""}
       }) {
          appointment_id
@@ -33,17 +32,15 @@ export async function getAppointments(filters: {
 
   const variables: {
     practiceId?: string;
-    start_time?: string;
-    end_time?: string;
+    startTime?: string;
+    endTime?: string;
     booked?: boolean;
   } = {
     practiceId: filters.practiceId,
-    start_time: filters.start_time,
-    end_time: filters.end_time,
+    startTime: filters.startTime,
+    endTime: filters.endTime,
   };
-  
 
-  // Only add `booked` if it's explicitly true or false
   if (filters.booked !== undefined) {
     variables.booked = filters.booked === "true";
   }
@@ -103,6 +100,59 @@ export async function getAppointmentById(appointmentId: string) {
   } catch (error: unknown) {
     console.error("Error in getAppointmentById:", error);
     const message = error instanceof Error ? error.message : "Error fetching appointment";
+    throw new Error(message);
+  }
+}
+
+export async function getUserAppointmentsWithDetails(userId: string) {
+  const query = `
+    query GetAppointmentsAndReviews($userId: uuid!) {
+      appointments(where: { user_id: { _eq: $userId } }) {
+        appointment_id
+        practice_id
+        user_id
+        title
+        start_time
+        end_time
+        booked
+        created_at
+        updated_at
+        practice {
+          practice_name
+          email
+          phone_number
+          photo
+          address
+          opening_hours
+        }
+        practice_review {
+          review_id
+          rating
+          comment
+          created_at
+          updated_at
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables: { userId } }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error fetching appointments and reviews");
+    }
+    return result.data.appointments;
+  } catch (error: unknown) {
+    console.error("Error in getAppointmentsAndReviews:", error);
+    const message = error instanceof Error ? error.message : "Error fetching appointments and reviews";
     throw new Error(message);
   }
 }

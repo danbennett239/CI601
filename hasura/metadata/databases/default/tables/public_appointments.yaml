@@ -1,3 +1,14 @@
 table:
   name: appointments
   schema: public
+object_relationships:
+  - name: practice
+    using:
+      foreign_key_constraint_on: practice_id
+  - name: practice_review
+    using:
+      foreign_key_constraint_on:
+        column: appointment_id
+        table:
+          name: practice_reviews
+          schema: public

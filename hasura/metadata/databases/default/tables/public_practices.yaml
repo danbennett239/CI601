@@ -26,6 +26,13 @@ array_relationships:
         table:
           name: practice_invites
           schema: public
+  - name: practice_reviews
+    using:
+      foreign_key_constraint_on:
+        column: practice_id
+        table:
+          name: practice_reviews
+          schema: public
   - name: users
     using:
       foreign_key_constraint_on:

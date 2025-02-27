@@ -1,4 +1,4 @@
-/* components/my-appointments/AppointmentCard.module.css */
+/* components/myappointments/AppointmentCard/AppointmentCard.module.css */
 .card {
   display: flex;
   justify-content: space-between;
@@ -40,7 +40,13 @@
   align-items: flex-end;
 }
 
-.reviewButton, .disputeButton {
+.reviewContainer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.reviewButton, .disputeButton, .editButton {
   padding: 0.5rem 1rem;
   background: var(--primary-color);
   color: white;
@@ -52,9 +58,18 @@
   transition: all 0.3s ease;
 }
 
-.reviewButton:hover, .disputeButton:not(.disabled):hover {
+.reviewButton:hover, .disputeButton:not(.disabled):hover, .editButton:hover {
   background: var(--primary-color-dark);
   transform: translateY(-2px);
+}
+
+.editButton {
+  background: #f8f9fa;
+  color: #000;
+}
+
+.editButton:hover {
+  background: #e9ecef;
 }
 
 .rating {
@@ -84,5 +99,16 @@
   .actions {
     align-items: flex-start;
     margin-top: 1rem;
+    width: 100%; /* Ensure full width for better spacing */
+  }
+
+  .reviewContainer {
+    flex-direction: row; /* Keep horizontal on mobile */
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .disputeContainer {
+    width: 100%; /* Ensure dispute section takes full width */
   }
 }

@@ -1,18 +1,25 @@
-// components/myappointments/ReviewPopup/ReviewPopup.tsx
 "use client";
 
 import React, { useState } from "react";
-import styles from "./ReviewPopup.module.css";
+import styles from "./EditReviewPopup.module.css";
 
-interface ReviewPopupProps {
+interface EditReviewPopupProps {
   appointmentId: string;
+  initialRating: number;
+  initialComment: string;
   onClose: () => void;
   onSubmit: (appointmentId: string, rating: number, comment: string) => void;
 }
 
-export default function ReviewPopup({ appointmentId, onClose, onSubmit }: ReviewPopupProps) {
-  const [rating, setRating] = useState(0);
-  const [comment, setComment] = useState("");
+export default function EditReviewPopup({
+  appointmentId,
+  initialRating,
+  initialComment,
+  onClose,
+  onSubmit,
+}: EditReviewPopupProps) {
+  const [rating, setRating] = useState(initialRating);
+  const [comment, setComment] = useState(initialComment);
 
   const handleStarClick = (value: number) => {
     setRating(value);
@@ -30,7 +37,7 @@ export default function ReviewPopup({ appointmentId, onClose, onSubmit }: Review
         <button className={styles.closeButton} onClick={onClose}>
           ✕
         </button>
-        <h3 className={styles.title}>Leave a Review</h3>
+        <h3 className={styles.title}>Edit Review</h3>
         <div className={styles.starRating}>
           {[1, 2, 3, 4, 5].map((star) => (
             <div key={star} className={styles.starContainer}>
@@ -57,7 +64,7 @@ export default function ReviewPopup({ appointmentId, onClose, onSubmit }: Review
         />
         <div className={styles.actions}>
           <button onClick={handleSubmit} className={styles.submitButton} disabled={rating === 0}>
-            Submit
+            Save
           </button>
           <button onClick={onClose} className={styles.cancelButton}>
             Cancel

@@ -1,3 +1,4 @@
+// components/myappointments/AppointmentCard/AppointmentCard.tsx
 "use client";
 
 import React from "react";
@@ -5,26 +6,30 @@ import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";
 import styles from "./AppointmentCard.module.css";
 
 interface AppointmentCardProps {
-  id: number;
+  appointmentId: string;
   dateTime: string;
   service: string;
   practice: string;
   practiceAddress: string;
-  review?: { rating: number; comment: string };
+  practiceId: string;
+  review?: { rating: number; comment: string; reviewId?: string };
   disputed?: boolean;
-  onReview: () => void;
-  onDispute: (appointmentId: number) => void;
+  onReview?: () => void; // Made optional
+  onEditReview?: () => void; // Made optional
+  onDispute?: (appointmentId: string) => void; // Made optional
 }
 
 export default function AppointmentCard({
-  id,
+  appointmentId,
   dateTime,
   service,
   practice,
   practiceAddress,
+  practiceId,
   review,
   disputed,
   onReview,
+  onEditReview,
   onDispute,
 }: AppointmentCardProps) {
   const appointmentDate = new Date(dateTime);
@@ -56,29 +61,40 @@ export default function AppointmentCard({
       </div>
       <div className={styles.actions}>
         {review ? (
-          <div className={styles.rating}>
-            {renderStars(review.rating)}
+          <div className={styles.reviewContainer}>
+            <div className={styles.rating}>
+              {renderStars(review.rating)}
+            </div>
+            {onEditReview && (
+              <button onClick={onEditReview} className={styles.editButton}>
+                Edit
+              </button>
+            )}
           </div>
         ) : (
-          <button onClick={onReview} className={styles.reviewButton}>
-            Leave Review
-          </button>
+          onReview && (
+            <button onClick={onReview} className={styles.reviewButton}>
+              Leave Review
+            </button>
+          )
         )}
-        <div className={styles.disputeContainer}>
-          {!canDispute && (
-            <InfoTooltip
-              title="Dispute Period Expired"
-              description="Disputes can only be raised within 5 calendar days after the appointment date."
-            />
-          )}
-          <button
-            onClick={() => canDispute && onDispute(id)}
-            className={`${styles.disputeButton} ${!canDispute ? styles.disabled : ''}`}
-            disabled={!canDispute}
-          >
-            Raise Dispute
-          </button>
-        </div>
+        {onDispute && (
+          <div className={styles.disputeContainer}>
+            <button
+              onClick={() => canDispute && onDispute(appointmentId)}
+              className={`${styles.disputeButton} ${!canDispute ? styles.disabled : ''}`}
+              disabled={!canDispute}
+            >
+              Raise Dispute
+            </button>
+            {!canDispute && (
+              <InfoTooltip
+                title="Dispute Period Expired"
+                description="Disputes can only be raised within 5 calendar days after the appointment date."
+              />
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
