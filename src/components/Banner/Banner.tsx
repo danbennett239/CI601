@@ -3,7 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useUser } from "@/hooks/useUser"; // adjust the path if necessary
+import { useUser } from "@/hooks/useUser";
 import styles from "./Banner.module.css";
 
 const Banner: React.FC = () => {
@@ -45,6 +45,11 @@ const Banner: React.FC = () => {
         <Link href="/home">
           <div className={styles.navItem}>Home</div>
         </Link>
+        {(!user || !["admin", "unverified-practice", "verified-practice"].includes(user.role)) && (
+          <Link href="/search">
+            <div className={styles.navItem}>Book Appointment</div>
+          </Link>
+        )}
         {loading ? (
           <p>Loading...</p>
         ) : user ? (
