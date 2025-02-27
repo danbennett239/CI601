@@ -61,8 +61,26 @@
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
 @media (max-width: 768px) {
-  .content { flex-direction: column; padding: 1rem 0.5rem; }
-  .title { font-size: 1.75rem; margin-left: 2.5vw; }
-  .subtitle { font-size: 0.875rem; margin-left: 2.5vw; }
-  .cardsGrid { grid-template-columns: 1fr; }
+  .content { 
+    flex-direction: column; 
+    padding: 1rem 0.5rem; 
+  }
+  .title { 
+    font-size: 1.75rem; 
+    margin-left: 2.5vw; 
+  }
+  .subtitle { 
+    font-size: 0.875rem; 
+    margin-left: 2.5vw; 
+  }
+  .cardsGrid { 
+    grid-template-columns: 1fr;
+    gap: 1rem;
+    padding: 0 0.5rem;
+  }
+  .cardsGrid > * {
+    width: 100%;
+    min-width: 0;
+    margin: 0 auto;
+  }
 }

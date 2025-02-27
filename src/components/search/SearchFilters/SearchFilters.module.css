@@ -5,6 +5,8 @@
   background: #f8f9fa;
   border-radius: 16px;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-height: 875px; /* Use pixel value of VH so that space at the bottom doesn't scale with screen height */
+  overflow-y: auto;
 }
 
 .filterTitle {
@@ -185,7 +187,11 @@
 }
 
 @media (max-width: 768px) {
-  .filters { padding: 1rem; }
+  .filters { 
+    padding: 1rem;
+    max-height: none;
+    overflow-y: visible;
+  }
   .filterTitle { font-size: 1.25rem; }
   .filterLabel { font-size: 1rem; }
   .priceInput { width: 60px; }
