@@ -1,20 +1,22 @@
-/* Banner.module.css */
 .banner {
   background-color: var(--primary-color);
   color: var(--white);
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 1000;
+  height: 60px;
+  border-bottom: 1px solid transparent;
+}
+
+.bannerContent {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 10px 20px;
-  position: fixed; /* Pin to top */
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000; /* Above other content */
-  height: 60px; /* Fixed height for consistency */
 }
 
-/* Adjust existing styles as needed */
 .logoSection {
   display: flex;
   align-items: center;
@@ -53,15 +55,113 @@
   color: var(--primary-color);
 }
 
+.hamburger {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 10px;
+}
+
+.hamburgerIcon {
+  width: 25px;
+  height: 3px;
+  background-color: var(--white);
+  position: relative;
+  transition: all 0.3s ease-in-out;
+  display: block;
+}
+
+.hamburgerIcon::before,
+.hamburgerIcon::after {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 3px;
+  background-color: var(--white);
+  transition: all 0.3s ease-in-out;
+}
+
+.hamburgerIcon::before {
+  top: -8px;
+  left: 0;
+}
+
+.hamburgerIcon::after {
+  top: 8px;
+  left: 0;
+}
+
+.menuOpen .hamburgerIcon {
+  background-color: transparent;
+}
+
+.menuOpen .hamburgerIcon::before {
+  transform: rotate(45deg) translate(5.5px, 5.5px);
+}
+
+.menuOpen .hamburgerIcon::after {
+  transform: rotate(-45deg) translate(5.5px, -5.5px);
+}
+
+.mobileNav {
+  width: 100%;
+  background-color: var(--primary-color);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease-in-out;
+}
+
+.mobileNavOpen {
+  max-height: 500px;
+}
+
+.mobileNav .navItem {
+  width: 100%;
+  text-align: center;
+  padding: 15px;
+  margin: 0;
+  position: relative;
+}
+
+.mobileNav .navItem:first-child::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--pale-blue);
+}
+
+.mobileNav .navItem:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--pale-blue);
+}
+
 @media (max-width: 768px) {
-  .banner {
-    flex-direction: column;
-    text-align: center;
-    height: auto;
-    padding: 10px;
+  .bannerContent {
+    position: relative;
   }
 
-  .navItem {
-    margin-top: 10px;
+  .navSection {
+    display: none;
+  }
+
+  .hamburger {
+    display: block;
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+  }
+
+  .menuOpen {
+    height: auto;
   }
 }

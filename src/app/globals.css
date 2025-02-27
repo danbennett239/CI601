@@ -2,6 +2,7 @@
   --primary-color: #007bff;
   --primary-color-dark: #0056b3;
   --secondary-color: #84888b;
+  --pale-blue:#EAF4FF;
   --white: #ffffff;
   --font-family: 'Arial, sans-serif';
   --background: #ffffff;
@@ -25,7 +26,8 @@ body {
   font-family: Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  padding-top: 60px; /* Default desktop banner height */
+  padding-top: 60px;
+  /* Default desktop banner height */
 }
 
 * {
