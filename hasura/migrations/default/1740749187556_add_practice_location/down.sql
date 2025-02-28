@@ -1,0 +1,6 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- CREATE EXTENSION IF NOT EXISTS postgis;
+--
+-- ALTER TABLE practices
+--   ADD COLUMN location geometry(Point, 4326);
