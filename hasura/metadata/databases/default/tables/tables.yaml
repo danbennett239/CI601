@@ -3,4 +3,5 @@
 - "!include public_practice_preferences.yaml"
 - "!include public_practice_reviews.yaml"
 - "!include public_practices.yaml"
+- "!include public_practices_with_distance.yaml"
 - "!include public_users.yaml"

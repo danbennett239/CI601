@@ -1,6 +1,7 @@
 import { hashPassword } from "@/lib/utils/auth";
 import { OpeningHoursItem, Practice, PracticePreferences } from "@/types/practice";
 import { uploadFileBuffer, deleteFileFromS3, extractKeyFromS3Url } from '@/lib/integrations/s3Service';
+import { geocodePostcode, toGeoJSONPoint } from '@/lib/utils/location';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
@@ -14,6 +15,7 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
     $photo: String,
     $address: jsonb,
     $opening_hours: jsonb,
+    $location: geometry
   ) {
     insert_practices_one(
       object: {
@@ -23,7 +25,8 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
         photo: $photo,
         address: $address,
         opening_hours: $opening_hours,
-        verified: false
+        verified: false,
+        location: $location,
         users: {
           data: {
             first_name: "",
@@ -64,6 +67,8 @@ export async function createPracticeWithUser({
 }) {
   try {
     const hashedPassword = await hashPassword(password);
+    const coords = await geocodePostcode(address.postcode);
+    const location = toGeoJSONPoint(coords);
 
     const response = await fetch(HASURA_GRAPHQL_URL, {
       method: "POST",
@@ -81,6 +86,7 @@ export async function createPracticeWithUser({
           photo,
           address,
           opening_hours: openingHours,
+          location,
         },
       }),
     });
