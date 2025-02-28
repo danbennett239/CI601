@@ -1,7 +1,12 @@
-// app/home/page.tsx
-import { HomeDashboard } from "@/components/home/HomeDashboard/HomeDashboard";
+"use client";
 
-export default async function Home() {
+import React from "react";
+import { HomeDashboard } from "@/components/home/HomeDashboard/HomeDashboard";
+import { useGeoLocation } from "@/hooks/useGeoLocation";
+
+export default function Home() {
+  const { loading, error, latitude, longitude } = useGeoLocation();
+  // Mock data
   const appointmentsData = [
     { id: 1, practice: "Smile Dental", time: "2025-02-25 10:00", type: "Cleaning", price: 80, image: "/dummy1.jpg" },
     { id: 2, practice: "Bright Teeth", time: "2025-02-25 14:30", type: "Check-up", price: 60, image: "/dummy2.jpg" },
@@ -26,19 +31,20 @@ export default async function Home() {
     { id: 4, title: "Understanding Cavities", image: "/dummy5.jpg", excerpt: "What you need to know." },
   ];
 
-  // const featuredDentist = {
-  //   name: "Dr. Jane Smith",
-  //   practice: "Smile Dental",
-  //   specialty: "Cosmetic Dentistry",
-  //   image: "/dummy4.jpg",
-  // };
-
   return (
-    <HomeDashboard
-      appointments={appointmentsData}
-      topPractices={practicesData}
-      articles={articlesData}
-      // featuredDentist={featuredDentist}
-    />
+    <>
+      {loading && <div>Loading location...</div>}
+      {error && <div>Error: {error}</div>}
+      {latitude && longitude && (
+        <div>
+          Your Location: Lat {latitude}, Lon {longitude}
+        </div>
+      )}
+      <HomeDashboard
+        appointments={appointmentsData}
+        topPractices={practicesData}
+        articles={articlesData}
+      />
+    </>
   );
 }
