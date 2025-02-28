@@ -2,7 +2,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   getAppointments,
-  getUserAppointmentsWithDetails,
   createAppointment,
 } from "@/lib/services/appointment/appointmentService";
 
@@ -12,14 +11,8 @@ export async function GET(request: NextRequest) {
   const startTime = searchParams.get("start_time") || undefined;
   const endTime = searchParams.get("end_time") || undefined;
   const booked = searchParams.get("booked") || undefined;
-  const userId = searchParams.get("userId") || undefined;
 
   try {
-    if (userId) {
-      const appointments = await getUserAppointmentsWithDetails(userId);
-      return NextResponse.json({ appointments });
-    }
-
     const appointments = await getAppointments({ practiceId, startTime, endTime, booked });
     return NextResponse.json({ appointments });
   } catch (error: unknown) {

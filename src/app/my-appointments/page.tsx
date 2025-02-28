@@ -7,6 +7,7 @@ import AppointmentCard from "@/components/myappointments/AppointmentCard/Appoint
 import ReviewPopup from "@/components/myappointments/ReviewPopup/ReviewPopup";
 import EditReviewPopup from "@/components/myappointments/EditReviewPopup/EditReviewPopup";
 import styles from "./MyAppointmentsPage.module.css";
+import { toast } from "react-toastify";
 
 interface Review {
   rating: number;
@@ -25,6 +26,37 @@ interface Appointment {
   disputed?: boolean;
 }
 
+// Local type for API response
+interface AddressResponse {
+  line1: string;
+  line2?: string;
+  line3?: string;
+  city: string;
+  county?: string;
+  postcode: string;
+  country: string;
+}
+
+interface PracticeResponse {
+  practice_name: string;
+  address: AddressResponse;
+}
+
+interface ReviewResponse {
+  review_id: string;
+  rating: number;
+  comment?: string;
+}
+
+interface AppointmentResponse {
+  appointment_id: string;
+  start_time: string;
+  title: string;
+  practice_id: string;
+  practice: PracticeResponse;
+  practice_review?: ReviewResponse;
+}
+
 export default function MyAppointmentsPage() {
   const { user, loading } = useUser();
   const [upcomingAppointments, setUpcomingAppointments] = useState<Appointment[]>([]);
@@ -38,13 +70,13 @@ export default function MyAppointmentsPage() {
       if (!user?.id) return;
 
       try {
-        const response = await fetch(`/api/appointment?userId=${encodeURIComponent(user.id)}`);
+        const response = await fetch(`/api/user/appointment?userId=${encodeURIComponent(user.id)}`);
         if (!response.ok) {
           const errorData = await response.json();
           throw new Error(errorData.error || "Failed to fetch appointments");
         }
         const data = await response.json();
-        const fetchedAppointments: Appointment[] = data.appointments.map((appt: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
+        const fetchedAppointments: Appointment[] = data.appointments.map((appt: AppointmentResponse) => ({
           appointmentId: appt.appointment_id,
           dateTime: appt.start_time,
           service: appt.title,
@@ -112,7 +144,7 @@ export default function MyAppointmentsPage() {
       setReviewPopupId(null);
     } catch (error) {
       console.error("Error submitting review:", error);
-      alert(error instanceof Error ? error.message : "Failed to submit review");
+      toast.error((error instanceof Error ? error.message : "Failed to submit review"));
     }
   };
 
@@ -139,6 +171,10 @@ export default function MyAppointmentsPage() {
       }
 
       const result = await response.json();
+      if (!result.data?.update_practice_reviews_by_pk) {
+        throw new Error("Failed to update review: No data returned");
+      }
+
       setPreviousAppointments((prev) =>
         prev.map((appt) =>
           appt.appointmentId === appointmentId ? { ...appt, review: { ...appt.review, rating, comment } } : appt
@@ -147,12 +183,12 @@ export default function MyAppointmentsPage() {
       setEditReviewPopupId(null);
     } catch (error) {
       console.error("Error updating review:", error);
-      alert(error instanceof Error ? error.message : "Failed to update review");
+      toast.error((error instanceof Error ? error.message : "Failed to update review"));
     }
   };
 
   const handleDispute = (appointmentId: string) => {
-    alert(`Dispute raised for appointment ${appointmentId} - Implement backend logic here!`);
+    toast.error((`Dispute raised for appointment ${appointmentId} - Implement backend logic here!`));
     setPreviousAppointments((prev) =>
       prev.map((appt) => (appt.appointmentId === appointmentId ? { ...appt, disputed: true } : appt))
     );
