@@ -627,3 +627,66 @@ export async function updatePracticeSettingsWithPhoto(
   await updatePractice(practiceId, updatedFields);
   return { photoUrl };
 }
+
+export async function getNearbyPractices(userLat: number, userLon: number, maxDistance: number): Promise<any[]> {
+  const query = `
+    query GetNearbyPractices($user_lat: float8!, $user_lon: float8!, $max_distance: float8!) {
+      get_nearby_practices(
+        args: {
+          user_lat: $user_lat
+          user_lon: $user_lon
+          max_distance: $max_distance
+        }
+        order_by: { distance: asc }
+      ) {
+        practice_id
+        practice_name
+        location
+        distance
+        email
+        phone_number
+        photo
+        address
+        opening_hours
+        verified
+        created_at
+        updated_at
+        verified_at
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query,
+        variables: {
+          user_lat: userLat,
+          user_lon: userLon,
+          max_distance: maxDistance,
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const result = await response.json();
+
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "Failed to fetch nearby practices");
+    }
+
+    return result.data.get_nearby_practices;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Failed to fetch nearby practices";
+    console.error("Error fetching nearby practices:", message);
+    throw new Error(message);
+  }
+}
