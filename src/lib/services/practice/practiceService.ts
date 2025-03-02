@@ -1,5 +1,6 @@
 import { hashPassword } from "@/lib/utils/auth";
 import { OpeningHoursItem, Practice, PracticePreferences } from "@/types/practice";
+import { NearbyPractice } from "@/types/practice";
 import { uploadFileBuffer, deleteFileFromS3, extractKeyFromS3Url } from '@/lib/integrations/s3Service';
 import { geocodePostcode, toGeoJSONPoint } from '@/lib/utils/location';
 
@@ -628,7 +629,7 @@ export async function updatePracticeSettingsWithPhoto(
   return { photoUrl };
 }
 
-export async function getNearbyPractices(userLat: number, userLon: number, maxDistance: number): Promise<any[]> {
+export async function getNearbyPractices(userLat: number, userLon: number, maxDistance: number): Promise<NearbyPractice[]> {
   const query = `
     query GetNearbyPractices($user_lat: float8!, $user_lon: float8!, $max_distance: float8!) {
       get_nearby_practices(

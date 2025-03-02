@@ -1,53 +1,79 @@
-"use client";
-
 import { notFound } from 'next/navigation';
 import styles from './AppointmentDetailsPage.module.css';
 import Link from 'next/link';
 
-// Dummy data (replace with backend fetch later)
-const appointments = [
-  { id: 1, practice: "Smile Dental", time: "2025-02-25 10:00", type: "Cleaning", price: 80, distance: 2.5, image: "/dummy1.jpg", description: "A routine cleaning to keep your smile bright." },
-  { id: 2, practice: "Bright Teeth", time: "2025-02-25 14:30", type: "Check-up", price: 60, distance: 5.0, image: "/dummy2.jpg", description: "A comprehensive dental check-up." },
-  { id: 3, practice: "Perfect Smile", time: "2025-02-26 11:15", type: "Filling", price: 120, distance: 1.8, image: "/dummy3.jpg", description: "Quick and painless cavity filling." },
-  { id: 4, practice: "Glow Dental", time: "2025-02-27 09:30", type: "Whitening", price: 150, distance: 3.2, image: "/dummy4.jpg", description: "Professional teeth whitening." },
-  { id: 5, practice: "Healthy Smiles", time: "2025-02-27 15:00", type: "Check-up", price: 70, distance: 4.5, image: "/dummy5.jpg", description: "Routine dental health check." },
-];
+async function fetchAppointment(id: string) {
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const response = await fetch(`${baseUrl}/api/appointment/${id}/details`, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
-export default async function AppointmentDetail({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-  const appointment = appointments.find((appt) => appt.id === Number(id));
+  if (!response.ok) {
+    throw new Error(`Failed to fetch appointment: ${response.status}`);
+  }
 
-  if (!appointment) {
+  const data = await response.json();
+  return data.appointment;
+}
+
+export default async function AppointmentDetail({ params }: { params: { id: string } }) {
+  const appointment = await fetchAppointment(params.id);
+
+  if (!appointment || appointment.booked) {
     notFound();
   }
 
-  const handleBook = () => {
-    alert(`Booking appointment ${appointment.id} - Implement backend logic here!`);
-  };
+  const avgRating = appointment.practice.practice_reviews_aggregate.aggregate.avg.rating || "N/A";
+  const reviewCount = appointment.practice.practice_reviews_aggregate.aggregate.count || 0;
 
   return (
     <div className={styles.detailPage}>
       <header className={styles.header}>
-        <h1 className={styles.title}>{appointment.practice}</h1>
-        <p className={styles.subtitle}>{appointment.type} Appointment</p>
+        <div className={styles.headerContent}>
+          <h1 className={styles.title}>{appointment.title} Appointment</h1>
+          <p className={styles.subtitle}>Book with {appointment.practice.practice_name}</p>
+        </div>
       </header>
 
       <div className={styles.content}>
-        <img src={appointment.image} alt={appointment.practice} className={styles.image} />
-        <div className={styles.details}>
-          <p><strong>Date & Time:</strong> {new Date(appointment.time).toLocaleString()}</p>
-          <p><strong>Type:</strong> {appointment.type}</p>
-          <p><strong>Price:</strong> £{appointment.price}</p>
-          <p><strong>Distance:</strong> {appointment.distance} miles away</p>
-          <p><strong>Description:</strong> {appointment.description}</p>
-          <div className={styles.actions}>
-            <button onClick={handleBook} className={styles.bookButton}>
-              Book Now
-            </button>
-            <Link href="/search" className={styles.backButton}>
-              Back to Search
-            </Link>
+        {/* Appointment Section */}
+        <section className={styles.appointmentSection}>
+          <h2 className={styles.sectionTitle}>Appointment Details</h2>
+          <div className={styles.card}>
+            <p><strong>Date & Time:</strong> {new Date(appointment.start_time).toLocaleString()}</p>
+            <p><strong>Type:</strong> {appointment.title}</p>
           </div>
+        </section>
+
+        {/* Practice Section */}
+        <section className={styles.practiceSection}>
+          <h2 className={styles.sectionTitle}>Practice Information</h2>
+          <div className={styles.card}>
+            <div className={styles.practiceHeader}>
+              <img
+                src={appointment.practice.photo || "/default-logo.png"}
+                alt={`${appointment.practice.practice_name} logo`}
+                className={styles.logo}
+              />
+              <h3 className={styles.practiceName}>{appointment.practice.practice_name}</h3>
+            </div>
+            <p><strong>Location:</strong> {appointment.practice.address.line1}, {appointment.practice.address.city}</p>
+            <p><strong>Contact:</strong> {appointment.practice.phone_number || "N/A"} | {appointment.practice.email}</p>
+            <p><strong>Rating:</strong> {avgRating} ({reviewCount} reviews)</p>
+          </div>
+        </section>
+
+        {/* Actions */}
+        <div className={styles.actions}>
+          <Link href={`/appointments/${appointment.appointment_id}/book`} className={styles.bookButton}>
+            Book Appointment
+          </Link>
+          <Link href="/search" className={styles.backButton}>
+            Back to Search
+          </Link>
         </div>
       </div>
     </div>

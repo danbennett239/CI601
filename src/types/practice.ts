@@ -13,6 +13,14 @@ export interface Practice {
   updated_at?: string;
 }
 
+export interface NearbyPractice extends Omit<Practice, 'practice_preferences'> {
+  distance: number;
+  location: {
+    type: string;
+    coordinates: [number, number];
+  };
+}
+
 export interface PracticePreferences {
   practice_id: string;
   enable_notifications: boolean;

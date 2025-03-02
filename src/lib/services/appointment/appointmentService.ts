@@ -1,4 +1,5 @@
 import { Appointment } from '@/types/practice';
+import { AppointmentWithPractice } from '@/types/appointment';
 
 const HASURA_GRAPHQL_URL = process.env.HASURA_GRAPHQL_URL!;
 const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
@@ -258,6 +259,69 @@ export async function deleteAppointment(appointmentId: string) {
   } catch (error: unknown) {
     console.error("Error in deleteAppointment:", error);
     const message = error instanceof Error ? error.message : "Error deleting appointment";
+    throw new Error(message);
+  }
+}
+
+export async function getAppointmentWithPracticeByAppId(appointmentId: string): Promise<AppointmentWithPractice> {
+  const query = `
+    query GetAppointmentWithPractice($appointmentId: uuid!) {
+      appointments_by_pk(appointment_id: $appointmentId) {
+        appointment_id
+        practice_id
+        user_id
+        title
+        start_time
+        end_time
+        booked
+        created_at
+        updated_at
+        practice {
+          practice_name
+          email
+          phone_number
+          photo
+          address
+          opening_hours
+          practice_reviews_aggregate {
+            aggregate {
+              avg {
+                rating
+              }
+              count
+            }
+          }
+        }
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query,
+        variables: { appointmentId },
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error: ${response.status}`);
+    }
+
+    const result = await response.json();
+    if (result.errors) {
+      throw new Error(result.errors[0]?.message || "Error fetching appointment with practice details");
+    }
+
+    return result.data.appointments_by_pk;
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Error fetching appointment with practice details";
+    console.error("Error in getAppointmentWithPracticeByAppId:", message);
     throw new Error(message);
   }
 }
