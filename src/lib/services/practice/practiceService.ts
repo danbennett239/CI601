@@ -16,7 +16,9 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
     $photo: String,
     $address: jsonb,
     $opening_hours: jsonb,
-    $location: geometry
+    $location: geometry,
+    $allowed_types: [String!],
+    $pricing_matrix: jsonb
   ) {
     insert_practices_one(
       object: {
@@ -28,6 +30,8 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
         opening_hours: $opening_hours,
         verified: false,
         location: $location,
+        allowed_types: $allowed_types,
+        pricing_matrix: $pricing_matrix,
         users: {
           data: {
             first_name: "",
@@ -49,6 +53,18 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
   }
 `;
 
+/**
+ * Creates a new dental practice and an associated user.
+ * 
+ * - Hashes the user's password.
+ * - Geocodes the practice's address to get location coordinates.
+ * - Sends a GraphQL mutation to insert the practice and user.
+ * - Adds default practice preferences after creation.
+ * 
+ * @param {Object} params - Practice and user details.
+ * @returns {Promise<Object>} - Created practice and user data.
+ * @throws {Error} - If registration fails.
+ */
 export async function createPracticeWithUser({
   practiceName,
   email,
@@ -57,6 +73,8 @@ export async function createPracticeWithUser({
   photo,
   address,
   openingHours,
+  allowedTypes,
+  pricingMatrix,
 }: {
   practiceName: string;
   email: string;
@@ -65,6 +83,8 @@ export async function createPracticeWithUser({
   photo?: string;
   address: Record<string, string>;
   openingHours: Array<{ dayName: string; open: string; close: string }>;
+  allowedTypes?: string[];
+  pricingMatrix?: Record<string, number>;
 }) {
   try {
     const hashedPassword = await hashPassword(password);
@@ -88,6 +108,8 @@ export async function createPracticeWithUser({
           address,
           opening_hours: openingHours,
           location,
+          allowed_types: allowedTypes,
+          pricing_matrix: pricingMatrix,
         },
       }),
     });
@@ -105,9 +127,10 @@ export async function createPracticeWithUser({
       practice_name: result.data.insert_practices_one.practice_name,
       user: result.data.insert_practices_one.users[0],
     };
-  } catch (error) {
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : "Practice registration failed. Please try again.";
     console.error("Practice Registration Error:", error);
-    throw new Error("Practice registration failed. Please try again.");
+    throw new Error(message);
   }
 }
 
