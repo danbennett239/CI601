@@ -420,6 +420,8 @@ export async function fetchPracticeAndPreferencesById(practiceId: string) {
         created_at
         updated_at
         verified_at
+        allowed_types
+        pricing_matrix
         practice_preferences {
           enable_notifications
           enable_mobile_notifications

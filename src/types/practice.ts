@@ -9,6 +9,8 @@ export interface Practice {
   verified: boolean;
   verified_at?: string;
   practice_preferences: PracticePreferences;
+  allowed_types?: string[];
+  pricing_matrix?: Record<string, number>;
   created_at?: string;
   updated_at?: string;
 }
