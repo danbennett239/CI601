@@ -1,5 +1,5 @@
 .formWrapper {
-  max-width: 700px; /* a bit wider for multi-column address fields */
+  max-width: 700px;
   width: 100%;
   margin: 0 auto;
   padding: 20px;
@@ -15,28 +15,24 @@
   margin-bottom: 20px;
 }
 
-/* Main form container */
 .form {
   display: flex;
   flex-direction: column;
-  gap: 25px; /* increased gap to spread out elements */
+  gap: 25px;
 }
 
-/* Two-column grid for certain sections */
 .twoColumnGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 25px; /* more space between columns */
+  gap: 25px;
 }
 
-/* Media query: collapse into 1 column on smaller screens */
 @media (max-width: 600px) {
   .twoColumnGrid {
     grid-template-columns: 1fr;
   }
 }
 
-/* A wrapper for each label+input pair */
 .fieldBlock {
   display: flex;
   flex-direction: column;
@@ -48,7 +44,6 @@
   margin-bottom: 5px;
 }
 
-/* Standard input style */
 .input {
   padding: 10px;
   border: 1px solid #ccc;
@@ -56,14 +51,12 @@
   font-size: 16px;
 }
 
-/* Error message styling */
 .error {
   color: red;
   font-size: 14px;
   margin-top: -10px;
 }
 
-/* Button style (similar to your user register form) */
 .button {
   padding: 10px 15px;
   font-size: 16px;
@@ -80,7 +73,6 @@
   background-color: var(--secondary-color);
 }
 
-/* Password fields with icons */
 .inputWrapper {
   position: relative;
   width: 100%;
@@ -88,7 +80,7 @@
 
 .inputWithIcon {
   width: 100%;
-  padding-right: 40px; /* space for eye icon */
+  padding-right: 40px;
   border: 1px solid #ccc;
   border-radius: 4px;
   font-size: 16px;
@@ -110,7 +102,6 @@
   color: #333;
 }
 
-/* Photo circle styling */
 .photoSection {
   display: flex;
   flex-direction: column;
@@ -146,12 +137,11 @@
   object-fit: cover;
 }
 
-/* Opening Hours Section */
 .hoursSection {
   text-align: left;
   background-color: #fff;
   border: 1px solid #ccc;
-  padding: 20px; /* more padding to reduce cramping */
+  padding: 20px;
   border-radius: 6px;
   margin-top: 10px;
 }
@@ -168,7 +158,7 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-  margin-bottom: 15px; /* more space between rows */
+  margin-bottom: 15px;
 }
 
 .dayLabel {
@@ -176,7 +166,6 @@
   font-weight: 500;
 }
 
-/* Checkbox styling (so it appears checked properly in modern browsers) */
 .closedCheckbox input[type="checkbox"] {
   accent-color: var(--primary-color);
   margin: 8px;
@@ -190,8 +179,65 @@
   border-radius: 4px;
 }
 
-/* When disabled, add a subtle styling to show it is disabled */
 .inputTime:disabled {
+  background-color: #eee;
+  cursor: not-allowed;
+}
+
+.hoursSection {
+  text-align: left;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.servicesSection {
+  text-align: left;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  padding: 20px;
+  border-radius: 6px;
+  margin-top: 10px;
+}
+
+.servicesTitle {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.serviceRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.serviceCheckbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 180px;
+}
+
+.serviceCheckbox input[type="checkbox"] {
+  accent-color: var(--primary-color);
+  margin: 0;
+}
+
+.priceInput {
+  width: 120px;
+  padding: 6px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+}
+
+.priceInput:disabled {
   background-color: #eee;
   cursor: not-allowed;
 }

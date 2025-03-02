@@ -31,6 +31,12 @@ interface AddressFormData {
   country: string;
 }
 
+interface ServiceOption {
+  name: string;
+  enabled: boolean;
+  price: number | null; // GBP
+}
+
 interface PracticeRegisterFormProps {
   onSuccess?: () => void;
 }
@@ -38,7 +44,7 @@ interface PracticeRegisterFormProps {
 export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterFormProps) {
   // Photo Upload
   const [photo, setPhoto] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string>(""); // base64 preview
+  const [photoPreview, setPhotoPreview] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Basic Fields
@@ -46,7 +52,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
   const [email, setEmail] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
 
-  // Password Fields (with show/hide)
+  // Password Fields
   const [password, setPassword] = useState("");
   const [repeatPassword, setRepeatPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -72,23 +78,31 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }))
   );
 
+  // Services Offered
+  const serviceOptionsList = ["Checkup", "Cleaning", "Whitening", "Filling", "Emergency", "Extraction"];
+  const [servicesOffered, setServicesOffered] = useState<ServiceOption[]>(
+    serviceOptionsList.map((name) => ({
+      name,
+      enabled: false,
+      price: null,
+    }))
+  );
+
   // Error handling
   const [error, setError] = useState("");
 
-  /** Handle photo circle click -> triggers file input */
+  /** Handle photo circle click */
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  /** Handle photo file selection (just for local preview) */
+  /** Handle photo file selection */
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setPhoto(file);
-
-      // Generate a local base64 preview
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
@@ -99,7 +113,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }
   };
 
-  /** Validate times so that close >= open (if both are set). */
+  /** Validate opening hours times */
   const validateTimes = (updatedIndex: number, field: "open" | "close") => {
     const dayObj = openingHours[updatedIndex];
     if (!dayObj.closed) {
@@ -108,7 +122,6 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
 
       if (isValidTime(openVal) && isValidTime(closeVal)) {
         if (timeToMinutes(closeVal) <= timeToMinutes(openVal)) {
-          // If invalid, clear the one we just changed or show an error
           if (field === "close") {
             alert("Closing time must be after opening time.");
             setOpeningHours((prev) => {
@@ -129,132 +142,159 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }
   };
 
-  /** Handle opening hours changes for time inputs */
+  /** Handle opening hours changes */
   const handleHoursChange = (index: number, field: "open" | "close", value: string) => {
     setOpeningHours((prev) => {
       const updated = [...prev];
       updated[index][field] = value;
       return updated;
     });
-    // After setting, re-validate asynchronously
     setTimeout(() => validateTimes(index, field), 0);
   };
 
-  /** Handle the 'Closed' checkbox toggle */
+  /** Handle closed checkbox toggle */
   const handleClosedChange = (index: number, checked: boolean) => {
     setOpeningHours((prev) => {
       const updated = [...prev];
       if (checked) {
-        // If user just checked "Closed", clear the open/close times
         updated[index].open = "";
         updated[index].close = "";
         updated[index].closed = true;
       } else {
-        // If user unchecked, set day as open
         updated[index].closed = false;
       }
       return updated;
     });
   };
 
-/** Handle form submission */
-const handleSubmit = async (e: FormEvent) => {
-  e.preventDefault();
-
-  if (password !== repeatPassword) {
-    setError("Passwords do not match!");
-    return;
-  }
-
-  setError("");
-
-  // Transform openingHours to place "closed" if day is closed
-  const finalHours = openingHours.map((dayObj) => {
-    if (dayObj.closed) {
-      return { dayName: dayObj.dayName, open: "closed", close: "closed" };
-    }
-    return { dayName: dayObj.dayName, open: dayObj.open, close: dayObj.close };
-  });
-
-  // Prepare address object
-  const address: AddressFormData = {
-    line1: addressLine1,
-    line2: addressLine2,
-    line3: addressLine3,
-    city,
-    county,
-    postcode,
-    country,
+  /** Handle service checkbox toggle */
+  const handleServiceToggle = (index: number, checked: boolean) => {
+    setServicesOffered((prev) => {
+      const updated = [...prev];
+      updated[index].enabled = checked;
+      if (!checked) {
+        updated[index].price = null; // Clear price when unchecked
+      }
+      return updated;
+    });
   };
 
-  // 1) If a photo is selected, call our Next.js route that does server-side S3 uploading
-  let photoUrl = "";
-  if (photo) {
-    try {
-      // Build a FormData object with the file
-      const formData = new FormData();
-      formData.append("file", photo);
-
-      // Make the request to our route
-      const uploadRes = await fetch("/api/integrations/upload", {
-        method: "PUT", // or "POST"
-        body: formData,
-      });
-
-      if (!uploadRes.ok) {
-        throw new Error("Failed to upload file to server");
-      }
-
-      const { fileUrl } = await uploadRes.json();
-      photoUrl = fileUrl;
-    } catch (err) {
-      console.error("Error uploading photo to Next.js route:", err);
-      setError("Failed to upload photo. Please try again.");
+  /** Handle service price change */
+  const handlePriceChange = (index: number, value: string) => {
+    const price = value === "" ? null : parseFloat(value);
+    if (price !== null && (isNaN(price) || price < 0)) {
+      setError("Price must be a positive number");
       return;
     }
-  }
+    setServicesOffered((prev) => {
+      const updated = [...prev];
+      updated[index].price = price;
+      return updated;
+    });
+  };
 
-  // 2) Now send the entire form data (including photoUrl if uploaded) to your /api/practice/register
-  try {
-    const res = await fetch("/api/practice/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        practiceName,
-        email,
-        password,
-        phoneNumber,
-        photo: photoUrl,
-        address,
-        openingHours: finalHours,
-      }),
+  /** Handle form submission */
+  const handleSubmit = async (e: FormEvent) => {
+    e.preventDefault();
+
+    if (password !== repeatPassword) {
+      setError("Passwords do not match!");
+      return;
+    }
+
+    setError("");
+
+    const finalHours = openingHours.map((dayObj) => {
+      if (dayObj.closed) {
+        return { dayName: dayObj.dayName, open: "closed", close: "closed" };
+      }
+      return { dayName: dayObj.dayName, open: dayObj.open, close: dayObj.close };
     });
 
-    if (res.redirected) {
-      window.location.href = res.url;
-      return;
+    const address: AddressFormData = {
+      line1: addressLine1,
+      line2: addressLine2,
+      line3: addressLine3,
+      city,
+      county,
+      postcode,
+      country,
+    };
+
+    // Build services_offered and pricing_matrix
+    const servicesOfferedList = servicesOffered
+      .filter((service) => service.enabled)
+      .map((service) => service.name.toLowerCase());
+    const pricingMatrix = servicesOffered.reduce((acc, service) => {
+      if (service.enabled && service.price !== null) {
+        acc[service.name.toLowerCase()] = service.price;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+
+    let photoUrl = "";
+    if (photo) {
+      try {
+        const formData = new FormData();
+        formData.append("file", photo);
+        const uploadRes = await fetch("/api/integrations/upload", {
+          method: "PUT",
+          body: formData,
+        });
+
+        if (!uploadRes.ok) {
+          throw new Error("Failed to upload file to server");
+        }
+
+        const { fileUrl } = await uploadRes.json();
+        photoUrl = fileUrl;
+      } catch (err) {
+        console.error("Error uploading photo:", err);
+        setError("Failed to upload photo. Please try again.");
+        return;
+      }
     }
 
-    const data = await res.json();
-    if (!res.ok) {
-      throw new Error(data.error || "Registration failed");
+    try {
+      const res = await fetch("/api/practice/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          practiceName,
+          email,
+          password,
+          phoneNumber,
+          photo: photoUrl,
+          address,
+          openingHours: finalHours,
+          allowedTypes: servicesOfferedList,
+          pricingMatrix,
+        }),
+      });
+
+      if (res.redirected) {
+        window.location.href = res.url;
+        return;
+      }
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Registration failed");
+      }
+
+      console.log("Practice registered:", data);
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      console.error("Error during registration:", err);
+      setError("Registration failed. Please try again.");
     }
-
-    console.log("Practice registered:", data);
-    // If success, optionally reset form or route away
-    if (onSuccess) onSuccess();
-  } catch (err) {
-    console.error("Error during registration:", err);
-    setError("Registration failed. Please try again.");
-  }
-};
-
+  };
 
   return (
     <div className={styles.formWrapper}>
       <h2 className={styles.title}>Register Your Practice</h2>
       <form onSubmit={handleSubmit} className={styles.form}>
-        {/* Two-column layout for main fields */}
+        {/* Two-column grid for main fields */}
         <div className={styles.twoColumnGrid}>
           {/* Photo Upload */}
           <div className={styles.fieldBlock}>
@@ -364,9 +404,8 @@ const handleSubmit = async (e: FormEvent) => {
             </div>
           </div>
         </div>
-        {/* END twoColumnGrid for main fields */}
 
-        {/* Address Fields (another two-column grid) */}
+        {/* Address Fields */}
         <div className={styles.twoColumnGrid}>
           <div className={styles.fieldBlock}>
             <label htmlFor="addressLine1" className={styles.label}>
@@ -453,7 +492,6 @@ const handleSubmit = async (e: FormEvent) => {
             />
           </div>
         </div>
-        {/* END Address Fields */}
 
         {/* Opening Hours */}
         <div className={styles.hoursSection}>
@@ -487,7 +525,33 @@ const handleSubmit = async (e: FormEvent) => {
             </div>
           ))}
         </div>
-        {/* END Opening Hours */}
+
+        {/* Services Offered */}
+        <div className={styles.servicesSection}>
+          <h3 className={styles.servicesTitle}>Services Offered</h3>
+          {servicesOffered.map((service, index) => (
+            <div key={service.name} className={styles.serviceRow}>
+              <label className={styles.serviceCheckbox}>
+                <input
+                  type="checkbox"
+                  checked={service.enabled}
+                  onChange={(e) => handleServiceToggle(index, e.target.checked)}
+                />
+                {service.name}
+              </label>
+              <input
+                type="number"
+                value={service.price !== null ? service.price : ""}
+                onChange={(e) => handlePriceChange(index, e.target.value)}
+                className={styles.priceInput}
+                placeholder="Price (GBP)"
+                disabled={!service.enabled}
+                min="0"
+                step="0.01"
+              />
+            </div>
+          ))}
+        </div>
 
         {/* Error Message */}
         {error && <p className={styles.error}>{error}</p>}
