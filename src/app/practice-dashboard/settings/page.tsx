@@ -2,9 +2,7 @@
 
 import React, { useState, useEffect, ChangeEvent, useRef } from "react";
 import Link from "next/link";
-import { toast, ToastContainer } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-
+import { toast } from "react-toastify";
 import { useUser } from "@/hooks/useUser";
 import { usePractice } from "@/hooks/usePractice";
 import { OpeningHoursItem, PracticePreferences } from "@/types/practice";
@@ -12,13 +10,20 @@ import ConfirmUnsavedPopup from "@/components/practice/settings/ConfirmUnsavedPo
 import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";
 import styles from "./PracticeSettingsPage.module.css";
 
-/** The shape of the local "info" for practice data */
 interface PracticeInfoState {
   practice_name: string;
   email: string;
   phone_number: string;
   photo?: string | null;
   opening_hours: OpeningHoursItem[];
+  allowed_types: string[];
+  pricing_matrix: Record<string, number>;
+}
+
+interface ServiceOption {
+  name: string;
+  enabled: boolean;
+  price: number | null;
 }
 
 const PracticeSettings: React.FC = () => {
@@ -30,34 +35,35 @@ const PracticeSettings: React.FC = () => {
     refreshPractice,
   } = usePractice(user?.practice_id);
 
-  // Local info/prefs states
   const [info, setInfo] = useState<PracticeInfoState | null>(null);
   const [prefs, setPrefs] = useState<PracticePreferences | null>(null);
 
-  // Original snapshots (for revert comparison)
   const [originalInfo, setOriginalInfo] = useState<PracticeInfoState | null>(null);
   const [originalPrefs, setOriginalPrefs] = useState<PracticePreferences | null>(null);
 
-  // Photo states: the newly selected file & preview
   const [newPhotoFile, setNewPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
 
-  // Each preference in local state
   const [hideDeleteConfirmation, setHideDeleteConfirmation] = useState(false);
   const [enableNotifications, setEnableNotifications] = useState(true);
   const [enableMobile, setEnableMobile] = useState(false);
   const [enableEmail, setEnableEmail] = useState(true);
   const [notifyOnBooking, setNotifyOnBooking] = useState(true);
 
-  // Track unsaved changes
   const [unsavedChanges, setUnsavedChanges] = useState(false);
-  // Popup for unsaved changes
   const [showUnsavedPopup, setShowUnsavedPopup] = useState(false);
 
-  // For clickable circle
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  /** On mount / when practice changes, populate local states */
+  const serviceOptionsList = ["Checkup", "Cleaning", "Whitening", "Filling", "Emergency", "Extraction"];
+  const [servicesOffered, setServicesOffered] = useState<ServiceOption[]>(
+    serviceOptionsList.map((name) => ({
+      name,
+      enabled: false,
+      price: null,
+    }))
+  );
+
   useEffect(() => {
     if (practice) {
       const newInfo: PracticeInfoState = {
@@ -66,39 +72,50 @@ const PracticeSettings: React.FC = () => {
         phone_number: practice.phone_number,
         photo: practice.photo ?? null,
         opening_hours: practice.opening_hours,
+        allowed_types: practice.allowed_types || [],
+        pricing_matrix: practice.pricing_matrix || {},
       };
       setInfo(newInfo);
-      setOriginalInfo(newInfo);
+      if (!originalInfo) {
+        setOriginalInfo(newInfo);
+      }
 
       setPrefs(practice.practice_preferences);
-      setOriginalPrefs(practice.practice_preferences);
+      if (!originalPrefs) {
+        setOriginalPrefs(practice.practice_preferences);
+      }
 
-      // Set preference checkboxes
       setHideDeleteConfirmation(practice.practice_preferences.hide_delete_confirmation);
       setEnableNotifications(practice.practice_preferences.enable_notifications);
       setEnableMobile(practice.practice_preferences.enable_mobile_notifications);
       setEnableEmail(practice.practice_preferences.enable_email_notifications);
       setNotifyOnBooking(practice.practice_preferences.notify_on_new_booking);
 
-      // Reset any new photo states
+      setServicesOffered(
+        serviceOptionsList.map((name) => ({
+          name,
+          enabled: practice.allowed_types?.includes(name.toLowerCase()) || false,
+          price: practice.pricing_matrix?.[name.toLowerCase()] || null,
+        }))
+      );
+
       setNewPhotoFile(null);
       setPhotoPreview("");
     }
   }, [practice]);
 
-  /** Compare local states to original for unsaved changes */
   useEffect(() => {
     if (!info || !prefs || !originalInfo || !originalPrefs) return;
 
-    // Compare "info" fields
     const infoEqual =
       info.practice_name === originalInfo.practice_name &&
       info.email === originalInfo.email &&
       info.phone_number === originalInfo.phone_number &&
       (info.photo || "") === (originalInfo.photo || "") &&
-      JSON.stringify(info.opening_hours) === JSON.stringify(originalInfo.opening_hours);
+      JSON.stringify(info.opening_hours) === JSON.stringify(originalInfo.opening_hours) &&
+      JSON.stringify(info.allowed_types) === JSON.stringify(originalInfo.allowed_types) &&
+      JSON.stringify(info.pricing_matrix) === JSON.stringify(originalInfo.pricing_matrix);
 
-    // Compare "prefs" checkboxes
     const prefsEqual =
       hideDeleteConfirmation === originalPrefs.hide_delete_confirmation &&
       enableNotifications === originalPrefs.enable_notifications &&
@@ -136,7 +153,6 @@ const PracticeSettings: React.FC = () => {
     return <div>Loading practice details...</div>;
   }
 
-  // Helpers to update local state
   const handleFieldChange = <T extends keyof PracticeInfoState>(
     field: T,
     value: PracticeInfoState[T]
@@ -144,7 +160,6 @@ const PracticeSettings: React.FC = () => {
     setInfo((prev) => (prev ? { ...prev, [field]: value } : null));
   };
 
-  // If notifications are turned off, also turn off sub-options
   const handleToggleNotifications = (value: boolean) => {
     setEnableNotifications(value);
     if (!value) {
@@ -154,20 +169,16 @@ const PracticeSettings: React.FC = () => {
     }
   };
 
-  /** On-click circle => trigger hidden file input */
   const handlePhotoCircleClick = () => {
     if (fileInputRef.current) {
       fileInputRef.current.click();
     }
   };
 
-  /** Read new file and set local preview + store the file. */
   const handlePhotoChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
       setNewPhotoFile(file);
-
-      // Generate a base64 preview
       const reader = new FileReader();
       reader.onloadend = () => {
         if (reader.result) {
@@ -178,11 +189,70 @@ const PracticeSettings: React.FC = () => {
     }
   };
 
-  /** Actual "Save" logic: if new photo is selected, upload & update DB, else just update DB. */
+  const handleHoursChange = (index: number, field: "open" | "close", value: string) => {
+    setInfo((prev) => {
+      if (!prev) return null;
+      const updatedHours = [...prev.opening_hours];
+      updatedHours[index] = { ...updatedHours[index], [field]: value };
+      return { ...prev, opening_hours: updatedHours };
+    });
+  };
+
+  const handleClosedChange = (index: number, checked: boolean) => {
+    setInfo((prev) => {
+      if (!prev) return null;
+      const updatedHours = [...prev.opening_hours];
+      updatedHours[index] = {
+        ...updatedHours[index],
+        open: checked ? "closed" : "",
+        close: checked ? "closed" : "",
+      };
+      return { ...prev, opening_hours: updatedHours };
+    });
+  };
+
+  const handleServiceToggle = (index: number, checked: boolean) => {
+    setServicesOffered((prev) => {
+      const updated = [...prev];
+      updated[index].enabled = checked;
+      if (!checked) {
+        updated[index].price = null;
+      }
+      return updated;
+    });
+    setInfo((prev) => {
+      if (!prev) return null;
+      const allowedTypes = servicesOffered
+        .filter((s) => s.enabled || (index === servicesOffered.indexOf(s) && checked))
+        .map((s) => s.name.toLowerCase());
+      const pricingMatrix = servicesOffered.reduce((acc, s) => {
+        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+        return acc;
+      }, {} as Record<string, number>);
+      return { ...prev, allowed_types: allowedTypes, pricing_matrix: pricingMatrix };
+    });
+  };
+
+  const handlePriceChange = (index: number, value: string) => {
+    const price = value === "" ? null : parseFloat(value);
+    setServicesOffered((prev) => {
+      const updated = [...prev];
+      updated[index].price = price;
+      return updated;
+    });
+    setInfo((prev) => {
+      if (!prev) return null;
+      const pricingMatrix = servicesOffered.reduce((acc, s) => {
+        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+        return acc;
+      }, {} as Record<string, number>);
+      return { ...prev, pricing_matrix: pricingMatrix };
+    });
+  };
+
   const handleSave = async () => {
     if (!info) return;
 
-    // (Optional) Validate opening hours
     try {
       const validateRes = await fetch(
         `/api/practice/${practice.practice_id}/settings/validate`,
@@ -208,13 +278,13 @@ const PracticeSettings: React.FC = () => {
       try {
         const formData = new FormData();
         formData.append("file", newPhotoFile);
-
-        // We also need the rest of the "settings" so the route can update them in DB. Could send them as JSON:
         const settingsPayload = {
           practice_name: info.practice_name,
           email: info.email,
           phone_number: info.phone_number,
           opening_hours: info.opening_hours,
+          allowed_types: info.allowed_types,
+          pricing_matrix: info.pricing_matrix,
         };
         formData.append("settings", JSON.stringify(settingsPayload));
 
@@ -233,9 +303,8 @@ const PracticeSettings: React.FC = () => {
         return;
       }
     } else {
-      // If no new photo, then just do a normal PUT of the rest of the settings
       try {
-        const body = { settings: info }; // existing data with no new photo
+        const body = { settings: info };
         const res = await fetch(`/api/practice/${practice.practice_id}/settings`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -272,12 +341,18 @@ const PracticeSettings: React.FC = () => {
         throw new Error(prefsData.error || "Error updating preferences");
       }
 
-      // On success:
-      // Refresh the practice data so the UI shows the updated photo and info
       await refreshPractice();
+      // Update original states after successful save
+      setOriginalInfo({ ...info });
+      setOriginalPrefs({
+        ...prefs!, // Use current prefs state, ensuring practice_id is included
+        enable_notifications: enableNotifications,
+        enable_mobile_notifications: enableMobile,
+        enable_email_notifications: enableEmail,
+        notify_on_new_booking: notifyOnBooking,
+        hide_delete_confirmation: hideDeleteConfirmation,
+      });
       toast.success("Settings saved successfully");
-
-      // Clear out the newPhotoFile since it's now used
       setNewPhotoFile(null);
       setPhotoPreview("");
     } catch (error: unknown) {
@@ -286,24 +361,30 @@ const PracticeSettings: React.FC = () => {
     }
   };
 
-  /** Revert changes => revert photo too */
   const handleCancel = () => {
     if (!practice || !originalInfo || !originalPrefs) return;
 
-    // Revert info
     setInfo({
       practice_name: originalInfo.practice_name,
       email: originalInfo.email,
       phone_number: originalInfo.phone_number,
       photo: originalInfo.photo,
       opening_hours: originalInfo.opening_hours,
+      allowed_types: originalInfo.allowed_types,
+      pricing_matrix: originalInfo.pricing_matrix,
     });
 
-    // Revert new photo states
+    setServicesOffered(
+      serviceOptionsList.map((name) => ({
+        name,
+        enabled: originalInfo.allowed_types?.includes(name.toLowerCase()) || false,
+        price: originalInfo.pricing_matrix?.[name.toLowerCase()] || null,
+      }))
+    );
+
     setNewPhotoFile(null);
     setPhotoPreview("");
 
-    // Revert prefs
     setHideDeleteConfirmation(originalPrefs.hide_delete_confirmation);
     setEnableNotifications(originalPrefs.enable_notifications);
     setEnableMobile(originalPrefs.enable_mobile_notifications);
@@ -313,7 +394,6 @@ const PracticeSettings: React.FC = () => {
 
   return (
     <div className={styles.settingsPage}>
-      <ToastContainer />
       <div className={styles.header}>
         <Link
           href="/practice-dashboard"
@@ -330,7 +410,6 @@ const PracticeSettings: React.FC = () => {
         <h1>Manage Practice Information & Preferences</h1>
       </div>
       <div className={styles.formContainer}>
-        {/* Practice Information Section */}
         <section className={styles.section}>
           <h2>Practice Information</h2>
           <div className={styles.fieldGroup}>
@@ -338,17 +417,9 @@ const PracticeSettings: React.FC = () => {
             <div className={styles.photoSection}>
               <div className={styles.photoCircle} onClick={handlePhotoCircleClick}>
                 {photoPreview ? (
-                  <img
-                    className={styles.photoPreview}
-                    src={photoPreview}
-                    alt="New Practice"
-                  />
+                  <img className={styles.photoPreview} src={photoPreview} alt="New Practice" />
                 ) : info.photo ? (
-                  <img
-                    className={styles.photoPreview}
-                    src={info.photo}
-                    alt="Current Practice"
-                  />
+                  <img className={styles.photoPreview} src={info.photo} alt="Current Practice" />
                 ) : (
                   <span className={styles.photoIcon}>📷</span>
                 )}
@@ -386,41 +457,82 @@ const PracticeSettings: React.FC = () => {
               onChange={(e) => handleFieldChange("phone_number", e.target.value)}
             />
           </div>
-          <div className={styles.fieldGroup}>
-            <label>Opening Hours</label>
-            {info.opening_hours.map((oh: OpeningHoursItem, idx: number) => (
-              <div key={oh.dayName} className={styles.openingRow}>
-                <span>{oh.dayName}</span>
-                <input
-                  type="time"
-                  value={oh.open}
-                  onChange={(e) => {
-                    const newOH = [...info.opening_hours];
-                    newOH[idx] = { ...newOH[idx], open: e.target.value };
-                    handleFieldChange("opening_hours", newOH);
-                  }}
-                />
-                <span>-</span>
-                <input
-                  type="time"
-                  value={oh.close}
-                  onChange={(e) => {
-                    const newOH = [...info.opening_hours];
-                    newOH[idx] = { ...newOH[idx], close: e.target.value };
-                    handleFieldChange("opening_hours", newOH);
-                  }}
-                />
-              </div>
-            ))}
-          </div>
         </section>
 
         <hr className={styles.divider} />
 
-        {/* Notification Preferences Section */}
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>Opening Hours</h2>
+          </div>
+          <p className={styles.sectionDescription}>Set your practice’s operating hours for each day of the week.</p>
+          {info.opening_hours.map((dayObj, index) => (
+            <div key={dayObj.dayName} className={styles.hoursRow}>
+              <span className={styles.dayLabel}>{dayObj.dayName}</span>
+              <div className={styles.timeGroup}>
+                <input
+                  type="time"
+                  value={dayObj.open === "closed" ? "" : dayObj.open}
+                  onChange={(e) => handleHoursChange(index, "open", e.target.value)}
+                  className={styles.timeInput}
+                  disabled={dayObj.open === "closed"}
+                />
+                <span className={styles.timeSeparator}>—</span>
+                <input
+                  type="time"
+                  value={dayObj.close === "closed" ? "" : dayObj.close}
+                  onChange={(e) => handleHoursChange(index, "close", e.target.value)}
+                  className={styles.timeInput}
+                  disabled={dayObj.close === "closed"}
+                />
+              </div>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={dayObj.open === "closed" && dayObj.close === "closed"}
+                  onChange={(e) => handleClosedChange(index, e.target.checked)}
+                />
+                Closed
+              </label>
+            </div>
+          ))}
+        </section>
+
+        <hr className={styles.divider} />
+
+        <section className={styles.section}>
+          <div className={styles.sectionHeader}>
+            <h2>Services Offered</h2>
+          </div>
+          <p className={styles.sectionDescription}>Select the dental services your practice provides and their prices in GBP.</p>
+          {servicesOffered.map((service, index) => (
+            <div key={service.name} className={styles.serviceRow}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={service.enabled}
+                  onChange={(e) => handleServiceToggle(index, e.target.checked)}
+                />
+                {service.name}
+              </label>
+              <input
+                type="number"
+                value={service.price !== null ? service.price : ""}
+                onChange={(e) => handlePriceChange(index, e.target.value)}
+                className={styles.priceInput}
+                placeholder="Price (GBP)"
+                disabled={!service.enabled}
+                min="0"
+                step="0.01"
+              />
+            </div>
+          ))}
+        </section>
+
+        <hr className={styles.divider} />
+
         <section className={styles.section}>
           <h2>Notification Preferences</h2>
-
           <div className={styles.fieldGroup}>
             <label>
               Enable Notifications{" "}
@@ -484,7 +596,6 @@ const PracticeSettings: React.FC = () => {
 
         <hr className={styles.divider} />
 
-        {/* System Preferences Section */}
         <section className={styles.section}>
           <h2>System Preferences</h2>
           <div className={styles.fieldGroup}>

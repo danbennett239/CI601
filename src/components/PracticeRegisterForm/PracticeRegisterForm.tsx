@@ -112,7 +112,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }
   };
 
-  const validateField = (field: string, value: any) => {
+  const validateField = (field: string, value: string | File | null) => {
     const formData = {
       practiceName,
       email,

@@ -1,4 +1,3 @@
-/* PracticeSettings.module.css */
 .settingsPage {
   padding: 1rem;
   font-family: Arial, sans-serif;
@@ -30,17 +29,31 @@
   background: #fff;
   padding: 1rem;
   border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .section {
   margin-bottom: 1.5rem;
 }
 
+.sectionHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem; /* Tighten gap universally */
+  white-space: nowrap; /* Prevent wrapping of entire header */
+}
+
 .section h2 {
   font-size: 1.5rem;
   color: var(--primary-color, #0070f3);
   margin-bottom: 0.5rem;
+  margin-right: 0.25rem; /* Minimize spacing */
+}
+
+.sectionDescription {
+  font-size: 14px;
+  color: #718096;
+  margin-bottom: 16px;
 }
 
 .fieldGroup {
@@ -57,37 +70,120 @@
 
 .fieldGroup input[type="text"],
 .fieldGroup input[type="email"],
-.fieldGroup input[type="time"] {
+.fieldGroup input[type="time"],
+.fieldGroup input[type="number"] {
   padding: 0.5rem;
   font-size: 1rem;
   border: 1px solid #ccc;
   border-radius: 4px;
 }
 
-.openingRow {
+.hoursRow {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.5rem;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.dayLabel {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.timeGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeInput {
+  width: 110px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.timeInput:disabled {
+  background: #e2e8f0;
+  color: #718096;
+}
+
+.timeInput:focus {
+  border-color: #3182ce;
+  outline: none;
+}
+
+.timeSeparator {
+  font-size: 16px;
+  color: #718096;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: #3182ce;
+  width: 16px;
+  height: 16px;
+}
+
+.serviceRow {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.serviceRow label {
+  flex-shrink: 0;
+  width: 180px;
+  white-space: nowrap;
+}
+
+.priceInput {
+  width: 140px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.priceInput:disabled {
+  background: #e2e8f0;
+  color: #718096;
+  cursor: not-allowed;
+}
+
+.priceInput:disabled:hover {
+  background: #d7dce4;
+}
+
+.priceInput:focus {
+  border-color: #3182ce;
+  outline: none;
 }
 
 .divider {
   border: none;
   border-top: 1px solid #ccc;
   margin: 1rem 0;
-}
-
-.infoIcon {
-  display: inline-block;
-  width: 18px;
-  height: 18px;
-  line-height: 18px;
-  text-align: center;
-  border-radius: 50%;
-  background: var(--primary-color, #0070f3);
-  color: #fff;
-  font-size: 0.75rem;
-  cursor: help;
 }
 
 .buttonRow {
@@ -162,7 +258,6 @@
   image-rendering: high-quality;
 }
 
-/* Mobile responsiveness */
 @media (max-width: 600px) {
   .formContainer {
     padding: 0.75rem;
@@ -172,5 +267,35 @@
   }
   .buttonRow {
     flex-direction: column;
+  }
+  .hoursRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .dayLabel {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+  .timeGroup {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .serviceRow {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: nowrap;
+  }
+  .serviceRow label {
+    width: 110px;
+  }
+  .sectionHeader {
+    gap: 0.25rem;
+  }
+  .section h2 {
+    font-size: 1.2rem; /* Further reduced from 1.25rem */
+    margin-right: 0.25rem;
   }
 }
