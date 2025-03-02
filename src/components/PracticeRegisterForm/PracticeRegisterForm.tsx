@@ -714,10 +714,10 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
           </div>
 
           <p className={styles.infoText}>
-            All information provided can be updated in your Practice Dashboard under Practice Preferences after verification by our staff.
+            A member of our admin team will review your application. You’ll receive an email once verification is complete.
           </p>
           <p className={styles.infoText}>
-            A member of our admin team will review your application. You’ll receive an email once verification is complete.
+            All information provided can be updated in your Practice Dashboard under Practice Preferences after verification is complete.
           </p>
 
           <button type="submit" className={styles.submitButton}>
