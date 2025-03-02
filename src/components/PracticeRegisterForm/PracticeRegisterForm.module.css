@@ -1,134 +1,64 @@
 .formWrapper {
-  max-width: 700px;
+  max-width: 900px;
   width: 100%;
-  margin: 0 auto;
-  padding: 20px;
-  text-align: center;
-  background-color: #f9f9f9;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin: 40px auto;
+  padding: 32px;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
 }
 
 .title {
-  font-size: 24px;
-  font-weight: bold;
-  margin-bottom: 20px;
+  font-size: 32px;
+  font-weight: 700;
+  color: #1a202c;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.backLink {
+  position: absolute;
+  top: 76px;
+  left: 16px;
+  font-size: 14px;
+  color: #3182ce;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.backLink:hover {
+  color: #2b6cb0;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 25px;
-}
-
-.twoColumnGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 25px;
-}
-
-@media (max-width: 600px) {
-  .twoColumnGrid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.fieldBlock {
-  display: flex;
-  flex-direction: column;
-}
-
-.label {
-  text-align: left;
-  font-weight: 600;
-  margin-bottom: 5px;
-}
-
-.input {
-  padding: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-}
-
-.error {
-  color: red;
-  font-size: 14px;
-  margin-top: -10px;
-}
-
-.button {
-  padding: 10px 15px;
-  font-size: 16px;
-  color: #fff;
-  background-color: var(--primary-color);
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-  margin-top: 10px;
-}
-
-.button:hover {
-  background-color: var(--secondary-color);
-}
-
-.inputWrapper {
-  position: relative;
-  width: 100%;
-}
-
-.inputWithIcon {
-  width: 100%;
-  padding-right: 40px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  font-size: 16px;
-  padding: 10px;
-}
-
-.eyeIcon {
-  position: absolute;
-  top: 50%;
-  right: 10px;
-  transform: translateY(-50%);
-  font-size: 18px;
-  color: #666;
-  cursor: pointer;
-  transition: color 0.3s ease;
-}
-
-.eyeIcon:hover {
-  color: #333;
+  gap: 32px;
 }
 
 .photoSection {
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 12px;
 }
 
 .photoCircle {
-  width: 100px;
-  height: 100px;
-  border: 2px dashed #aaa;
+  width: 120px;
+  height: 120px;
   border-radius: 50%;
+  background: #edf2f7;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   overflow: hidden;
-  margin-bottom: 0.5rem;
+  transition: all 0.3s ease;
 }
 
 .photoCircle:hover {
-  border-color: #888;
-  background-color: #f9f9f9;
-}
-
-.photoIcon {
-  font-size: 2rem;
-  color: #aaa;
+  background: #e2e8f0;
+  transform: scale(1.05);
 }
 
 .photoPreview {
@@ -137,107 +67,302 @@
   object-fit: cover;
 }
 
-.hoursSection {
-  text-align: left;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 20px;
-  border-radius: 6px;
-  margin-top: 10px;
+.photoPlaceholder {
+  font-size: 16px;
+  color: #718096;
 }
 
-.hoursTitle {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
-}
-
-.dayRow {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.dayLabel {
-  width: 80px;
+.photoLabel {
+  font-size: 14px;
+  color: #4a5568;
   font-weight: 500;
 }
 
-.closedCheckbox input[type="checkbox"] {
-  accent-color: var(--primary-color);
-  margin: 8px;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
 }
 
-.inputTime {
-  width: 100px;
-  padding: 6px;
+.input {
+  width: 100%;
+  padding: 12px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  font-size: 16px;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus {
+  border-color: #3182ce;
+  box-shadow: 0 0 0 3px rgba(49, 130, 206, 0.1);
+  outline: none;
+}
+
+.passwordWrapper {
+  position: relative;
+}
+
+.eyeIcon {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 18px;
+  color: #718096;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.eyeIcon:hover {
+  color: #2d3748;
+}
+
+.section {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.sectionTitle {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 8px;
+}
+
+.sectionDescription {
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  color: #718096;
+  margin-bottom: 16px;
 }
 
-.inputTime:disabled {
-  background-color: #eee;
+.hoursRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf2f7;
+}
+
+.dayLabel {
+  width: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #4a5568;
+}
+
+.timeGroup {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.timeInput {
+  width: 110px;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 14px;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s ease;
+}
+
+.timeInput:disabled {
+  background: #e2e8f0;
+  color: #718096;
   cursor: not-allowed;
 }
 
-.hoursSection {
-  text-align: left;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 20px;
-  border-radius: 6px;
-  margin-top: 10px;
+.timeInput:disabled:hover {
+  background: #d7dce4;
 }
 
-.servicesSection {
-  text-align: left;
-  background-color: #fff;
-  border: 1px solid #ccc;
-  padding: 20px;
-  border-radius: 6px;
-  margin-top: 10px;
+.timeInput:focus {
+  border-color: #3182ce;
+  outline: none;
 }
 
-.servicesTitle {
-  margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
-  font-weight: 600;
+.timeSeparator {
+  font-size: 16px;
+  color: #718096;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #4a5568;
+}
+
+.checkboxLabel input[type="checkbox"] {
+  accent-color: #3182ce;
+  width: 16px;
+  height: 16px;
 }
 
 .serviceRow {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 15px;
-  margin-bottom: 15px;
+  margin-bottom: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid #edf2f7;
 }
 
-.serviceCheckbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+.serviceRow label {
+  flex-shrink: 0;
   width: 180px;
-}
-
-.serviceCheckbox input[type="checkbox"] {
-  accent-color: var(--primary-color);
-  margin: 0;
+  white-space: nowrap;
 }
 
 .priceInput {
-  width: 120px;
-  padding: 6px;
+  width: 140px;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
   font-size: 14px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  color: #2d3748;
+  background: #fff;
+  transition: border-color 0.2s ease;
 }
 
 .priceInput:disabled {
-  background-color: #eee;
+  background: #e2e8f0;
+  color: #718096;
   cursor: not-allowed;
+}
+
+.priceInput:disabled:hover {
+  background: #d7dce4;
+}
+
+.priceInput:focus {
+  border-color: #3182ce;
+  outline: none;
+}
+
+.infoText {
+  font-size: 14px;
+  color: #718096;
+  text-align: center;
+  margin: 16px 0;
+}
+
+.error {
+  color: #e53e3e;
+  font-size: 14px;
+  text-align: center;
+  margin: 12px 0;
+}
+
+.submitButton {
+  padding: 12px 32px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #3182ce 0%, #2b6cb0 100%);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: auto;
+}
+
+.submitButton:hover {
+  background: linear-gradient(135deg, #2b6cb0 0%, #2c5282 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(49, 130, 206, 0.3);
+}
+
+@media (max-width: 768px) {
+  .formWrapper {
+    padding: 24px;
+    margin: 16px 8px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .hoursRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .dayLabel {
+    width: 80px;
+  }
+
+  .timeInput,
+  .priceInput {
+    width: 100%;
+    max-width: 140px;
+  }
+
+  .submitButton {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .formWrapper {
+    padding: 16px;
+    margin: 8px 0;
+  }
+
+  .title {
+    font-size: 24px;
+  }
+
+  .section {
+    padding: 16px;
+  }
+
+  .hoursRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dayLabel {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .timeGroup {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .serviceRow {
+    flex-direction: row;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: nowrap;
+  }
+
+  .serviceRow label {
+    width: 110px;
+  }
+
+  .photoCircle {
+    width: 100px;
+    height: 100px;
+  }
+
+  .backLink {
+    position: static;
+    margin: 20px 0 0 8px; /* 20px top spacing for mobile, adjust as needed */
+  }
 }

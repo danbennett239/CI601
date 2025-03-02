@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import styles from "./PracticeRegisterPage.module.css";
 import PracticeRegisterForm from "@/components/PracticeRegisterForm/PracticeRegisterForm";
 
 export default function PracticeRegisterPage() {
@@ -10,7 +11,7 @@ export default function PracticeRegisterPage() {
   };
 
   return (
-    <div style={{ marginTop: "50px" }}>
+    <div className={styles.practiceRegisterFormContainer}>
       <PracticeRegisterForm onSuccess={handleSuccess} />
     </div>
   );
