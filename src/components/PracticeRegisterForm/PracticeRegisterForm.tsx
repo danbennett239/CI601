@@ -4,6 +4,8 @@ import React, { useState, useRef, ChangeEvent, FormEvent } from "react";
 import styles from "./PracticeRegisterForm.module.css";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Link from "next/link";
+import { practiceRegistrationSchema } from "@/schemas/practiceSchemas";
+import { toast } from "react-toastify";
 
 function timeToMinutes(t: string): number {
   const [hh, mm] = t.split(":");
@@ -41,6 +43,10 @@ interface PracticeRegisterFormProps {
   onSuccess?: () => void;
 }
 
+interface FormErrors {
+  [key: string]: string | undefined;
+}
+
 export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterFormProps) {
   const [photo, setPhoto] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string>("");
@@ -76,13 +82,14 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
   const serviceOptionsList = ["Checkup", "Cleaning", "Whitening", "Filling", "Emergency", "Extraction"];
   const [servicesOffered, setServicesOffered] = useState<ServiceOption[]>(
     serviceOptionsList.map((name) => ({
-     	name,
+      name,
       enabled: false,
       price: null,
     }))
   );
 
-  const [error, setError] = useState("");
+  const [formErrors, setFormErrors] = useState<FormErrors>({});
+  const [hasSubmitted, setHasSubmitted] = useState(false);
 
   const handlePhotoClick = () => {
     if (fileInputRef.current) {
@@ -101,6 +108,40 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         }
       };
       reader.readAsDataURL(file);
+      if (hasSubmitted) validateField("photo", file);
+    }
+  };
+
+  const validateField = (field: string, value: any) => {
+    const formData = {
+      practiceName,
+      email,
+      password,
+      repeatPassword,
+      phoneNumber,
+      photo,
+      address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
+      openingHours: openingHours.map((day) => ({
+        dayName: day.dayName,
+        open: day.open,
+        close: day.close,
+        closed: day.closed,
+      })),
+      allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
+      pricingMatrix: servicesOffered.reduce((acc, s) => {
+        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+        return acc;
+      }, {} as Record<string, number>),
+    };
+
+    const validationResult = practiceRegistrationSchema.safeParse({ ...formData, [field]: value });
+    if (validationResult.success) {
+      setFormErrors((prev) => ({ ...prev, [field]: undefined }));
+    } else {
+      const error = validationResult.error.errors.find((err) => err.path.join(".") === field);
+      if (error) {
+        setFormErrors((prev) => ({ ...prev, [field]: error.message }));
+      }
     }
   };
 
@@ -113,14 +154,14 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       if (isValidTime(openVal) && isValidTime(closeVal)) {
         if (timeToMinutes(closeVal) <= timeToMinutes(openVal)) {
           if (field === "close") {
-            alert("Closing time must be after opening time.");
+            toast.error("Closing time must be after opening time.");
             setOpeningHours((prev) => {
               const cloned = [...prev];
               cloned[updatedIndex].close = "";
               return cloned;
             });
           } else {
-            alert("Opening time must be before closing time.");
+            toast.error("Opening time must be before closing time.");
             setOpeningHours((prev) => {
               const cloned = [...prev];
               cloned[updatedIndex].open = "";
@@ -132,6 +173,11 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
     }
   };
 
+  const handleInputChange = (field: string, value: string, setter: (value: string) => void) => {
+    setter(value);
+    if (hasSubmitted) validateField(field, value);
+  };
+
   const handleHoursChange = (index: number, field: "open" | "close", value: string) => {
     setOpeningHours((prev) => {
       const updated = [...prev];
@@ -139,20 +185,102 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       return updated;
     });
     setTimeout(() => validateTimes(index, field), 0);
+    if (hasSubmitted) {
+      const formData = openingHours.map((day, i) => ({
+        dayName: day.dayName,
+        open: i === index && field === "open" ? value : day.open,
+        close: i === index && field === "close" ? value : day.close,
+        closed: day.closed,
+      }));
+      const validationResult = practiceRegistrationSchema.safeParse({
+        practiceName,
+        email,
+        password,
+        repeatPassword,
+        phoneNumber,
+        photo,
+        address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
+        openingHours: formData,
+        allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
+        pricingMatrix: servicesOffered.reduce((acc, s) => {
+          if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+          return acc;
+        }, {} as Record<string, number>),
+      });
+      if (validationResult.success) {
+        setFormErrors((prev) => ({
+          ...prev,
+          [`openingHours.${index}.open`]: undefined,
+          [`openingHours.${index}.close`]: undefined,
+          openingHours: undefined,
+        }));
+      } else {
+        const errors = validationResult.error.errors.reduce((acc, err) => {
+          acc[err.path.join(".")] = err.message;
+          return acc;
+        }, {} as FormErrors);
+        setFormErrors((prev) => ({
+          ...prev,
+          ...errors,
+          [`openingHours.${index}.open`]: errors[`openingHours.${index}.open`],
+          [`openingHours.${index}.close`]: errors[`openingHours.${index}.close`],
+        }));
+      }
+    }
   };
 
   const handleClosedChange = (index: number, checked: boolean) => {
     setOpeningHours((prev) => {
       const updated = [...prev];
+      updated[index].closed = checked;
       if (checked) {
         updated[index].open = "";
         updated[index].close = "";
-        updated[index].closed = true;
-      } else {
-        updated[index].closed = false;
       }
       return updated;
     });
+    if (hasSubmitted) {
+      const formData = openingHours.map((day, i) => ({
+        dayName: day.dayName,
+        open: i === index && checked ? "" : day.open,
+        close: i === index && checked ? "" : day.close,
+        closed: i === index ? checked : day.closed,
+      }));
+      const validationResult = practiceRegistrationSchema.safeParse({
+        practiceName,
+        email,
+        password,
+        repeatPassword,
+        phoneNumber,
+        photo,
+        address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
+        openingHours: formData,
+        allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
+        pricingMatrix: servicesOffered.reduce((acc, s) => {
+          if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+          return acc;
+        }, {} as Record<string, number>),
+      });
+      if (validationResult.success) {
+        setFormErrors((prev) => ({
+          ...prev,
+          [`openingHours.${index}.open`]: undefined,
+          [`openingHours.${index}.close`]: undefined,
+          openingHours: undefined,
+        }));
+      } else {
+        const errors = validationResult.error.errors.reduce((acc, err) => {
+          acc[err.path.join(".")] = err.message;
+          return acc;
+        }, {} as FormErrors);
+        setFormErrors((prev) => ({
+          ...prev,
+          ...errors,
+          [`openingHours.${index}.open`]: errors[`openingHours.${index}.open`],
+          [`openingHours.${index}.close`]: errors[`openingHours.${index}.close`],
+        }));
+      }
+    }
   };
 
   const handleServiceToggle = (index: number, checked: boolean) => {
@@ -164,30 +292,105 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       }
       return updated;
     });
+    if (hasSubmitted) validateForm();
   };
 
   const handlePriceChange = (index: number, value: string) => {
     const price = value === "" ? null : parseFloat(value);
-    if (price !== null && (isNaN(price) || price < 0)) {
-      setError("Price must be a positive number");
-      return;
-    }
+    let updatedServices: ServiceOption[] = [];
     setServicesOffered((prev) => {
-      const updated = [...prev];
-      updated[index].price = price;
-      return updated;
+      updatedServices = [...prev];
+      updatedServices[index].price = price;
+      return updatedServices;
     });
+
+    if (hasSubmitted) {
+      const formData = {
+        practiceName,
+        email,
+        password,
+        repeatPassword,
+        phoneNumber,
+        photo,
+        address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
+        openingHours: openingHours.map((day) => ({
+          dayName: day.dayName,
+          open: day.open,
+          close: day.close,
+          closed: day.closed,
+        })),
+        allowedTypes: updatedServices.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
+        pricingMatrix: updatedServices.reduce((acc, s) => {
+          if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+          return acc;
+        }, {} as Record<string, number>),
+      };
+
+      const validationResult = practiceRegistrationSchema.safeParse(formData);
+      if (validationResult.success) {
+        setFormErrors((prev) => ({
+          ...prev,
+          allowedTypes: undefined,
+          pricingMatrix: undefined,
+          [`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`]: undefined,
+        }));
+      } else {
+        const errors = validationResult.error.errors.reduce((acc, err) => {
+          acc[err.path.join(".")] = err.message;
+          return acc;
+        }, {} as FormErrors);
+        setFormErrors((prev) => ({
+          ...prev,
+          ...errors,
+          allowedTypes: errors.allowedTypes,
+          pricingMatrix: errors.pricingMatrix,
+          [`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`]:
+            errors[`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`],
+        }));
+      }
+    }
+  };
+
+  const validateForm = () => {
+    const formData = {
+      practiceName,
+      email,
+      password,
+      repeatPassword,
+      phoneNumber,
+      photo,
+      address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
+      openingHours: openingHours.map((day) => ({
+        dayName: day.dayName,
+        open: day.open,
+        close: day.close,
+        closed: day.closed,
+      })),
+      allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
+      pricingMatrix: servicesOffered.reduce((acc, s) => {
+        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+        return acc;
+      }, {} as Record<string, number>),
+    };
+
+    const validationResult = practiceRegistrationSchema.safeParse(formData);
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors.reduce((acc, err) => {
+        acc[err.path.join(".")] = err.message;
+        return acc;
+      }, {} as FormErrors);
+      setFormErrors(errors);
+      return false;
+    }
+    setFormErrors({});
+    return true;
   };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setHasSubmitted(true);
 
-    if (password !== repeatPassword) {
-      setError("Passwords do not match!");
-      return;
-    }
-
-    setError("");
+    if (!validateForm()) return;
 
     const finalHours = openingHours.map((dayObj) => {
       if (dayObj.closed) {
@@ -234,7 +437,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         photoUrl = fileUrl;
       } catch (err) {
         console.error("Error uploading photo:", err);
-        setError("Failed to upload photo. Please try again.");
+        toast.error("Failed to upload photo. Please try again.");
         return;
       }
     }
@@ -258,6 +461,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
 
       if (res.redirected) {
         window.location.href = res.url;
+        toast.success("Practice registered successfully!");
         return;
       }
 
@@ -267,10 +471,11 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       }
 
       console.log("Practice registered:", data);
+      toast.success("Practice registered successfully!");
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Error during registration:", err);
-      setError("Registration failed. Please try again.");
+      toast.error("Registration failed. Please try again.");
     }
   };
 
@@ -296,6 +501,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
               accept="image/*"
             />
             <label className={styles.photoLabel}>Practice Photo</label>
+            {formErrors["photo"] && <p className={styles.fieldError}>{formErrors["photo"]}</p>}
           </div>
 
           <div className={styles.grid}>
@@ -303,56 +509,57 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
               <input
                 type="text"
                 value={practiceName}
-                onChange={(e) => setPracticeName(e.target.value)}
+                onChange={(e) => handleInputChange("practiceName", e.target.value, setPracticeName)}
                 className={styles.input}
                 placeholder="Practice Name"
-                required
               />
+              {formErrors["practiceName"] && <p className={styles.fieldError}>{formErrors["practiceName"]}</p>}
             </div>
             <div>
               <input
                 type="email"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => handleInputChange("email", e.target.value, setEmail)}
                 className={styles.input}
                 placeholder="Email"
-                required
               />
+              {formErrors["email"] && <p className={styles.fieldError}>{formErrors["email"]}</p>}
             </div>
             <div>
               <input
                 type="tel"
                 value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
+                onChange={(e) => handleInputChange("phoneNumber", e.target.value, setPhoneNumber)}
                 className={styles.input}
                 placeholder="Phone Number"
               />
+              {formErrors["phoneNumber"] && <p className={styles.fieldError}>{formErrors["phoneNumber"]}</p>}
             </div>
             <div className={styles.passwordWrapper}>
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => handleInputChange("password", e.target.value, setPassword)}
                 className={styles.input}
                 placeholder="Password"
-                required
               />
               <span onClick={() => setShowPassword(!showPassword)} className={styles.eyeIcon}>
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
+              {formErrors["password"] && <p className={styles.fieldError}>{formErrors["password"]}</p>}
             </div>
             <div className={styles.passwordWrapper}>
               <input
                 type={showRepeatPassword ? "text" : "password"}
                 value={repeatPassword}
-                onChange={(e) => setRepeatPassword(e.target.value)}
+                onChange={(e) => handleInputChange("repeatPassword", e.target.value, setRepeatPassword)}
                 className={styles.input}
                 placeholder="Confirm Password"
-                required
               />
               <span onClick={() => setShowRepeatPassword(!showRepeatPassword)} className={styles.eyeIcon}>
                 {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
+              {formErrors["repeatPassword"] && <p className={styles.fieldError}>{formErrors["repeatPassword"]}</p>}
             </div>
           </div>
 
@@ -360,55 +567,76 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
             <h3 className={styles.sectionTitle}>Address</h3>
             <p className={styles.sectionDescription}>Provide your practice’s location details for patients to find you.</p>
             <div className={styles.grid}>
-              <input
-                type="text"
-                value={addressLine1}
-                onChange={(e) => setAddressLine1(e.target.value)}
-                className={styles.input}
-                placeholder="Address Line 1"
-              />
-              <input
-                type="text"
-                value={addressLine2}
-                onChange={(e) => setAddressLine2(e.target.value)}
-                className={styles.input}
-                placeholder="Address Line 2"
-              />
-              <input
-                type="text"
-                value={addressLine3}
-                onChange={(e) => setAddressLine3(e.target.value)}
-                className={styles.input}
-                placeholder="Address Line 3"
-              />
-              <input
-                type="text"
-                value={city}
-                onChange={(e) => setCity(e.target.value)}
-                className={styles.input}
-                placeholder="City/Town"
-              />
-              <input
-                type="text"
-                value={county}
-                onChange={(e) => setCounty(e.target.value)}
-                className={styles.input}
-                placeholder="County"
-              />
-              <input
-                type="text"
-                value={postcode}
-                onChange={(e) => setPostcode(e.target.value)}
-                className={styles.input}
-                placeholder="Postcode"
-              />
-              <input
-                type="text"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                className={styles.input}
-                placeholder="Country"
-              />
+              <div>
+                <input
+                  type="text"
+                  value={addressLine1}
+                  onChange={(e) => handleInputChange("address.line1", e.target.value, setAddressLine1)}
+                  className={styles.input}
+                  placeholder="Address Line 1"
+                />
+                {formErrors["address.line1"] && <p className={styles.fieldError}>{formErrors["address.line1"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={addressLine2}
+                  onChange={(e) => handleInputChange("address.line2", e.target.value, setAddressLine2)}
+                  className={styles.input}
+                  placeholder="Address Line 2"
+                />
+                {formErrors["address.line2"] && <p className={styles.fieldError}>{formErrors["address.line2"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={addressLine3}
+                  onChange={(e) => handleInputChange("address.line3", e.target.value, setAddressLine3)}
+                  className={styles.input}
+                  placeholder="Address Line 3"
+                />
+                {formErrors["address.line3"] && <p className={styles.fieldError}>{formErrors["address.line3"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={city}
+                  onChange={(e) => handleInputChange("address.city", e.target.value, setCity)}
+                  className={styles.input}
+                  placeholder="City/Town"
+                />
+                {formErrors["address.city"] && <p className={styles.fieldError}>{formErrors["address.city"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={county}
+                  onChange={(e) => handleInputChange("address.county", e.target.value, setCounty)}
+                  className={styles.input}
+                  placeholder="County"
+                />
+                {formErrors["address.county"] && <p className={styles.fieldError}>{formErrors["address.county"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={postcode}
+                  onChange={(e) => handleInputChange("address.postcode", e.target.value, setPostcode)}
+                  className={styles.input}
+                  placeholder="Postcode"
+                />
+                {formErrors["address.postcode"] && <p className={styles.fieldError}>{formErrors["address.postcode"]}</p>}
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={country}
+                  onChange={(e) => handleInputChange("address.country", e.target.value, setCountry)}
+                  className={styles.input}
+                  placeholder="Country"
+                />
+                {formErrors["address.country"] && <p className={styles.fieldError}>{formErrors["address.country"]}</p>}
+              </div>
             </div>
           </div>
 
@@ -443,8 +671,14 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   />
                   Closed
                 </label>
+                {(formErrors[`openingHours.${index}.open`] || formErrors[`openingHours.${index}.close`]) && (
+                  <p className={styles.fieldError}>
+                    {formErrors[`openingHours.${index}.open`] || formErrors[`openingHours.${index}.close`]}
+                  </p>
+                )}
               </div>
             ))}
+            {formErrors["openingHours"] && <p className={styles.fieldError}>{formErrors["openingHours"]}</p>}
           </div>
 
           <div className={styles.section}>
@@ -470,18 +704,22 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   min="0"
                   step="0.01"
                 />
+                {formErrors[`pricingMatrix.${service.name.toLowerCase()}`] && (
+                  <p className={styles.fieldError}>{formErrors[`pricingMatrix.${service.name.toLowerCase()}`]}</p>
+                )}
               </div>
             ))}
+            {formErrors["allowedTypes"] && <p className={styles.fieldError}>{formErrors["allowedTypes"]}</p>}
+            {formErrors["pricingMatrix"] && <p className={styles.fieldError}>{formErrors["pricingMatrix"]}</p>}
           </div>
+
+          <p className={styles.infoText}>
+            All information provided can be updated in your Practice Dashboard under Practice Preferences after verification by our staff.
+          </p>
           <p className={styles.infoText}>
             A member of our admin team will review your application. You’ll receive an email once verification is complete.
           </p>
 
-          <p className={styles.infoText}>
-            All information provided can be updated in your Practice Dashboard under Practice Preferences after verification is complete.
-          </p>
-
-          {error && <p className={styles.error}>{error}</p>}
           <button type="submit" className={styles.submitButton}>
             Register Practice
           </button>

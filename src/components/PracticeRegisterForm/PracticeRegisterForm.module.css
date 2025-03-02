@@ -363,6 +363,16 @@
 
   .backLink {
     position: static;
-    margin: 20px 0 0 8px; /* 20px top spacing for mobile, adjust as needed */
+    margin: 20px 0 0 8px;
   }
+}
+
+.fieldError {
+  color: #e53e3e;
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.priceError {
+  padding-left: 8px;
 }
