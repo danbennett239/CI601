@@ -20,11 +20,12 @@ async function fetchAppointment(id: string) {
   return data.appointment;
 }
 
-export default async function AppointmentDetail({ params }: { params: { id: string } }) {
-  const appointment = await fetchAppointment(params.id);
+export default async function AppointmentDetail({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const appointment = await fetchAppointment(id);
 
-  if (!appointment || appointment.booked) {
-    redirect('/appointments/error?status=404'); // Handle booked appointments as unavailable
+  if (appointment.booked) {
+    redirect('/appointments/error?status=404'); // Handle booked appointments
   }
 
   const avgRating = appointment.practice.practice_reviews_aggregate.aggregate.avg.rating || "N/A";
