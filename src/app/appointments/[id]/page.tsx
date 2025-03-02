@@ -1,4 +1,4 @@
-import { notFound } from 'next/navigation';
+import { redirect } from 'next/navigation';
 import styles from './AppointmentDetailsPage.module.css';
 import Link from 'next/link';
 
@@ -12,7 +12,8 @@ async function fetchAppointment(id: string) {
   });
 
   if (!response.ok) {
-    throw new Error(`Failed to fetch appointment: ${response.status}`);
+    // Redirect to error page with status code as query param
+    redirect(`/appointments/error?status=${response.status}`);
   }
 
   const data = await response.json();
@@ -23,7 +24,7 @@ export default async function AppointmentDetail({ params }: { params: { id: stri
   const appointment = await fetchAppointment(params.id);
 
   if (!appointment || appointment.booked) {
-    notFound();
+    redirect('/appointments/error?status=404'); // Handle booked appointments as unavailable
   }
 
   const avgRating = appointment.practice.practice_reviews_aggregate.aggregate.avg.rating || "N/A";

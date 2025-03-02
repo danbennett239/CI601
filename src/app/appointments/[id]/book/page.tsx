@@ -108,7 +108,7 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
         <p className={styles.confirmationMessage}>
           Please check your inbox for a confirmation email. You can view this appointment in{' '}
           <Link href="/my-appointments" className={styles.link}>My Appointments</Link>.
-          After your appointment, you'll be able to leave a review or raise a dispute if needed.
+          After your appointment, you&apos;ll be able to leave a review or raise a dispute if needed.
         </p>
         <Link href="/my-appointments" className={styles.backButton}>Go to My Appointments</Link>
       </div>
