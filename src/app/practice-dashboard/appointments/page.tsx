@@ -324,6 +324,7 @@ const AppointmentsPage: React.FC = () => {
         <AppointmentPopup
           appointment={selectedAppointment}
           openingHours={openingHours}
+          practiceServices={practice.practice_services || {}}
           hideDeleteConfirmation={practice.practice_preferences.hide_delete_confirmation}
           onClose={() => setSelectedAppointment(null)}
           onUpdate={handleUpdate}
@@ -338,7 +339,7 @@ const AppointmentsPage: React.FC = () => {
           openingHours={openingHours}
           defaultStart={createDefaults.start}
           defaultEnd={createDefaults.end}
-          practiceServices={practice.practice_services}
+          practiceServices={practice.practice_services || {}}
           onClose={() => setShowCreatePopup(false)}
           onCreated={handleAppointmentCreated}
         />

@@ -25,6 +25,8 @@ export async function getAppointments(filters: {
          start_time
          end_time
          booked
+         services
+         booked_service
          created_at
          updated_at
       }
@@ -226,6 +228,8 @@ export async function updateAppointment(appointmentId: string, appointment: Part
          start_time
          end_time
          booked
+         services
+         booked_service
          created_at
          updated_at
       }
@@ -235,8 +239,8 @@ export async function updateAppointment(appointmentId: string, appointment: Part
     const response = await fetch(HASURA_GRAPHQL_URL, {
       method: "POST",
       headers: {
-         "Content-Type": "application/json",
-         "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
       },
       body: JSON.stringify({ query: mutation, variables: { appointmentId, appointment } }),
     });
@@ -264,8 +268,8 @@ export async function deleteAppointment(appointmentId: string) {
     const response = await fetch(HASURA_GRAPHQL_URL, {
       method: "POST",
       headers: {
-         "Content-Type": "application/json",
-         "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
       },
       body: JSON.stringify({ query: mutation, variables: { appointmentId } }),
     });

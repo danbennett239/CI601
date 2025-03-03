@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { z } from 'zod';
 import styles from './AppointmentPopup.module.css';
-import { Appointment, OpeningHoursItem } from '@/types/practice'; // Adjust import paths
+import { Appointment, OpeningHoursItem } from '@/types/practice';
 import ConfirmDeletePopup from '../ConfirmDeletePopup/ConfirmDeletePopup';
 
 const editSchema = z.object({
   title: z.string().min(1, "Title is required"),
   start_time: z.string(),
   end_time: z.string(),
+  services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
+    (services) => Object.keys(services).length > 0,
+    { message: "At least one service must be selected" }
+  ),
 }).refine(data => new Date(data.end_time) > new Date(data.start_time), {
   message: "End time must be after start time",
 });
@@ -15,16 +19,18 @@ const editSchema = z.object({
 interface AppointmentPopupProps {
   appointment: Appointment;
   openingHours: OpeningHoursItem[];
-  hideDeleteConfirmation: boolean;  // <<--- New prop
+  practiceServices: Record<string, number>;
+  hideDeleteConfirmation: boolean;
   onClose: () => void;
   onUpdate: (updateData: Partial<Appointment>) => Promise<void>;
   onDelete: (appointmentId: string) => Promise<void>;
-  onDontShowAgain: (dontShow: boolean) => void;  // <<--- New prop
+  onDontShowAgain: (dontShow: boolean) => void;
 }
 
 const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   appointment,
   openingHours,
+  practiceServices,
   hideDeleteConfirmation,
   onClose,
   onUpdate,
@@ -32,22 +38,28 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   onDontShowAgain,
 }) => {
   const [editMode, setEditMode] = useState(false);
-  const [formTitle, setFormTitle] = useState(appointment.title);
+  const [formTitle, setFormTitle] = useState(appointment.title || '');
   const [formStart, setFormStart] = useState(appointment.start_time.slice(0, 16));
   const [formEnd, setFormEnd] = useState(appointment.end_time.slice(0, 16));
+  const [allTypes, setAllTypes] = useState(true);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(Object.keys(appointment.services || {}));
   const [error, setError] = useState<string>('');
   const [userInfo, setUserInfo] = useState<Record<string, string> | null>(null);
-
-  // For the "Delete" confirmation popup
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
-  // Calculate original duration for start/end sync
+  const appointmentTypes = Object.keys(practiceServices);
   const originalDuration =
     new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime();
 
-  // If appointment is booked, fetch user info
+  // Sync allTypes with selectedTypes
   useEffect(() => {
-    if (appointment.booked && appointment.user_id) {
+    const allSelected = appointmentTypes.every((type) => selectedTypes.includes(type));
+    setAllTypes(allSelected && appointmentTypes.length > 0);
+  }, [selectedTypes, appointmentTypes]);
+
+  // Fetch user info if booked and user_id exists
+  useEffect(() => {
+    if (appointment.user_id) {
       fetch(`/api/user/${appointment.user_id}`)
         .then((res) => res.json())
         .then((data) => {
@@ -57,7 +69,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
         })
         .catch((err) => console.error('Error fetching user info:', err));
     }
-  }, [appointment]);
+  }, [appointment.user_id]);
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -73,7 +85,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     }
   };
 
-  // Validate within opening hours
   const validateWithinOpeningHours = (startISO: string, endISO: string): boolean => {
     const startDate = new Date(startISO);
     const dayName = startDate.toLocaleDateString('en-US', { weekday: 'long' });
@@ -95,13 +106,17 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     return true;
   };
 
-  // Handle edits
   const handleSave = async () => {
     setError('');
+    const services = selectedTypes.reduce((acc, type) => {
+      acc[type] = practiceServices[type] || 0; // Use fixed prices from practice_services
+      return acc;
+    }, {} as Record<string, number>);
     const parseResult = editSchema.safeParse({
       title: formTitle,
       start_time: formStart,
       end_time: formEnd,
+      services,
     });
     if (!parseResult.success) {
       setError(parseResult.error.errors.map(err => err.message).join(', '));
@@ -114,6 +129,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
         title: formTitle,
         start_time: formStart,
         end_time: formEnd,
+        services,
       });
       setEditMode(false);
     } catch (error: unknown) {
@@ -125,24 +141,21 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const handleMarkBooked = async () => {
     setError('');
     try {
-      await onUpdate({ booked: true });
+      await onUpdate({ booked: true }); // booked_service set elsewhere
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error marking appointment as booked';
       setError(message);
     }
   };
 
-  // Check preference before showing the ConfirmDeletePopup
   const handleDeleteClick = () => {
     if (hideDeleteConfirmation) {
-      // If user set "hide_delete_confirmation", then no popup; just delete
       handleConfirmDelete();
     } else {
       setShowDeleteConfirm(true);
     }
   };
 
-  // Called when user confirms "Yes" in the confirm dialog
   const handleConfirmDelete = async () => {
     setShowDeleteConfirm(false);
     try {
@@ -153,7 +166,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     }
   };
 
-  // Sync the end time with the adjusted start time
   const handleStartChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newStart = e.target.value;
     setFormStart(newStart);
@@ -161,6 +173,19 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     const newEndDate = new Date(newStartDate.getTime() + originalDuration);
     setFormEnd(newEndDate.toISOString().slice(0, 16));
   };
+
+  const handleAllTypesChange = (checked: boolean) => {
+    setAllTypes(checked);
+    setSelectedTypes(checked ? appointmentTypes : []);
+  };
+
+  const handleTypeChange = (type: string, checked: boolean) => {
+    setSelectedTypes((prev) =>
+      checked ? [...prev, type] : prev.filter((t) => t !== type)
+    );
+  };
+
+  const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
 
   return (
     <div className={styles.popupOverlay} onClick={handleOverlayClick}>
@@ -173,7 +198,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             <div className={styles.detailsForm}>
               <div className={styles.detailRow}>
                 <label>Title:</label>
-                <span>{appointment.title}</span>
+                <span>{appointment.title || 'N/A'}</span>
               </div>
               <div className={styles.detailRow}>
                 <label>Start:</label>
@@ -186,6 +211,16 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
               <div className={styles.detailRow}>
                 <label>Status:</label>
                 <span>{appointment.booked ? "Booked" : "Available"}</span>
+              </div>
+              <div className={styles.detailRow}>
+                <label>{appointment.booked ? "Booked Service" : "Available Services"}:</label>
+                <span>
+                  {appointment.booked && appointment.booked_service
+                    ? `${capitalizeFirstLetter(appointment.booked_service.type)} (£${appointment.booked_service.price})`
+                    : Object.entries(appointment.services || {}).map(([type, price]) => (
+                        `${capitalizeFirstLetter(type)} (£${price})`
+                      )).join(', ') || 'None'}
+                </span>
               </div>
             </div>
 
@@ -208,7 +243,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             {appointment.booked && (
               <div className={styles.userInfoContainer}>
                 <div className={styles.divider} />
-                <h2 className={styles.userInfoTitle}>Patient Information</h2>
+                <h2 className={styles.userInfoTitle}>Booking Information</h2>
                 <div className={styles.detailsForm}>
                   {appointment.user_id ? (
                     userInfo ? (
@@ -264,6 +299,34 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
                 value={formEnd}
                 onChange={(e) => setFormEnd(e.target.value)}
               />
+
+              <div className={styles.appointmentTypeSection}>
+                <h3>Appointment Type</h3>
+                <p className={styles.appointmentTypeSectionInfo}>
+                  Select the services available for this appointment slot.
+                </p>
+                <div className={styles.checkboxContainer}>
+                  <label className={styles.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={allTypes}
+                      onChange={(e) => handleAllTypesChange(e.target.checked)}
+                    />
+                    All
+                  </label>
+                  <hr className={styles.divider} />
+                  {appointmentTypes.map((type) => (
+                    <label key={type} className={styles.checkboxLabel}>
+                      <input
+                        type="checkbox"
+                        checked={selectedTypes.includes(type)}
+                        onChange={(e) => handleTypeChange(type, e.target.checked)}
+                      />
+                      {capitalizeFirstLetter(type)} (£{practiceServices[type] || 0})
+                    </label>
+                  ))}
+                </div>
+              </div>
             </div>
 
             {error && <p className={styles.error}>{error}</p>}
@@ -284,11 +347,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
         <ConfirmDeletePopup
           onConfirm={handleConfirmDelete}
           onCancel={() => setShowDeleteConfirm(false)}
-          onDontShowAgain={(dontShow) => {
-            // If user checks "Don't show again" and confirms,
-            // we call the parent's callback to update preferences.
-            onDontShowAgain(dontShow);
-          }}
+          onDontShowAgain={(dontShow) => onDontShowAgain(dontShow)}
         />
       )}
     </div>
