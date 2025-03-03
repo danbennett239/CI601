@@ -18,7 +18,6 @@ import styles from "./AppointmentsPage.module.css";
 
 type TimeRange = { start_time: string; end_time: string };
 
-// -- Utility for date/time ranges --
 function computeTimeRange(date: Date, view: ViewType): TimeRange {
   let start: Date, end: Date;
   if (view === "day") {
@@ -31,14 +30,13 @@ function computeTimeRange(date: Date, view: ViewType): TimeRange {
     start = new Date(monday);
     start.setHours(0, 0, 0, 0);
     end = new Date(monday);
-    const addDays = view === "workWeek" ? 4 : 6; // workWeek: Mon-Fri, otherwise Mon-Sun
+    const addDays = view === "workWeek" ? 4 : 6;
     end.setDate(end.getDate() + addDays);
     end.setHours(23, 59, 59, 999);
   } else if (view === "month") {
     start = new Date(date.getFullYear(), date.getMonth(), 1, 0, 0, 0);
     end = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59, 999);
   } else {
-    // fallback for any other view
     start = date;
     end = date;
   }
@@ -47,8 +45,6 @@ function computeTimeRange(date: Date, view: ViewType): TimeRange {
     end_time: end.toISOString().split("Z")[0],
   };
 }
-
-// -- Controller-level update/delete preferences calls --
 
 async function updateAppointmentAPI(appointmentId: string, updateData: Partial<Appointment>) {
   const response = await fetch(`/api/appointment/${appointmentId}`, {
@@ -74,7 +70,6 @@ async function deleteAppointmentAPI(appointmentId: string) {
   return true;
 }
 
-/** Updates the practice preferences on the server. */
 async function updatePracticePreferences(
   practiceId: string,
   partialPrefs: Partial<PracticePreferences>
@@ -112,7 +107,6 @@ const AppointmentsPage: React.FC = () => {
   });
   const [bookedFilter, setBookedFilter] = useState<string>("all");
 
-  // If practice is not yet loaded, fallback to default opening hours
   const openingHours: OpeningHoursItem[] = practice?.opening_hours || [
     { open: "08:00", close: "16:00", dayName: "Monday" },
     { open: "08:00", close: "16:00", dayName: "Tuesday" },
@@ -184,7 +178,6 @@ const AppointmentsPage: React.FC = () => {
   };
 
   const handleSlotClick = (start: Date, end: Date) => {
-    // Check if practice is closed for that day
     const dayName = start.toLocaleDateString("en-US", { weekday: "long" });
     const dayOpening = openingHours.find((oh) => oh.dayName === dayName);
     if (
@@ -213,7 +206,6 @@ const AppointmentsPage: React.FC = () => {
     setSelectedAppointment(appt);
   };
 
-  // -- Controller update & delete for appointments --
   const handleUpdate = async (updateData: Partial<Appointment>) => {
     if (!selectedAppointment) return;
     try {
@@ -243,16 +235,13 @@ const AppointmentsPage: React.FC = () => {
     }
   };
 
-  /** Called when user checks "Don't show this again" and clicks Yes on ConfirmDeletePopup. */
   const handleDontShowAgain = async (dontShow: boolean) => {
     if (!practice?.practice_id) return;
     try {
-      // We only care if they set 'dontShow' to true => hide_delete_confirmation: true
       if (dontShow) {
         await updatePracticePreferences(practice.practice_id, {
           hide_delete_confirmation: true,
         });
-        // Refresh the practice so that local state is up-to-date
         await refreshPractice();
         toast.success("Preference updated: Hide delete confirmation");
       }
@@ -281,7 +270,6 @@ const AppointmentsPage: React.FC = () => {
   return (
     <div className={styles.appointmentsPage}>
       <ToastContainer />
-
       <Link href="/practice-dashboard" className={styles.backButton}>
         Back to Practice Dashboard
       </Link>
@@ -340,7 +328,7 @@ const AppointmentsPage: React.FC = () => {
           onClose={() => setSelectedAppointment(null)}
           onUpdate={handleUpdate}
           onDelete={handleDelete}
-          onDontShowAgain={handleDontShowAgain} 
+          onDontShowAgain={handleDontShowAgain}
         />
       )}
 
@@ -350,6 +338,8 @@ const AppointmentsPage: React.FC = () => {
           openingHours={openingHours}
           defaultStart={createDefaults.start}
           defaultEnd={createDefaults.end}
+          allowedTypes={practice.allowed_types || []} // Pass allowed_types
+          pricingMatrix={practice.pricing_matrix || {}} // Pass pricing_matrix
           onClose={() => setShowCreatePopup(false)}
           onCreated={handleAppointmentCreated}
         />

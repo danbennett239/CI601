@@ -1,13 +1,15 @@
-// components/practice/CreateAppointmentPopup/CreateAppointmentPopup.tsx
-import React, { useState } from 'react';
-import styles from './CreateAppointmentPopup.module.css';
-import { OpeningHoursItem, Appointment } from '@/types/practice';
+import React, { useState, useEffect } from "react";
+import styles from "./CreateAppointmentPopup.module.css";
+import { OpeningHoursItem, Appointment } from "@/types/practice";
+import { toast } from "react-toastify";
 
 interface CreateAppointmentPopupProps {
   practiceId: string;
   openingHours: OpeningHoursItem[];
   defaultStart: Date;
   defaultEnd: Date;
+  allowedTypes: string[];
+  pricingMatrix: Record<string, number>;
   onClose: () => void;
   onCreated: (appointment: Appointment) => void;
 }
@@ -17,29 +19,60 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   openingHours,
   defaultStart,
   defaultEnd,
+  allowedTypes,
+  pricingMatrix,
   onClose,
   onCreated,
 }) => {
-  const [title, setTitle] = useState('');
-  // Format dates to "YYYY-MM-DDTHH:MM"
+  const [title, setTitle] = useState("");
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
+  const [allTypes, setAllTypes] = useState(true); // Default "All" checked
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(allowedTypes); // Default to all types
   const [error, setError] = useState<string | null>(null);
+
+  // Sync allTypes with selectedTypes
+  useEffect(() => {
+    // Check if all allowedTypes are in selectedTypes
+    const allSelected = allowedTypes.every((type) => selectedTypes.includes(type));
+    setAllTypes(allSelected && allowedTypes.length > 0);
+  }, [selectedTypes, allowedTypes]);
+
+  const handleAllTypesChange = (checked: boolean) => {
+    setAllTypes(checked);
+    setSelectedTypes(checked ? allowedTypes : []);
+  };
+
+  const handleTypeChange = (type: string, checked: boolean) => {
+    setSelectedTypes((prev) =>
+      checked ? [...prev, type] : prev.filter((t) => t !== type)
+    );
+    // No direct toggle of allTypes here; useEffect handles it
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Validate that the appointment is within opening hours.
+
+    if (selectedTypes.length === 0) {
+      toast.error("At least one appointment type must be selected.");
+      return;
+    }
+
     const startDate = new Date(start);
     const endDate = new Date(end);
     const dayName = startDate.toLocaleDateString("en-US", { weekday: "long" });
-    const dayOpening = openingHours.find(oh => oh.dayName === dayName);
-    if (!dayOpening || dayOpening.open.toLowerCase() === 'closed' || dayOpening.close.toLowerCase() === 'closed') {
+    const dayOpening = openingHours.find((oh) => oh.dayName === dayName);
+    if (
+      !dayOpening ||
+      dayOpening.open.toLowerCase() === "closed" ||
+      dayOpening.close.toLowerCase() === "closed"
+    ) {
       setError(`The practice is closed on ${dayName}`);
       return;
     }
-    // Build Date objects for the opening and closing times on the same day.
-    const [openHour, openMinute] = dayOpening.open.split(':').map(Number);
-    const [closeHour, closeMinute] = dayOpening.close.split(':').map(Number);
+
+    const [openHour, openMinute] = dayOpening.open.split(":").map(Number);
+    const [closeHour, closeMinute] = dayOpening.close.split(":").map(Number);
     const openDate = new Date(startDate);
     openDate.setHours(openHour, openMinute, 0, 0);
     const closeDate = new Date(startDate);
@@ -48,18 +81,18 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
       setError(`Appointment must be within opening hours: ${dayOpening.open} - ${dayOpening.close}`);
       return;
     }
+
     try {
-      const response = await fetch('/api/appointment', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+      const response = await fetch("/api/appointment", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           practice_id: practiceId,
           title,
           start_time: start,
-          end_time: end
-        })
+          end_time: end,
+          services: selectedTypes,
+        }),
       });
       const result = await response.json();
       if (!response.ok || result.error) {
@@ -74,13 +107,18 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   };
 
   return (
-    <div className={styles.popupOverlay} onClick={(e) => {
-      if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
-        onClose();
-      }
-    }}>
+    <div
+      className={styles.popupOverlay}
+      onClick={(e) => {
+        if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
+          onClose();
+        }
+      }}
+    >
       <div className={styles.popupContent}>
-        <button className={styles.closeButton} onClick={onClose}>×</button>
+        <button className={styles.closeButton} onClick={onClose}>
+          ×
+        </button>
         <h2>Create Appointment</h2>
         {error && <p className={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
@@ -90,13 +128,51 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
           </label>
           <label>
             Start:
-            <input type="datetime-local" value={start} onChange={(e) => setStart(e.target.value)} required />
+            <input
+              type="datetime-local"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              required
+            />
           </label>
           <label>
             End:
-            <input type="datetime-local" value={end} onChange={(e) => setEnd(e.target.value)} required />
+            <input
+              type="datetime-local"
+              value={end}
+              onChange={(e) => setEnd(e.target.value)}
+              required
+            />
           </label>
-          <button type="submit" className={styles.saveButton}>Create</button>
+          <div className={styles.appointmentTypeSection}>
+            <h3>Appointment Type</h3>
+            <p className={styles.appointmentTypeSectionInfo}>
+              Select the services available for this appointment slot.
+            </p>
+            <div className={styles.checkboxContainer}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={allTypes}
+                  onChange={(e) => handleAllTypesChange(e.target.checked)}
+                />
+                All
+              </label>
+              {allowedTypes.map((type) => (
+                <label key={type} className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(type)}
+                    onChange={(e) => handleTypeChange(type, e.target.checked)}
+                  />
+                  {type} (£{pricingMatrix[type] || 0})
+                </label>
+              ))}
+            </div>
+          </div>
+          <button type="submit" className={styles.saveButton}>
+            Create
+          </button>
         </form>
       </div>
     </div>
