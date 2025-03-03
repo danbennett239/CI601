@@ -12,8 +12,7 @@ export async function POST(req: NextRequest) {
       photo,
       address,
       openingHours,
-      allowedTypes,
-      pricingMatrix,
+      practiceServices,
     } = await req.json();
 
     await createPracticeWithUser({
@@ -24,8 +23,7 @@ export async function POST(req: NextRequest) {
       photo,
       address,
       openingHours,
-      allowedTypes,
-      pricingMatrix,
+      practiceServices,
     });
 
     const { accessToken, refreshToken } = await loginUser({ email, password });

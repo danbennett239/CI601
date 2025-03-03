@@ -338,8 +338,7 @@ const AppointmentsPage: React.FC = () => {
           openingHours={openingHours}
           defaultStart={createDefaults.start}
           defaultEnd={createDefaults.end}
-          allowedTypes={practice.allowed_types || []} // Pass allowed_types
-          pricingMatrix={practice.pricing_matrix || {}} // Pass pricing_matrix
+          practiceServices={practice.practice_services}
           onClose={() => setShowCreatePopup(false)}
           onCreated={handleAppointmentCreated}
         />
