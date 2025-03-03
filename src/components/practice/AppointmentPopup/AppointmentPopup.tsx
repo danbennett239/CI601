@@ -46,6 +46,8 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const [error, setError] = useState<string>('');
   const [userInfo, setUserInfo] = useState<Record<string, string> | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showBookingDropdown, setShowBookingDropdown] = useState(false);
+  const [selectedBookingType, setSelectedBookingType] = useState<string>('');
 
   const appointmentTypes = Object.keys(practiceServices);
   const originalDuration =
@@ -73,7 +75,10 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        setShowBookingDropdown(false);
+        onClose();
+      }
     };
     document.addEventListener('keydown', handleEsc);
     return () => document.removeEventListener('keydown', handleEsc);
@@ -81,6 +86,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).classList.contains(styles.popupOverlay)) {
+      setShowBookingDropdown(false);
       onClose();
     }
   };
@@ -138,14 +144,35 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     }
   };
 
-  const handleMarkBooked = async () => {
+  const handleMarkBookedClick = () => {
+    setShowBookingDropdown(true);
+    setSelectedBookingType(Object.keys(appointment.services || {})[0] || ''); // Default to first service
+  };
+
+  const handleBookingConfirm = async () => {
+    if (!selectedBookingType) {
+      setError('Please select a service type.');
+      return;
+    }
     setError('');
     try {
-      await onUpdate({ booked: true }); // booked_service set elsewhere
+      await onUpdate({
+        booked: true,
+        booked_service: {
+          type: selectedBookingType,
+          price: appointment.services[selectedBookingType] || 0,
+        },
+      });
+      setShowBookingDropdown(false);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error marking appointment as booked';
       setError(message);
     }
+  };
+
+  const handleBookingCancel = () => {
+    setShowBookingDropdown(false);
+    setSelectedBookingType('');
   };
 
   const handleDeleteClick = () => {
@@ -222,23 +249,57 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
                       )).join(', ') || 'None'}
                 </span>
               </div>
-            </div>
-
-            <div className={styles.buttonRow}>
-              {!appointment.booked && (
-                <>
-                  <button className={styles.editButton} onClick={() => setEditMode(true)}>
-                    Edit
-                  </button>
-                  <button className={styles.markBookedButton} onClick={handleMarkBooked}>
-                    Mark as Booked
-                  </button>
-                  <button className={styles.deleteButton} onClick={handleDeleteClick}>
-                    Delete
-                  </button>
-                </>
+              {!appointment.booked && showBookingDropdown && (
+                <div className={`${styles.bookingSection} ${styles.fadeIn}`}>
+                  <div className={styles.divider} />
+                  <h3 className={styles.bookingTitle}>Select Service</h3>
+                  <select
+                    value={selectedBookingType}
+                    onChange={(e) => setSelectedBookingType(e.target.value)}
+                    className={styles.bookingDropdown}
+                  >
+                    <option value="">Select a service</option>
+                    {Object.keys(appointment.services || {}).map((type) => (
+                      <option key={type} value={type}>
+                        {capitalizeFirstLetter(type)} (£{appointment.services[type]})
+                      </option>
+                    ))}
+                  </select>
+                  <div className={styles.bookingButtonRow}>
+                    <button
+                      className={styles.cancelBookingButton}
+                      onClick={handleBookingCancel}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      className={styles.confirmBookingButton}
+                      onClick={handleBookingConfirm}
+                    >
+                      Confirm Booking
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
+
+            {!showBookingDropdown && (
+              <div className={styles.buttonRow}>
+                {!appointment.booked && (
+                  <>
+                    <button className={styles.editButton} onClick={() => setEditMode(true)}>
+                      Edit
+                    </button>
+                    <button className={styles.markBookedButton} onClick={handleMarkBookedClick}>
+                      Mark as Booked
+                    </button>
+                    <button className={styles.deleteButton} onClick={handleDeleteClick}>
+                      Delete
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
 
             {appointment.booked && (
               <div className={styles.userInfoContainer}>
@@ -332,11 +393,11 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             {error && <p className={styles.error}>{error}</p>}
 
             <div className={styles.buttonRow}>
-              <button className={styles.saveButton} onClick={handleSave}>
-                Save
-              </button>
               <button className={styles.cancelButton} onClick={() => setEditMode(false)}>
                 Cancel
+              </button>
+              <button className={styles.saveButton} onClick={handleSave}>
+                Save
               </button>
             </div>
           </>
