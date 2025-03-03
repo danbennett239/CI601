@@ -25,19 +25,19 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   const [title, setTitle] = useState("");
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
-  const allowedTypes = Object.keys(practiceServices);
+  const appointmentTypes = Object.keys(practiceServices);
   const [allTypes, setAllTypes] = useState(true);
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(allowedTypes);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(appointmentTypes);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const allSelected = allowedTypes.every((type) => selectedTypes.includes(type));
-    setAllTypes(allSelected && allowedTypes.length > 0);
-  }, [selectedTypes, allowedTypes]);
+    const allSelected = appointmentTypes.every((type) => selectedTypes.includes(type));
+    setAllTypes(allSelected && appointmentTypes.length > 0);
+  }, [selectedTypes, appointmentTypes]);
 
   const handleAllTypesChange = (checked: boolean) => {
     setAllTypes(checked);
-    setSelectedTypes(checked ? allowedTypes : []);
+    setSelectedTypes(checked ? appointmentTypes : []);
   };
 
   const handleTypeChange = (type: string, checked: boolean) => {
@@ -159,7 +159,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                 All
               </label>
               <hr className={styles.divider} />
-              {allowedTypes.map((type) => (
+              {appointmentTypes.map((type) => (
                 <label key={type} className={styles.checkboxLabel}>
                   <input
                     type="checkbox"
