@@ -8,6 +8,7 @@ import { usePractice } from "@/hooks/usePractice";
 import { OpeningHoursItem, PracticePreferences } from "@/types/practice";
 import ConfirmUnsavedPopup from "@/components/practice/settings/ConfirmUnsavedPopup/ConfirmUnsavedPopup";
 import InfoTooltip from "@/components/InfoTooltip/InfoTooltip";
+import { practiceSettingsSchema } from '@/schemas/practiceSchemas';
 import styles from "./PracticeSettingsPage.module.css";
 
 interface PracticeInfoState {
@@ -214,14 +215,20 @@ const PracticeSettings: React.FC = () => {
       updated[index].enabled = checked;
       if (!checked) {
         updated[index].price = null;
+      } else if (checked && originalInfo?.practice_services[updated[index].name.toLowerCase()] !== undefined) {
+        updated[index].price = originalInfo.practice_services[updated[index].name.toLowerCase()];
       }
       return updated;
     });
     setInfo((prev) => {
       if (!prev) return null;
-      const practiceServices = servicesOffered.reduce((acc, s) => {
-        if (s.enabled || (index === servicesOffered.indexOf(s) && checked)) {
-          acc[s.name.toLowerCase()] = s.price !== null ? s.price : prev.practice_services[s.name.toLowerCase()] || 0;
+      const practiceServices = servicesOffered.reduce((acc, s, i) => {
+        if (s.enabled || (i === index && checked)) {
+          // acc[s.name.toLowerCase()] = s.price !== null ? s.price : (originalInfo?.practice_services[s.name.toLowerCase()] || null);
+          acc[s.name.toLowerCase()] = s.price !== null 
+          ? s.price 
+          : (originalInfo?.practice_services?.[s.name.toLowerCase()] ?? 0);
+        
         }
         return acc;
       }, {} as Record<string, number>);
@@ -252,41 +259,65 @@ const PracticeSettings: React.FC = () => {
 
   const handleSave = async () => {
     if (!info) return;
-
+  
+    // Validate servicesOffered directly
+    const parseResult = practiceSettingsSchema.safeParse({
+      practice_name: info.practice_name,
+      email: info.email,
+      phone_number: info.phone_number,
+      photo: newPhotoFile || undefined,
+      opening_hours: info.opening_hours.map(day => ({
+        dayName: day.dayName,
+        open: day.open,
+        close: day.close,
+      })),
+      servicesOffered: servicesOffered,
+    });
+  
+    if (!parseResult.success) {
+      const errorMessages = parseResult.error.errors.map(err => err.message).join(', ');
+      toast.error(`Validation failed: ${errorMessages}`);
+      return;
+    }
+  
+    // Construct practice_services from validated servicesOffered
+    const practiceServices = servicesOffered.reduce((acc, s) => {
+      if (s.enabled && s.price !== null) {
+        acc[s.name.toLowerCase()] = s.price;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  
+    const updatedInfo = { ...info, practice_services: practiceServices };
+  
     try {
+      // Validate opening hours (API check, if still needed alongside Zod)
       const validateRes = await fetch(
         `/api/practice/${practice.practice_id}/settings/validate`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ opening_hours: info.opening_hours }),
+          body: JSON.stringify({ opening_hours: updatedInfo.opening_hours }),
         }
       );
       const validateData = await validateRes.json();
       if (!validateRes.ok || validateData.error) {
-        toast.error(validateData.error || "Opening hours validation failed");
-        return;
+        throw new Error(validateData.error || "Opening hours validation failed");
       }
-    } catch (error: unknown) {
-      const message =
-        error instanceof Error ? error.message : "Error validating opening hours";
-      toast.error(message);
-      return;
-    }
-
-    if (newPhotoFile) {
-      try {
+  
+      // Update practice info and photo if applicable
+      if (newPhotoFile) {
         const formData = new FormData();
         formData.append("file", newPhotoFile);
         const settingsPayload = {
-          practice_name: info.practice_name,
-          email: info.email,
-          phone_number: info.phone_number,
-          opening_hours: info.opening_hours,
-          practice_services: info.practice_services,
+          practice_name: updatedInfo.practice_name,
+          email: updatedInfo.email,
+          phone_number: updatedInfo.phone_number,
+          opening_hours: updatedInfo.opening_hours,
+          practice_services: updatedInfo.practice_services,
         };
         formData.append("settings", JSON.stringify(settingsPayload));
-
+  
         const uploadRes = await fetch(`/api/practice/${practice.practice_id}`, {
           method: "PUT",
           body: formData,
@@ -295,15 +326,8 @@ const PracticeSettings: React.FC = () => {
         if (!uploadRes.ok || uploadData.error) {
           throw new Error(uploadData.error || "Error updating photo");
         }
-      } catch (error: unknown) {
-        toast.error(
-          error instanceof Error ? error.message : "Failed to upload/update photo"
-        );
-        return;
-      }
-    } else {
-      try {
-        const body = { settings: info };
+      } else {
+        const body = { settings: updatedInfo };
         const res = await fetch(`/api/practice/${practice.practice_id}/settings`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -313,15 +337,9 @@ const PracticeSettings: React.FC = () => {
         if (!res.ok || data.error) {
           throw new Error(data.error || "Error updating settings");
         }
-      } catch (err: unknown) {
-        toast.error(
-          err instanceof Error ? err.message : "Error updating practice settings"
-        );
-        return;
       }
-    }
-
-    try {
+  
+      // Update preferences
       const prefsRes = await fetch(`/api/practice/${practice.practice_id}/preferences`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -339,9 +357,12 @@ const PracticeSettings: React.FC = () => {
       if (!prefsRes.ok || prefsData.error) {
         throw new Error(prefsData.error || "Error updating preferences");
       }
-
+  
+      // **All updates succeeded, refresh practice and reset state**
       await refreshPractice();
-      setOriginalInfo({ ...info });
+  
+      // **Ensure state updates are applied correctly**
+      setOriginalInfo({ ...updatedInfo });
       setOriginalPrefs({
         ...prefs!,
         enable_notifications: enableNotifications,
@@ -350,14 +371,31 @@ const PracticeSettings: React.FC = () => {
         notify_on_new_booking: notifyOnBooking,
         hide_delete_confirmation: hideDeleteConfirmation,
       });
-      toast.success("Settings saved successfully");
+  
+      setServicesOffered(
+        serviceOptionsList.map((name) => ({
+          name,
+          enabled: !!updatedInfo.practice_services[name.toLowerCase()],
+          price: updatedInfo.practice_services[name.toLowerCase()] || null,
+        }))
+      );
+  
       setNewPhotoFile(null);
       setPhotoPreview("");
+  
+      // **Manually force recalculating unsavedChanges**
+      setTimeout(() => {
+        setUnsavedChanges(false);
+      }, 0); // Allows React to re-render before recalculating
+  
+      toast.success("Settings saved successfully");
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : "Error saving settings";
       toast.error(message);
     }
   };
+  
+
 
   const handleCancel = () => {
     if (!practice || !originalInfo || !originalPrefs) return;

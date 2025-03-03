@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { z } from 'zod';
 import styles from './AppointmentPopup.module.css';
 import { Appointment, OpeningHoursItem } from '@/types/practice';
 import ConfirmDeletePopup from '../ConfirmDeletePopup/ConfirmDeletePopup';

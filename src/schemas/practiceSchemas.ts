@@ -96,6 +96,68 @@ export const editAppointmentSchema = z.object({
   message: "End time must be after start time",
 });
 
+// Schema for practice settings in Practice Dashboard
+export const practiceSettingsSchema = z.object({
+  practice_name: z.string().min(1, "Practice name is required"),
+  email: z.string().email("Invalid email address"),
+  phone_number: z.string().min(1, "Phone number is required"),
+  photo: z
+    .instanceof(File)
+    .optional()
+    .refine((file) => !file || file.size <= 10 * 1024 * 1024, {
+      message: "File size must be less than 10MB",
+    })
+    .refine((file) => !file || allowedImageTypes.includes(file.type), {
+      message: "File must be a PNG or JPEG image",
+    }),
+  opening_hours: z
+    .array(
+      z.object({
+        dayName: z.string(),
+        open: z.string(),
+        close: z.string(),
+      })
+    )
+    .refine((hours) => hours.some((day) => day.open !== "closed" && day.close !== "closed"), {
+      message: "At least one day must be open",
+      path: ["opening_hours"],
+    })
+    .refine(
+      (hours) => {
+        const timeRegex = /^\d{2}:\d{2}$/;
+        return hours.every((day) => {
+          if (day.open !== "closed" && day.close !== "closed") {
+            return (
+              day.open &&
+              day.close &&
+              timeRegex.test(day.open) &&
+              timeRegex.test(day.close) &&
+              timeToMinutes(day.close) > timeToMinutes(day.open)
+            );
+          }
+          return day.open === "closed" && day.close === "closed";
+        });
+      },
+      {
+        message: "For open days, both opening and closing times are required and closing must be after opening",
+        path: ["opening_hours"],
+      }
+    ),
+  servicesOffered: z.array(
+    z.object({
+      name: z.string(),
+      enabled: z.boolean(),
+      price: z.number().nonnegative("Price must be non-negative").nullable(),
+    })
+  ).refine(
+    (services) => {
+      const enabledServices = services.filter(s => s.enabled);
+      return enabledServices.length > 0 && enabledServices.every(s => s.price !== null);
+    },
+    { message: "All enabled services must have a non-negative price" }
+  ),
+});
+
 function timeToMinutes(t: string): number {
   const [hh, mm] = t.split(":");
   return parseInt(hh, 10) * 60 + parseInt(mm, 10);

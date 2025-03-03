@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./CreateAppointmentPopup.module.css";
 import { OpeningHoursItem, Appointment } from "@/types/practice";
 import { toast } from "react-toastify";
-import { createAppointmentSchema } from '@/schemas/practiceSchemas'; // Import schema
+import { createAppointmentSchema } from '@/schemas/practiceSchemas';
 
 interface CreateAppointmentPopupProps {
   practiceId: string;
