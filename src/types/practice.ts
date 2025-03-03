@@ -49,6 +49,8 @@ export interface Appointment {
   title: string;
   start_time: string;
   end_time: string;
+  services?: Record<string, number>;
+  booked_service?: { type: string; price: number };
   booked: boolean;
   created_at: string;
   updated_at: string;

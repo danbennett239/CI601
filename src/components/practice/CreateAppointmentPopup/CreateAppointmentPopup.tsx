@@ -78,6 +78,12 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
       return;
     }
 
+    // Build services object with selected types and their prices
+    const services = selectedTypes.reduce((acc: Record<string, number>, type) => {
+      acc[type] = practiceServices[type] || 0;
+      return acc;
+    }, {});
+
     try {
       const response = await fetch("/api/appointment", {
         method: "POST",
@@ -87,7 +93,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
           title,
           start_time: start,
           end_time: end,
-          services: selectedTypes,
+          services, // Send full services object with prices
         }),
       });
       const result = await response.json();
