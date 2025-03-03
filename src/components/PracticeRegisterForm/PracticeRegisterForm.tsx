@@ -127,8 +127,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         close: day.close,
         closed: day.closed,
       })),
-      allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
-      pricingMatrix: servicesOffered.reduce((acc, s) => {
+      practice_services: servicesOffered.reduce((acc, s) => {
         if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
         return acc;
       }, {} as Record<string, number>),
@@ -190,7 +189,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         dayName: day.dayName,
         open: i === index && field === "open" ? value : day.open,
         close: i === index && field === "close" ? value : day.close,
-        closed: day.closed,
+        closed: i === index ? day.closed : day.closed,
       }));
       const validationResult = practiceRegistrationSchema.safeParse({
         practiceName,
@@ -201,8 +200,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         photo,
         address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
         openingHours: formData,
-        allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
-        pricingMatrix: servicesOffered.reduce((acc, s) => {
+        practice_services: servicesOffered.reduce((acc, s) => {
           if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
           return acc;
         }, {} as Record<string, number>),
@@ -255,8 +253,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         photo,
         address: { line1: addressLine1, line2: addressLine2, line3: addressLine3, city, county, postcode, country },
         openingHours: formData,
-        allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
-        pricingMatrix: servicesOffered.reduce((acc, s) => {
+        practice_services: servicesOffered.reduce((acc, s) => {
           if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
           return acc;
         }, {} as Record<string, number>),
@@ -319,8 +316,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
           close: day.close,
           closed: day.closed,
         })),
-        allowedTypes: updatedServices.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
-        pricingMatrix: updatedServices.reduce((acc, s) => {
+        practice_services: updatedServices.reduce((acc, s) => {
           if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
           return acc;
         }, {} as Record<string, number>),
@@ -330,9 +326,8 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       if (validationResult.success) {
         setFormErrors((prev) => ({
           ...prev,
-          allowedTypes: undefined,
-          pricingMatrix: undefined,
-          [`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`]: undefined,
+          practice_services: undefined,
+          [`practice_services.${serviceOptionsList[index].toLowerCase()}`]: undefined,
         }));
       } else {
         const errors = validationResult.error.errors.reduce((acc, err) => {
@@ -342,10 +337,9 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         setFormErrors((prev) => ({
           ...prev,
           ...errors,
-          allowedTypes: errors.allowedTypes,
-          pricingMatrix: errors.pricingMatrix,
-          [`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`]:
-            errors[`pricingMatrix.${serviceOptionsList[index].toLowerCase()}`],
+          practice_services: errors.practice_services,
+          [`practice_services.${serviceOptionsList[index].toLowerCase()}`]:
+            errors[`practice_services.${serviceOptionsList[index].toLowerCase()}`],
         }));
       }
     }
@@ -366,8 +360,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
         close: day.close,
         closed: day.closed,
       })),
-      allowedTypes: servicesOffered.filter((s) => s.enabled).map((s) => s.name.toLowerCase()),
-      pricingMatrix: servicesOffered.reduce((acc, s) => {
+      practice_services: servicesOffered.reduce((acc, s) => {
         if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
         return acc;
       }, {} as Record<string, number>),
@@ -409,10 +402,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
       country,
     };
 
-    const servicesOfferedList = servicesOffered
-      .filter((service) => service.enabled)
-      .map((service) => service.name.toLowerCase());
-    const pricingMatrix = servicesOffered.reduce((acc, service) => {
+    const practiceServices = servicesOffered.reduce((acc, service) => {
       if (service.enabled && service.price !== null) {
         acc[service.name.toLowerCase()] = service.price;
       }
@@ -454,8 +444,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
           photo: photoUrl,
           address,
           openingHours: finalHours,
-          allowedTypes: servicesOfferedList,
-          pricingMatrix,
+          practiceServices,
         }),
       });
 
@@ -704,13 +693,12 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   min="0"
                   step="0.01"
                 />
-                {formErrors[`pricingMatrix.${service.name.toLowerCase()}`] && (
-                  <p className={styles.fieldError}>{formErrors[`pricingMatrix.${service.name.toLowerCase()}`]}</p>
+                {formErrors[`practice_services.${service.name.toLowerCase()}`] && (
+                  <p className={styles.fieldError}>{formErrors[`practice_services.${service.name.toLowerCase()}`]}</p>
                 )}
               </div>
             ))}
-            {formErrors["allowedTypes"] && <p className={styles.fieldError}>{formErrors["allowedTypes"]}</p>}
-            {formErrors["pricingMatrix"] && <p className={styles.fieldError}>{formErrors["pricingMatrix"]}</p>}
+            {formErrors["practice_services"] && <p className={styles.fieldError}>{formErrors["practice_services"]}</p>}
           </div>
 
           <p className={styles.infoText}>

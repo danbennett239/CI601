@@ -61,27 +61,15 @@ export const practiceRegistrationSchema = z
           path: ["openingHours"],
         }
       ),
-    allowedTypes: z.array(z.string()).min(1, "At least one service type must be selected"),
-    pricingMatrix: z.record(z.string(), z.number().nonnegative("Price must be non-negative")),
+    practice_services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
+      (services) => Object.keys(services).length > 0,
+      { message: "At least one service must be selected with a price" }
+    ),
   })
   .refine((data) => data.password === data.repeatPassword, {
     message: "Passwords do not match",
     path: ["repeatPassword"],
-  })
-  .refine(
-    (data) => {
-      const selectedServices = new Set(data.allowedTypes);
-      const pricedServices = new Set(Object.keys(data.pricingMatrix));
-      return (
-        selectedServices.size === pricedServices.size &&
-        [...selectedServices].every((service) => pricedServices.has(service) && data.pricingMatrix[service] !== null)
-      );
-    },
-    {
-      message: "Please input a price for all selected services",
-      path: ["pricingMatrix"],
-    }
-  );
+  });
 
 function timeToMinutes(t: string): number {
   const [hh, mm] = t.split(":");
