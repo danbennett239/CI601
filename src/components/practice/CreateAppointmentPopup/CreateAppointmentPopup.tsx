@@ -27,13 +27,11 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   const [title, setTitle] = useState("");
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
-  const [allTypes, setAllTypes] = useState(true); // Default "All" checked
-  const [selectedTypes, setSelectedTypes] = useState<string[]>(allowedTypes); // Default to all types
+  const [allTypes, setAllTypes] = useState(true);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(allowedTypes);
   const [error, setError] = useState<string | null>(null);
 
-  // Sync allTypes with selectedTypes
   useEffect(() => {
-    // Check if all allowedTypes are in selectedTypes
     const allSelected = allowedTypes.every((type) => selectedTypes.includes(type));
     setAllTypes(allSelected && allowedTypes.length > 0);
   }, [selectedTypes, allowedTypes]);
@@ -47,7 +45,6 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
     setSelectedTypes((prev) =>
       checked ? [...prev, type] : prev.filter((t) => t !== type)
     );
-    // No direct toggle of allTypes here; useEffect handles it
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,6 +103,10 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
     }
   };
 
+  // Capitalize first letter of service names
+  const capitalizeFirstLetter = (str: string) =>
+    str.charAt(0).toUpperCase() + str.slice(1);
+
   return (
     <div
       className={styles.popupOverlay}
@@ -158,6 +159,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                 />
                 All
               </label>
+              <hr className={styles.divider} />
               {allowedTypes.map((type) => (
                 <label key={type} className={styles.checkboxLabel}>
                   <input
@@ -165,7 +167,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                     checked={selectedTypes.includes(type)}
                     onChange={(e) => handleTypeChange(type, e.target.checked)}
                   />
-                  {type} (£{pricingMatrix[type] || 0})
+                  {capitalizeFirstLetter(type)} (£{pricingMatrix[type] || 0})
                 </label>
               ))}
             </div>

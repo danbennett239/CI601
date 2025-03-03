@@ -104,27 +104,33 @@
 
 .checkboxContainer {
   display: flex;
-  flex-direction: column; /* Stack each checkbox-label pair vertically */
-  gap: 12px; /* Space between each line */
+  flex-direction: column;
+  gap: 12px;
 }
 
 .checkboxLabel {
-  display: flex !important; /* Override any inherited styles */
-  flex-direction: row !important; /* Force checkbox and label inline */
-  align-items: center; /* Vertically align checkbox with label */
-  justify-content: flex-start; /* Left-align the pair */
-  gap: 8px; /* Space between checkbox and label */
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 8px;
   font-size: 14px;
   color: #4a5568;
-  white-space: nowrap; /* Ensure label stays on one line with checkbox */
+  white-space: nowrap;
 }
 
 .checkboxLabel input[type="checkbox"] {
   accent-color: #3182ce;
   width: 16px;
   height: 16px;
-  margin: 0 !important; /* Remove any default margin */
-  flex-shrink: 0; /* Prevent checkbox from shrinking */
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+.divider {
+  border: none;
+  border-top: 1px solid #ccc; /* Subtle gray divider, matches PracticeSettingsPage */
+  margin: 8px 0; /* Space above and below */
 }
 
 .saveButton {
