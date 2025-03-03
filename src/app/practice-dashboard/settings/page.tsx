@@ -16,8 +16,7 @@ interface PracticeInfoState {
   phone_number: string;
   photo?: string | null;
   opening_hours: OpeningHoursItem[];
-  allowed_types: string[];
-  pricing_matrix: Record<string, number>;
+  practice_services: Record<string, number>;
 }
 
 interface ServiceOption {
@@ -72,8 +71,7 @@ const PracticeSettings: React.FC = () => {
         phone_number: practice.phone_number,
         photo: practice.photo ?? null,
         opening_hours: practice.opening_hours,
-        allowed_types: practice.allowed_types || [],
-        pricing_matrix: practice.pricing_matrix || {},
+        practice_services: practice.practice_services || {},
       };
       setInfo(newInfo);
       if (!originalInfo) {
@@ -94,8 +92,8 @@ const PracticeSettings: React.FC = () => {
       setServicesOffered(
         serviceOptionsList.map((name) => ({
           name,
-          enabled: practice.allowed_types?.includes(name.toLowerCase()) || false,
-          price: practice.pricing_matrix?.[name.toLowerCase()] || null,
+          enabled: !!practice.practice_services[name.toLowerCase()],
+          price: practice.practice_services[name.toLowerCase()] || null,
         }))
       );
 
@@ -113,8 +111,7 @@ const PracticeSettings: React.FC = () => {
       info.phone_number === originalInfo.phone_number &&
       (info.photo || "") === (originalInfo.photo || "") &&
       JSON.stringify(info.opening_hours) === JSON.stringify(originalInfo.opening_hours) &&
-      JSON.stringify(info.allowed_types) === JSON.stringify(originalInfo.allowed_types) &&
-      JSON.stringify(info.pricing_matrix) === JSON.stringify(originalInfo.pricing_matrix);
+      JSON.stringify(info.practice_services) === JSON.stringify(originalInfo.practice_services);
 
     const prefsEqual =
       hideDeleteConfirmation === originalPrefs.hide_delete_confirmation &&
@@ -222,14 +219,13 @@ const PracticeSettings: React.FC = () => {
     });
     setInfo((prev) => {
       if (!prev) return null;
-      const allowedTypes = servicesOffered
-        .filter((s) => s.enabled || (index === servicesOffered.indexOf(s) && checked))
-        .map((s) => s.name.toLowerCase());
-      const pricingMatrix = servicesOffered.reduce((acc, s) => {
-        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
+      const practiceServices = servicesOffered.reduce((acc, s) => {
+        if (s.enabled || (index === servicesOffered.indexOf(s) && checked)) {
+          acc[s.name.toLowerCase()] = s.price !== null ? s.price : prev.practice_services[s.name.toLowerCase()] || 0;
+        }
         return acc;
       }, {} as Record<string, number>);
-      return { ...prev, allowed_types: allowedTypes, pricing_matrix: pricingMatrix };
+      return { ...prev, practice_services: practiceServices };
     });
   };
 
@@ -242,11 +238,15 @@ const PracticeSettings: React.FC = () => {
     });
     setInfo((prev) => {
       if (!prev) return null;
-      const pricingMatrix = servicesOffered.reduce((acc, s) => {
-        if (s.enabled && s.price !== null) acc[s.name.toLowerCase()] = s.price;
-        return acc;
-      }, {} as Record<string, number>);
-      return { ...prev, pricing_matrix: pricingMatrix };
+      const practiceServices = { ...prev.practice_services };
+      if (servicesOffered[index].enabled) {
+        if (price !== null) {
+          practiceServices[servicesOffered[index].name.toLowerCase()] = price;
+        } else {
+          delete practiceServices[servicesOffered[index].name.toLowerCase()];
+        }
+      }
+      return { ...prev, practice_services: practiceServices };
     });
   };
 
@@ -283,8 +283,7 @@ const PracticeSettings: React.FC = () => {
           email: info.email,
           phone_number: info.phone_number,
           opening_hours: info.opening_hours,
-          allowed_types: info.allowed_types,
-          pricing_matrix: info.pricing_matrix,
+          practice_services: info.practice_services,
         };
         formData.append("settings", JSON.stringify(settingsPayload));
 
@@ -342,10 +341,9 @@ const PracticeSettings: React.FC = () => {
       }
 
       await refreshPractice();
-      // Update original states after successful save
       setOriginalInfo({ ...info });
       setOriginalPrefs({
-        ...prefs!, // Use current prefs state, ensuring practice_id is included
+        ...prefs!,
         enable_notifications: enableNotifications,
         enable_mobile_notifications: enableMobile,
         enable_email_notifications: enableEmail,
@@ -370,15 +368,14 @@ const PracticeSettings: React.FC = () => {
       phone_number: originalInfo.phone_number,
       photo: originalInfo.photo,
       opening_hours: originalInfo.opening_hours,
-      allowed_types: originalInfo.allowed_types,
-      pricing_matrix: originalInfo.pricing_matrix,
+      practice_services: originalInfo.practice_services,
     });
 
     setServicesOffered(
       serviceOptionsList.map((name) => ({
         name,
-        enabled: originalInfo.allowed_types?.includes(name.toLowerCase()) || false,
-        price: originalInfo.pricing_matrix?.[name.toLowerCase()] || null,
+        enabled: !!originalInfo.practice_services[name.toLowerCase()],
+        price: originalInfo.practice_services[name.toLowerCase()] || null,
       }))
     );
 
