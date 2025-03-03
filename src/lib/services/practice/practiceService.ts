@@ -17,8 +17,7 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
     $address: jsonb,
     $opening_hours: jsonb,
     $location: geometry,
-    $allowed_types: [String!],
-    $pricing_matrix: jsonb
+    $practice_services: jsonb
   ) {
     insert_practices_one(
       object: {
@@ -30,8 +29,7 @@ const CREATE_PRACTICE_AND_USER_MUTATION = `
         opening_hours: $opening_hours,
         verified: false,
         location: $location,
-        allowed_types: $allowed_types,
-        pricing_matrix: $pricing_matrix,
+        practice_services: $practice_services,
         users: {
           data: {
             first_name: "",
@@ -73,8 +71,7 @@ export async function createPracticeWithUser({
   photo,
   address,
   openingHours,
-  allowedTypes,
-  pricingMatrix,
+  practiceServices,
 }: {
   practiceName: string;
   email: string;
@@ -83,8 +80,7 @@ export async function createPracticeWithUser({
   photo?: string;
   address: Record<string, string>;
   openingHours: Array<{ dayName: string; open: string; close: string }>;
-  allowedTypes?: string[];
-  pricingMatrix?: Record<string, number>;
+  practiceServices?: Record<string, number>;
 }) {
   try {
     const hashedPassword = await hashPassword(password);
@@ -108,8 +104,7 @@ export async function createPracticeWithUser({
           address,
           opening_hours: openingHours,
           location,
-          allowed_types: allowedTypes,
-          pricing_matrix: pricingMatrix,
+          practice_services: practiceServices,
         },
       }),
     });
@@ -191,7 +186,6 @@ export async function insertPracticePreferences(practiceId: string): Promise<Pra
   }
 }
 
-
 export async function fetchPendingDentalPractices() {
   const query = `
     query FetchPendingDentalPractices {
@@ -206,6 +200,7 @@ export async function fetchPendingDentalPractices() {
         verified
         created_at
         updated_at
+        practice_services
       }
     }
   `;
@@ -251,6 +246,7 @@ export async function fetchApprovedDentalPractices() {
         created_at
         updated_at
         verified_at
+        practice_services
       }
     }
   `;
@@ -296,7 +292,7 @@ export async function approvePractice(practiceId: string) {
         affected_rows
       }
     }
-    `;
+  `;
 
   try {
     const response = await fetch(HASURA_GRAPHQL_URL, {
@@ -378,6 +374,7 @@ export async function fetchPracticeById(practiceId: string) {
         verified_at
         created_at
         updated_at
+        practice_services
       }
     }
   `;
@@ -417,11 +414,10 @@ export async function fetchPracticeAndPreferencesById(practiceId: string) {
         address
         opening_hours
         verified
+        verified_at
         created_at
         updated_at
-        verified_at
-        allowed_types
-        pricing_matrix
+        practice_services
         practice_preferences {
           enable_notifications
           enable_mobile_notifications
@@ -489,8 +485,6 @@ export async function updatePracticeSettings(practiceId: string, settings: Parti
 }
 
 export async function validateOpeningHours(practiceId: string, newOpeningHours: OpeningHoursItem[]) {
-  // For simplicity, call the appointments API with a wide date range and check each appointment.
-  // In production you might create a dedicated API endpoint.
   const query = `
     query GetAppointments($practiceId: uuid!) {
       appointments(where: { practice_id: { _eq: $practiceId } }) {
