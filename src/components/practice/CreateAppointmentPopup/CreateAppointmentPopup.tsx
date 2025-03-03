@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import styles from "./CreateAppointmentPopup.module.css";
 import { OpeningHoursItem, Appointment } from "@/types/practice";
 import { toast } from "react-toastify";
+import { createAppointmentSchema } from '@/schemas/practiceSchemas'; // Import schema
 
 interface CreateAppointmentPopupProps {
   practiceId: string;
@@ -22,7 +23,6 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   onClose,
   onCreated,
 }) => {
-  const [title, setTitle] = useState("");
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
   const appointmentTypes = Object.keys(practiceServices);
@@ -46,11 +46,28 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
     );
   };
 
+  const generateTitle = () => {
+    const servicesList = selectedTypes.map(capitalizeFirstLetter).join(', ');
+    return servicesList || 'Available Appointment';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (selectedTypes.length === 0) {
-      toast.error("At least one appointment type must be selected.");
+    const services = selectedTypes.reduce((acc: Record<string, number>, type) => {
+      acc[type] = practiceServices[type] || 0;
+      return acc;
+    }, {});
+
+    const parseResult = createAppointmentSchema.safeParse({
+      start_time: start,
+      end_time: end,
+      services,
+    });
+
+    if (!parseResult.success) {
+      setError(parseResult.error.errors.map(err => err.message).join(', '));
+      toast.error("Validation failed. Check the form.");
       return;
     }
 
@@ -78,11 +95,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
       return;
     }
 
-    // Build services object with selected types and their prices
-    const services = selectedTypes.reduce((acc: Record<string, number>, type) => {
-      acc[type] = practiceServices[type] || 0;
-      return acc;
-    }, {});
+    const title = generateTitle();
 
     try {
       const response = await fetch("/api/appointment", {
@@ -93,7 +106,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
           title,
           start_time: start,
           end_time: end,
-          services, // Send full services object with prices
+          services,
         }),
       });
       const result = await response.json();
@@ -108,7 +121,6 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
     }
   };
 
-  // Capitalize first letter of service names
   const capitalizeFirstLetter = (str: string) =>
     str.charAt(0).toUpperCase() + str.slice(1);
 
@@ -128,10 +140,6 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
         <h2>Create Appointment</h2>
         {error && <p className={styles.error}>{error}</p>}
         <form onSubmit={handleSubmit} className={styles.form}>
-          <label>
-            Title:
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required />
-          </label>
           <label>
             Start:
             <input

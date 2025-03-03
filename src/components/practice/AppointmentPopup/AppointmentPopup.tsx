@@ -3,18 +3,7 @@ import { z } from 'zod';
 import styles from './AppointmentPopup.module.css';
 import { Appointment, OpeningHoursItem } from '@/types/practice';
 import ConfirmDeletePopup from '../ConfirmDeletePopup/ConfirmDeletePopup';
-
-const editSchema = z.object({
-  title: z.string().min(1, "Title is required"),
-  start_time: z.string(),
-  end_time: z.string(),
-  services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
-    (services) => Object.keys(services).length > 0,
-    { message: "At least one service must be selected" }
-  ),
-}).refine(data => new Date(data.end_time) > new Date(data.start_time), {
-  message: "End time must be after start time",
-});
+import { editAppointmentSchema } from '@/schemas/practiceSchemas';
 
 interface AppointmentPopupProps {
   appointment: Appointment;
@@ -38,7 +27,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   onDontShowAgain,
 }) => {
   const [editMode, setEditMode] = useState(false);
-  const [formTitle, setFormTitle] = useState(appointment.title || '');
   const [formStart, setFormStart] = useState(appointment.start_time.slice(0, 16));
   const [formEnd, setFormEnd] = useState(appointment.end_time.slice(0, 16));
   const [allTypes, setAllTypes] = useState(true);
@@ -52,6 +40,22 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const appointmentTypes = Object.keys(practiceServices);
   const originalDuration =
     new Date(appointment.end_time).getTime() - new Date(appointment.start_time).getTime();
+
+  const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
+
+  // Generate title dynamically
+  const generateTitle = () => {
+    if (appointment.booked && appointment.booked_service) {
+      const baseTitle = capitalizeFirstLetter(appointment.booked_service.type);
+      return appointment.user_id && userInfo?.first_name && userInfo?.last_name
+        ? `${baseTitle} - ${userInfo.first_name} ${userInfo.last_name}`
+        : baseTitle;
+    }
+    const servicesList = Object.keys(appointment.services || {}).map(capitalizeFirstLetter).join(', ');
+    return servicesList || 'Available Appointment';
+  };
+
+  const displayTitle = generateTitle();
 
   // Sync allTypes with selectedTypes
   useEffect(() => {
@@ -115,11 +119,10 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
   const handleSave = async () => {
     setError('');
     const services = selectedTypes.reduce((acc, type) => {
-      acc[type] = practiceServices[type] || 0; // Use fixed prices from practice_services
+      acc[type] = practiceServices[type] || 0;
       return acc;
     }, {} as Record<string, number>);
-    const parseResult = editSchema.safeParse({
-      title: formTitle,
+    const parseResult = editAppointmentSchema.safeParse({
       start_time: formStart,
       end_time: formEnd,
       services,
@@ -130,9 +133,11 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     }
     if (!validateWithinOpeningHours(formStart, formEnd)) return;
 
+    const updatedTitle = Object.keys(services).map(capitalizeFirstLetter).join(', ') || 'Available Appointment';
+
     try {
       await onUpdate({
-        title: formTitle,
+        title: updatedTitle,
         start_time: formStart,
         end_time: formEnd,
         services,
@@ -146,7 +151,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
 
   const handleMarkBookedClick = () => {
     setShowBookingDropdown(true);
-    setSelectedBookingType(Object.keys(appointment.services || {})[0] || ''); // Default to first service
+    setSelectedBookingType(Object.keys(appointment.services || {})[0] || '');
   };
 
   const handleBookingConfirm = async () => {
@@ -155,8 +160,10 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
       return;
     }
     setError('');
+    const bookedTitle = capitalizeFirstLetter(selectedBookingType);
     try {
       await onUpdate({
+        title: bookedTitle,
         booked: true,
         booked_service: {
           type: selectedBookingType,
@@ -164,6 +171,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
         },
       });
       setShowBookingDropdown(false);
+      onClose(); // Close the popup after successful update
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error marking appointment as booked';
       setError(message);
@@ -212,8 +220,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
     );
   };
 
-  const capitalizeFirstLetter = (str: string) => str.charAt(0).toUpperCase() + str.slice(1);
-
   return (
     <div className={styles.popupOverlay} onClick={handleOverlayClick}>
       <div className={styles.popupContent}>
@@ -225,7 +231,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             <div className={styles.detailsForm}>
               <div className={styles.detailRow}>
                 <label>Title:</label>
-                <span>{appointment.title || 'N/A'}</span>
+                <span>{displayTitle}</span>
               </div>
               <div className={styles.detailRow}>
                 <label>Start:</label>
@@ -252,7 +258,7 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
               {!appointment.booked && showBookingDropdown && (
                 <div className={`${styles.bookingSection} ${styles.fadeIn}`}>
                   <div className={styles.divider} />
-                  <h3 className={styles.bookingTitle}>Select Service</h3>
+                  <h3 className={styles.bookingTitle}>Choose Manual Booking Service</h3>
                   <select
                     value={selectedBookingType}
                     onChange={(e) => setSelectedBookingType(e.target.value)}
@@ -267,16 +273,16 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
                   </select>
                   <div className={styles.bookingButtonRow}>
                     <button
-                      className={styles.cancelBookingButton}
-                      onClick={handleBookingCancel}
-                    >
-                      Cancel
-                    </button>
-                    <button
                       className={styles.confirmBookingButton}
                       onClick={handleBookingConfirm}
                     >
                       Confirm Booking
+                    </button>
+                    <button
+                      className={styles.cancelBookingButton}
+                      onClick={handleBookingCancel}
+                    >
+                      Cancel
                     </button>
                   </div>
                 </div>
@@ -344,13 +350,6 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
           <>
             <h2>Edit Appointment</h2>
             <div className={styles.editForm}>
-              <label>Title:</label>
-              <input
-                type="text"
-                value={formTitle}
-                onChange={(e) => setFormTitle(e.target.value)}
-              />
-
               <label>Start:</label>
               <input type="datetime-local" value={formStart} onChange={handleStartChange} />
 
@@ -393,11 +392,11 @@ const AppointmentPopup: React.FC<AppointmentPopupProps> = ({
             {error && <p className={styles.error}>{error}</p>}
 
             <div className={styles.buttonRow}>
-              <button className={styles.cancelButton} onClick={() => setEditMode(false)}>
-                Cancel
-              </button>
               <button className={styles.saveButton} onClick={handleSave}>
                 Save
+              </button>
+              <button className={styles.cancelButton} onClick={() => setEditMode(false)}>
+                Cancel
               </button>
             </div>
           </>

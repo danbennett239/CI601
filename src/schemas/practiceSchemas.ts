@@ -71,6 +71,31 @@ export const practiceRegistrationSchema = z
     path: ["repeatPassword"],
   });
 
+
+// Schema for create appointment in Practice Dashboard
+export const createAppointmentSchema = z.object({
+  start_time: z.string(),
+  end_time: z.string(),
+  services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
+    (services) => Object.keys(services).length > 0,
+    { message: "At least one appointment type must be selected" }
+  ),
+}).refine(data => new Date(data.end_time) > new Date(data.start_time), {
+  message: "End time must be after start time",
+});
+
+// Schema for edit appointment in Practice Dashboard
+export const editAppointmentSchema = z.object({
+  start_time: z.string(),
+  end_time: z.string(),
+  services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
+    (services) => Object.keys(services).length > 0,
+    { message: "At least one service must be selected" }
+  ),
+}).refine(data => new Date(data.end_time) > new Date(data.start_time), {
+  message: "End time must be after start time",
+});
+
 function timeToMinutes(t: string): number {
   const [hh, mm] = t.split(":");
   return parseInt(hh, 10) * 60 + parseInt(mm, 10);
