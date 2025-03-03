@@ -8,8 +8,7 @@ interface CreateAppointmentPopupProps {
   openingHours: OpeningHoursItem[];
   defaultStart: Date;
   defaultEnd: Date;
-  allowedTypes: string[];
-  pricingMatrix: Record<string, number>;
+  practiceServices: Record<string, number>;
   onClose: () => void;
   onCreated: (appointment: Appointment) => void;
 }
@@ -19,14 +18,14 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
   openingHours,
   defaultStart,
   defaultEnd,
-  allowedTypes,
-  pricingMatrix,
+  practiceServices,
   onClose,
   onCreated,
 }) => {
   const [title, setTitle] = useState("");
   const [start, setStart] = useState(defaultStart.toISOString().slice(0, 16));
   const [end, setEnd] = useState(defaultEnd.toISOString().slice(0, 16));
+  const allowedTypes = Object.keys(practiceServices);
   const [allTypes, setAllTypes] = useState(true);
   const [selectedTypes, setSelectedTypes] = useState<string[]>(allowedTypes);
   const [error, setError] = useState<string | null>(null);
@@ -167,7 +166,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                     checked={selectedTypes.includes(type)}
                     onChange={(e) => handleTypeChange(type, e.target.checked)}
                   />
-                  {capitalizeFirstLetter(type)} (£{pricingMatrix[type] || 0})
+                  {capitalizeFirstLetter(type)} (£{practiceServices[type] || 0})
                 </label>
               ))}
             </div>
