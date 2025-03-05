@@ -347,3 +347,57 @@ export async function getAppointmentWithPracticeByAppId(appointmentId: string): 
     throw new Error(message);
   }
 }
+
+export async function getNextAppointments(filters: {
+  startTime: string;
+  limit: number;
+}) {
+  const query = `
+    query GetNextAppointments($startTime: timestamp!, $limit: Int!) {
+      appointments(
+        where: {
+          booked: { _eq: false },
+          start_time: { _gte: $startTime },
+        },
+        order_by: { start_time: asc },
+        limit: $limit
+      ) {
+        appointment_id
+        practice_id
+        title
+        start_time
+        end_time
+        services
+        practice {
+          practice_name
+          photo
+        }
+      }
+    }
+  `;
+
+  const variables = {
+    startTime: filters.startTime,
+    limit: filters.limit,
+  };
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error fetching next appointments");
+    }
+    return result.data.appointments;
+  } catch (error: unknown) {
+    console.error("Error in getNextAppointments:", error);
+    const message = error instanceof Error ? error.message : "Error fetching next appointments";
+    throw new Error(message);
+  }
+}

@@ -1,20 +1,40 @@
-// components/home/HomeDashboard.tsx
 import { AppointmentCard } from "../AppointmentCard/AppointmentCard";
 import { PracticeCard } from "../PracticeCard/PracticeCard";
 import { ArticleCard } from "../ArticleCard/ArticleCard";
-// import { FeaturedDentist } from "../FeaturedDentist/FeaturedDentist";
 import styles from "./HomeDashboard.module.css";
 import Link from "next/link";
 
 interface HomeDashboardProps {
-  appointments: Array<{ id: number; practice: string; time: string; type: string; price: number; image: string }>;
-  topPractices: Array<{ id: number; name: string; rating: number; reviews: number; image: string }>;
-  articles: Array<{ id: number; title: string; image: string; excerpt: string }>;
-  // featuredDentist: { name: string; practice: string; specialty: string; image: string };
+  appointments: Array<{
+    id: string;
+    practice: string;
+    time: string;
+    type: string;
+    price: number;
+    image: string;
+  }>;
+  topPractices: Array<{
+    id: string;
+    name: string;
+    rating: number;
+    reviews: number;
+    image: string;
+  }>;
+  articles: Array<{
+    id: number;
+    title: string;
+    image: string;
+    excerpt: string;
+  }>;
+  hasGeoPermission: boolean;
 }
 
-// export function HomeDashboard({ appointments, topPractices, articles, featuredDentist }: HomeDashboardProps) {
-export function HomeDashboard({ appointments, topPractices, articles }: HomeDashboardProps) {
+export function HomeDashboard({
+  appointments,
+  topPractices,
+  articles,
+  hasGeoPermission,
+}: HomeDashboardProps) {
   return (
     <>
       <header className={styles.header}>
@@ -29,20 +49,32 @@ export function HomeDashboard({ appointments, topPractices, articles }: HomeDash
 
       <div className={styles.container}>
         <section className={`${styles.section} ${styles.fadeIn}`}>
-          <h2 className={styles.sectionTitle}>Next Available Appointments</h2>
+          <h2 className={styles.sectionTitle}>
+            {hasGeoPermission ? "Next Appointments Near You" : "Next Appointments"}
+          </h2>
           <div className={styles.cardsGrid}>
-            {appointments.slice(0, 5).map((appt) => (
-              <AppointmentCard key={appt.id} {...appt} />
-            ))}
+            {appointments.length > 0 ? (
+              appointments.slice(0, 5).map((appt) => (
+                <AppointmentCard key={appt.id} {...appt} />
+              ))
+            ) : (
+              <p>No upcoming appointments available.</p>
+            )}
           </div>
         </section>
 
         <section className={`${styles.section} ${styles.fadeIn}`}>
-          <h2 className={styles.sectionTitle}>Top Rated Practices</h2>
+          <h2 className={styles.sectionTitle}>
+            {hasGeoPermission ? "Top Rated Practices Near You" : "Top Rated Practices"}
+          </h2>
           <div className={styles.cardsGrid}>
-            {topPractices.slice(0, 5).map((practice) => (
-              <PracticeCard key={practice.id} {...practice} />
-            ))}
+            {topPractices.length > 0 ? (
+              topPractices.slice(0, 5).map((practice) => (
+                <PracticeCard key={practice.id} {...practice} />
+              ))
+            ) : (
+              <p>No top-rated practices available.</p>
+            )}
           </div>
         </section>
 

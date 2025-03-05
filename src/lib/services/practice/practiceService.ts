@@ -648,6 +648,19 @@ export async function updatePracticeSettingsWithPhoto(
   return { photoUrl };
 }
 
+/**
+ * Retrieves nearby dental practices based on user location.
+ * 
+ * - Calls a Hasura function `get_nearby_practices` that calculates distance.
+ * - Orders results by proximity to the user.
+ * - Returns practice details including distance, contact info, and verification status.
+ * 
+ * @param {number} userLat - User's latitude.
+ * @param {number} userLon - User's longitude.
+ * @param {number} maxDistance - Maximum search radius in kilometers.
+ * @returns {Promise<NearbyPractice[]>} - List of nearby practices.
+ * @throws {Error} - If fetching fails.
+ */
 export async function getNearbyPractices(userLat: number, userLon: number, maxDistance: number): Promise<NearbyPractice[]> {
   const query = `
     query GetNearbyPractices($user_lat: float8!, $user_lon: float8!, $max_distance: float8!) {
@@ -707,6 +720,72 @@ export async function getNearbyPractices(userLat: number, userLon: number, maxDi
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : "Failed to fetch nearby practices";
     console.error("Error fetching nearby practices:", message);
+    throw new Error(message);
+  }
+}
+
+/**
+ * Fetches the top-rated dental practices based on their average review rating.
+ * 
+ * - Orders practices by ascending rating.
+ * - Limits results based on the provided `limit` parameter.
+ * - Returns practice details including name, rating, review count, and photo.
+ * 
+ * @param {Object} filters - Contains the `limit` for the number of practices to return.
+ * @returns {Promise<Array>} - List of top-rated practices with key details.
+ * @throws {Error} - If the query fails.
+ */
+export async function getTopRatedPractices(filters: { limit: number }) {
+  const query = `
+  query TopRatedPractices($limit: Int!) {
+    practices(
+      order_by: { practice_reviews_aggregate: { avg: { rating: asc } } }
+      limit: $limit
+    ) {
+      practice_id
+      practice_name
+      email
+      phone_number
+      photo
+      address
+      opening_hours
+      verified
+      created_at
+      updated_at
+      verified_at
+      location
+      practice_services
+      practice_reviews_aggregate {
+        aggregate {
+          avg {
+            rating
+          }
+          count
+        }
+      }
+    }
+  }
+  `;
+
+  const variables = { limit: filters.limit };
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error fetching top practices");
+    }
+    return result.data.practices;
+  } catch (error: unknown) {
+    console.error("Error in getTopRatedPractices:", error);
+    const message = error instanceof Error ? error.message : "Error fetching top practices";
     throw new Error(message);
   }
 }
