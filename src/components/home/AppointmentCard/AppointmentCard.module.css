@@ -1,13 +1,22 @@
-/* Example adjustment for AppointmentCard.module.css */
+.cardLink {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  width: 100%;
+}
+
 .card {
   border-radius: 16px;
   overflow: hidden;
   background: white;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  width: 100%; /* Ensure it fits the container */
-  max-width: 300px; /* Keep a reasonable max width */
-  margin: 0 auto; /* Center within grid */
+  width: 100%;
+  max-width: 300px;
+  height: 460px;
+  display: flex;
+  flex-direction: column;
+  margin: 0 auto;
 }
 
 .card:hover {
@@ -22,34 +31,136 @@
 
 .content {
   padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  flex-grow: 1;
 }
 
 .practice {
-  font-size: 1.5rem;
+  font-size: 1.35rem;
   font-weight: 600;
   color: #000;
-  margin-bottom: 0.5rem;
+  margin: 0 0 0.25rem 0;
+}
+
+.city {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0 0 0.5rem 0;
 }
 
 .time {
   color: #666;
   font-size: 0.95rem;
-  margin-bottom: 0.75rem;
+  margin: 0 0 0.75rem 0;
 }
 
-.details {
+.services {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  max-height: 150px;
+  overflow-y: auto;
+  flex-grow: 1;
+}
+
+.service {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  font-size: 0.9rem;
 }
 
 .type {
   color: #007bff;
   font-weight: 500;
+  text-transform: capitalize;
 }
 
 .price {
-  font-size: 1.25rem;
+  font-size: 1rem;
   font-weight: 700;
   color: #000;
+}
+
+@media (max-width: 768px) {
+  .card {
+    max-width: 300px;
+    height: auto;
+    min-height: 360px;
+  }
+
+  .image {
+    height: 160px;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .practice {
+    font-size: 1.25rem;
+  }
+
+  .city {
+    font-size: 0.8rem;
+  }
+
+  .time {
+    font-size: 0.9rem;
+  }
+
+  .services {
+    max-height: none;
+    flex-grow: 0;
+  }
+
+  .service {
+    font-size: 0.85rem;
+  }
+
+  .price {
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    max-width: 300px;
+    height: auto;
+    min-height: 340px;
+  }
+
+  .image {
+    height: 140px;
+  }
+
+  .content {
+    padding: 0.75rem;
+  }
+
+  .practice {
+    font-size: 1.15rem;
+  }
+
+  .city {
+    font-size: 0.75rem;
+  }
+
+  .time {
+    font-size: 0.85rem;
+  }
+
+  .services {
+    max-height: none;
+    flex-grow: 0;
+  }
+
+  .service {
+    font-size: 0.8rem;
+  }
+
+  .price {
+    font-size: 0.9rem;
+  }
 }

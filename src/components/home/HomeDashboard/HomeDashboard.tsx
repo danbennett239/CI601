@@ -8,10 +8,11 @@ interface HomeDashboardProps {
   appointments: Array<{
     id: string;
     practice: string;
-    time: string;
-    type: string;
-    price: number;
+    start_time: string;
+    end_time: string;
+    services: Record<string, number>;
     image: string;
+    address: string;
   }>;
   topPractices: Array<{
     id: string;

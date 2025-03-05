@@ -1,9 +1,9 @@
-import { redirect } from 'next/navigation';
-import styles from './AppointmentDetailsPage.module.css';
-import Link from 'next/link';
+import { redirect } from "next/navigation";
+import styles from "./AppointmentDetailsPage.module.css";
+import Link from "next/link";
 
 async function fetchAppointment(id: string) {
-  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
   const response = await fetch(`${baseUrl}/api/appointment/${id}/details`, {
     method: "GET",
     headers: {
@@ -12,7 +12,6 @@ async function fetchAppointment(id: string) {
   });
 
   if (!response.ok) {
-    // Redirect to error page with status code as query param
     redirect(`/appointments/error?status=${response.status}`);
   }
 
@@ -20,16 +19,26 @@ async function fetchAppointment(id: string) {
   return data.appointment;
 }
 
-export default async function AppointmentDetail({ params }: { params: Promise<{ id: string }> }) {
+interface AppointmentDetailProps {
+  params: Promise<{ id: string }>;
+  searchParams: { from?: string };
+}
+
+export default async function AppointmentDetail({ params, searchParams }: AppointmentDetailProps) {
   const { id } = await params;
+  const from = searchParams.from || "";
   const appointment = await fetchAppointment(id);
 
   if (appointment.booked) {
-    redirect('/appointments/error?status=404'); // Handle booked appointments
+    redirect("/appointments/error?status=404");
   }
 
   const avgRating = appointment.practice.practice_reviews_aggregate.aggregate.avg.rating || "N/A";
   const reviewCount = appointment.practice.practice_reviews_aggregate.aggregate.count || 0;
+
+  // Determine back link and text based on 'from' query param
+  const backLink = from === "home" ? "/" : from === "search" ? "/search" : "/search"; // Default to search if unknown
+  const backText = from === "home" ? "Back to Home" : from === "search" ? "Back to Search" : "Back to Search";
 
   return (
     <div className={styles.detailPage}>
@@ -73,8 +82,8 @@ export default async function AppointmentDetail({ params }: { params: Promise<{ 
           <Link href={`/appointments/${appointment.appointment_id}/book`} className={styles.bookButton}>
             Book Appointment
           </Link>
-          <Link href="/search" className={styles.backButton}>
-            Back to Search
+          <Link href={backLink} className={styles.backButton}>
+            {backText}
           </Link>
         </div>
       </div>

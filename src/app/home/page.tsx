@@ -3,19 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { HomeDashboard } from "@/components/home/HomeDashboard/HomeDashboard";
 import { useGeoLocation } from "@/hooks/useGeoLocation";
-import { Practice} from "@/types/practice";
+import { PracticeWithReviews } from "@/types/practice";
 
-// New type for Practice including review aggregation
-export interface PracticeWithReviews extends Practice {
-  practice_reviews_aggregate: {
-    aggregate: {
-      avg: {
-        rating: number | null;
-      };
-      count: number;
-    };
-  };
-}
 export interface RawAppointment {
   appointment_id: string;
   practice_id: string;
@@ -26,16 +15,26 @@ export interface RawAppointment {
   practice: {
     practice_name: string;
     photo: string | null;
+    address: {
+      line1: string;
+      line2: string | null;
+      line3: string | null;
+      city: string;
+      county: string | null;
+      postcode: string;
+      country: string;
+    };
   };
 }
 
 export interface ProcessedAppointment {
   id: string;
   practice: string;
-  time: string;
-  type: string;
-  price: number;
+  start_time: string;
+  end_time: string;
+  services: Record<string, number>;
   image: string;
+  address: string;
 }
 
 export interface ProcessedPractice {
@@ -78,10 +77,11 @@ export default function Home() {
           const processedAppointments: ProcessedAppointment[] = apptData.appointments.map((appt: RawAppointment) => ({
             id: appt.appointment_id,
             practice: appt.practice.practice_name,
-            time: appt.start_time,
-            type: Object.keys(appt.services)[0] || "Appointment",
-            price: Object.values(appt.services)[0] || 0,
+            start_time: appt.start_time,
+            end_time: appt.end_time,
+            services: appt.services,
             image: appt.practice.photo || "/default-practice.jpg",
+            address: `${appt.practice.address.line1}, ${appt.practice.address.city}, ${appt.practice.address.postcode}`,
           }));
           setAppointments(processedAppointments);
         }
@@ -117,11 +117,6 @@ export default function Home() {
 
   return (
     <>
-      {loading && <div>Loading location...</div>}
-      {error && <div>Error: {error}</div>}
-      {latitude && longitude && (
-        <div>Your Location: Lat {latitude}, Lon {longitude}</div>
-      )}
       <HomeDashboard
         appointments={appointments}
         topPractices={topPractices}

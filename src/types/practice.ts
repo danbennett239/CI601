@@ -21,6 +21,16 @@ export interface NearbyPractice extends Omit<Practice, 'practice_preferences'> {
     coordinates: [number, number];
   };
 }
+export interface PracticeWithReviews extends Practice {
+  practice_reviews_aggregate: {
+    aggregate: {
+      avg: {
+        rating: number | null;
+      };
+      count: number;
+    };
+  };
+}
 
 export interface PracticePreferences {
   practice_id: string;

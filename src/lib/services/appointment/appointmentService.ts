@@ -371,6 +371,7 @@ export async function getNextAppointments(filters: {
         practice {
           practice_name
           photo
+          address
         }
       }
     }
