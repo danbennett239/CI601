@@ -1,13 +1,12 @@
-/* Example adjustment for AppointmentCard.module.css */
 .card {
   border-radius: 16px;
   overflow: hidden;
   background: white;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   transition: transform 0.3s ease;
-  width: 100%; /* Ensure it fits the container */
-  max-width: 300px; /* Keep a reasonable max width */
-  margin: 0 auto; /* Center within grid */
+  width: 100%;
+  max-width: 300px;
+  margin: 0 auto;
 }
 
 .card:hover {
@@ -39,5 +38,75 @@
 }
 
 .stars {
+  display: flex;
+  font-size: 1.2rem;
+}
+
+.star {
+  position: relative;
+  display: inline-block;
+  width: 1.2rem;
+  height: 1.2rem;
+}
+
+.filledStar {
+  position: absolute;
+  top: 0;
+  left: 0;
   color: #ffd700;
+  overflow: hidden;
+}
+
+.emptyStar {
+  color: #d3d3d3;
+}
+
+@media (max-width: 768px) {
+  .card {
+    max-width: 300px;
+  }
+
+  .content {
+    padding: 1rem;
+  }
+
+  .name {
+    font-size: 1.3rem;
+  }
+
+  .stars {
+    font-size: 1.1rem;
+  }
+
+  .star {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+
+  .rating {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .image {
+    height: 160px;
+  }
+
+  .name {
+    font-size: 1.2rem;
+  }
+
+  .stars {
+    font-size: 1rem;
+  }
+
+  .star {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .rating {
+    font-size: 0.85rem;
+  }
 }
