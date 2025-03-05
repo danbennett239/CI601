@@ -21,12 +21,13 @@ async function fetchAppointment(id: string) {
 
 interface AppointmentDetailProps {
   params: Promise<{ id: string }>;
-  searchParams: { from?: string };
+  searchParams: Promise<{ from?: string }>;
 }
 
 export default async function AppointmentDetail({ params, searchParams }: AppointmentDetailProps) {
   const { id } = await params;
-  const from = searchParams.from || "";
+  const { from } = await searchParams;
+
   const appointment = await fetchAppointment(id);
 
   if (appointment.booked) {
@@ -36,8 +37,7 @@ export default async function AppointmentDetail({ params, searchParams }: Appoin
   const avgRating = appointment.practice.practice_reviews_aggregate.aggregate.avg.rating || "N/A";
   const reviewCount = appointment.practice.practice_reviews_aggregate.aggregate.count || 0;
 
-  // Determine back link and text based on 'from' query param
-  const backLink = from === "home" ? "/" : from === "search" ? "/search" : "/search"; // Default to search if unknown
+  const backLink = from === "home" ? "/" : from === "search" ? "/search" : "/search";
   const backText = from === "home" ? "Back to Home" : from === "search" ? "Back to Search" : "Back to Search";
 
   return (
@@ -50,7 +50,6 @@ export default async function AppointmentDetail({ params, searchParams }: Appoin
       </header>
 
       <div className={styles.content}>
-        {/* Appointment Section */}
         <section className={styles.appointmentSection}>
           <h2 className={styles.sectionTitle}>Appointment Details</h2>
           <div className={styles.card}>
@@ -59,7 +58,6 @@ export default async function AppointmentDetail({ params, searchParams }: Appoin
           </div>
         </section>
 
-        {/* Practice Section */}
         <section className={styles.practiceSection}>
           <h2 className={styles.sectionTitle}>Practice Information</h2>
           <div className={styles.card}>
@@ -77,7 +75,6 @@ export default async function AppointmentDetail({ params, searchParams }: Appoin
           </div>
         </section>
 
-        {/* Actions */}
         <div className={styles.actions}>
           <Link href={`/appointments/${appointment.appointment_id}/book`} className={styles.bookButton}>
             Book Appointment
