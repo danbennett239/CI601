@@ -1,1 +1,2 @@
+- "!include public_get_nearby_appointments.yaml"
 - "!include public_get_nearby_practices.yaml"

@@ -1,0 +1,3 @@
+table:
+  name: appointments_with_distance
+  schema: public
