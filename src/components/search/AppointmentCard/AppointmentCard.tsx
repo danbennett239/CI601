@@ -33,7 +33,7 @@ export default function AppointmentCard({
         <p className={styles.type}>{type.charAt(0).toUpperCase() + type.slice(1)}</p>
         <p className={styles.price}>£{price}</p>
         <p className={styles.distance}>
-          {hasPostcode ? `${(distance * 0.621371).toFixed(1)} miles away` : city}
+          {hasPostcode ? `${(distance).toFixed(1)} miles away` : city}
         </p>
         <Link href={`/appointments/${id}`} className={styles.detailsButton}>
           View Details
