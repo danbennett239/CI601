@@ -402,3 +402,100 @@ export async function getNextAppointments(filters: {
     throw new Error(message);
   }
 }
+
+export async function searchAppointments(filters: {
+  userLat?: number;
+  userLon?: number;
+  maxDistance?: number;
+  limit?: number;
+  appointmentType?: string;
+  priceMin?: number;
+  priceMax?: number;
+  dateStart?: string;
+  dateEnd?: string;
+  sortBy?: "lowest_price" | "highest_price" | "closest" | "soonest";
+}) {
+  const query = `
+    query SearchAppointments(
+      $userLon: float8,
+      $userLat: float8,
+      $maxDistance: float8,
+      $limit: Int,
+      $appointmentType: String,
+      $priceMin: numeric,
+      $priceMax: numeric,
+      $dateStart: timestamp,
+      $dateEnd: timestamp,
+      $sortBy: String
+    ) {
+      get_nearby_appointments(
+        args: {
+          user_lon: $userLon,
+          user_lat: $userLat,
+          max_distance: $maxDistance,
+          limit_num: $limit,
+          appointment_type: $appointmentType,
+          price_min: $priceMin,
+          price_max: $priceMax,
+          date_start: $dateStart,
+          date_end: $dateEnd,
+          sort_by: $sortBy
+        }
+      ) {
+        appointment_id
+        practice_id
+        user_id
+        title
+        start_time
+        end_time
+        booked
+        created_at
+        updated_at
+        services
+        booked_service
+        practice_name
+        email
+        phone_number
+        photo
+        address
+        verified
+        verified_at
+        location
+        distance
+      }
+    }
+  `;
+
+  const variables = {
+    userLon: filters.userLon || null,
+    userLat: filters.userLat || null,
+    maxDistance: filters.maxDistance || 10000,
+    limit: filters.limit || 10,
+    appointmentType: filters.appointmentType || null,
+    priceMin: filters.priceMin || null,
+    priceMax: filters.priceMax || null,
+    dateStart: filters.dateStart || null,
+    dateEnd: filters.dateEnd || null,
+    sortBy: filters.sortBy || "soonest",
+  };
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({ query, variables }),
+    });
+    const result = await response.json();
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error searching appointments");
+    }
+    return result.data.get_nearby_appointments;
+  } catch (error: unknown) {
+    console.error("Error in searchAppointments:", error);
+    const message = error instanceof Error ? error.message : "Error searching appointments";
+    throw new Error(message);
+  }
+}
