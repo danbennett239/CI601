@@ -43,10 +43,11 @@ export default function SearchFilters({
 
   const appointmentTypes = ['checkup', 'filling', 'cleaning', 'emergency', 'whitening', 'extraction'];
 
-  const priceMin = appointments.length > 0 ? Math.min(...appointments.map((appt) => appt.price)) : 0;
-  const priceMax = appointments.length > 0 ? Math.max(...appointments.map((appt) => appt.price)) : 200;
+  // Static range for slider and histogram, not tied to API response
+  const priceMin = 0;
+  const priceMax = 200;
   const bins = 10;
-  const binSize = priceMax > priceMin ? (priceMax - priceMin) / bins : 1;
+  const binSize = (priceMax - priceMin) / bins;
   const histogram = Array(bins).fill(0);
   appointments.forEach((appt) => {
     if (appt.price >= priceMin && appt.price <= priceMax) {
@@ -59,11 +60,6 @@ export default function SearchFilters({
     setPriceRange([minPrice, maxPrice]);
     setMaxDistance(distance);
   }, [minPrice, maxPrice, distance, setPriceRange, setMaxDistance]);
-
-  useEffect(() => {
-    setMinPrice(priceMin);
-    setMaxPrice(priceMax);
-  }, [appointments]);
 
   const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, isMin: boolean) => {
     const value = Number(e.target.value);

@@ -41,6 +41,18 @@ interface Coordinates {
   longitude: number;
 }
 
+interface SavedFilters {
+  filters: {
+    priceRange: [number, number];
+    postcode: string;
+    maxDistance: number;
+    dateRange: [string, string];
+    sortOption: string;
+    appointmentType: string;
+  };
+  timestamp: number;
+}
+
 export default function SearchPage() {
   const [appointments, setAppointments] = useState<RawAppointment[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<{
@@ -50,24 +62,38 @@ export default function SearchPage() {
     dateRange: [string, string];
     sortOption: string;
     appointmentType: string;
-  }>({
-    priceRange: [0, 200],
-    postcode: '',
-    maxDistance: 50,
-    dateRange: ['', ''],
-    sortOption: 'soonest',
-    appointmentType: '',
+  }>(() => {
+    const saved = localStorage.getItem('searchFilters');
+    if (saved) {
+      const { filters, timestamp }: SavedFilters = JSON.parse(saved);
+      const expiry = 24 * 60 * 60 * 1000;
+      if (Date.now() - timestamp < expiry) {
+        return filters;
+      }
+      localStorage.removeItem('searchFilters');
+    }
+    return {
+      priceRange: [0, 200],
+      postcode: '',
+      maxDistance: 50,
+      dateRange: ['', ''],
+      sortOption: 'soonest',
+      appointmentType: '',
+    };
   });
-  const [tempPriceRange, setTempPriceRange] = useState<[number, number]>([0, 200]);
-  const [tempPostcode, setTempPostcode] = useState('');
-  const [tempMaxDistance, setTempMaxDistance] = useState(50);
-  const [tempDateRange, setTempDateRange] = useState<[string, string]>(['', '']);
-  const [tempSortOption, setTempSortOption] = useState('soonest');
-  const [tempAppointmentType, setTempAppointmentType] = useState<string>('');
+  const [tempPriceRange, setTempPriceRange] = useState<[number, number]>(appliedFilters.priceRange);
+  const [tempPostcode, setTempPostcode] = useState(appliedFilters.postcode);
+  const [tempMaxDistance, setTempMaxDistance] = useState(appliedFilters.maxDistance);
+  const [tempDateRange, setTempDateRange] = useState<[string, string]>(appliedFilters.dateRange);
+  const [tempSortOption, setTempSortOption] = useState(appliedFilters.sortOption);
+  const [tempAppointmentType, setTempAppointmentType] = useState<string>(appliedFilters.appointmentType);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [offset, setOffset] = useState(0);
 
-  const fetchAppointments = async (filters: typeof appliedFilters) => {
+  const LIMIT = 20;
+
+  const fetchAppointments = async (filters: typeof appliedFilters, append: boolean = false) => {
     setLoading(true);
     setError(null);
 
@@ -78,7 +104,8 @@ export default function SearchPage() {
       ...(filters.dateRange[0] && { dateStart: filters.dateRange[0] }),
       ...(filters.dateRange[1] && { dateEnd: filters.dateRange[1] }),
       sortBy: filters.sortOption,
-      limit: '10',
+      limit: LIMIT.toString(),
+      offset: append ? offset.toString() : '0',
     });
 
     if (filters.postcode) {
@@ -91,7 +118,7 @@ export default function SearchPage() {
         const coords: Coordinates = data;
         params.set('lat', coords.latitude.toString());
         params.set('lon', coords.longitude.toString());
-        params.set('maxDistance', (filters.maxDistance * 1.60934).toString()); // Miles to km, always include if postcode
+        params.set('maxDistance', (filters.maxDistance * 1.60934).toString());
       } catch (err: unknown) {
         console.error('Geocode error details:', err);
         setError(err instanceof Error ? err.message : 'Failed to geocode postcode');
@@ -105,7 +132,8 @@ export default function SearchPage() {
       const response = await fetch(`/api/appointment/search?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `Search failed with status: ${response.status}`);
-      setAppointments(data.appointments || []);
+      setAppointments((prev) => (append ? [...prev, ...(data.appointments || [])] : data.appointments || []));
+      if (append) setOffset((prev) => prev + LIMIT);
     } catch (err: unknown) {
       console.error('Fetch appointments error:', err);
       const message = err instanceof Error ? err.message : 'Error fetching appointments';
@@ -130,7 +158,13 @@ export default function SearchPage() {
       appointmentType: tempAppointmentType,
     };
     setAppliedFilters(newFilters);
+    setOffset(0);
     fetchAppointments(newFilters);
+    localStorage.setItem('searchFilters', JSON.stringify({ filters: newFilters, timestamp: Date.now() }));
+  };
+
+  const showMore = () => {
+    fetchAppointments(appliedFilters, true);
   };
 
   return (
@@ -162,31 +196,42 @@ export default function SearchPage() {
           }))}
         />
         <div className={styles.results}>
-          {loading ? (
+          {loading && appointments.length === 0 ? (
             <p>Loading appointments...</p>
           ) : error ? (
             <p className={styles.noResults}>{error}</p>
           ) : appointments.length > 0 ? (
-            <div className={styles.cardsGrid}>
-              {appointments.map((appt) => (
-                <AppointmentCard
-                  key={appt.appointment_id}
-                  id={appt.appointment_id}
-                  practice={appt.practice_name}
-                  time={appt.start_time}
-                  type={appliedFilters.appointmentType || Object.keys(appt.services)[0] || 'Unknown'}
-                  price={
-                    appliedFilters.appointmentType && appt.services[appliedFilters.appointmentType]
-                      ? appt.services[appliedFilters.appointmentType]
-                      : Object.values(appt.services)[0] || 0
-                  }
-                  distance={appt.distance}
-                  city={appt.address.city}
-                  hasPostcode={!!appliedFilters.postcode}
-                  image={appt.photo || '/placeholder.jpg'}
-                />
-              ))}
-            </div>
+            <>
+              <div className={styles.cardsGrid}>
+                {appointments.map((appt) => (
+                  <AppointmentCard
+                    key={appt.appointment_id}
+                    id={appt.appointment_id}
+                    practice={appt.practice_name}
+                    time={appt.start_time}
+                    type={appliedFilters.appointmentType || Object.keys(appt.services)[0] || 'Unknown'}
+                    price={
+                      appliedFilters.appointmentType && appt.services[appliedFilters.appointmentType]
+                        ? appt.services[appliedFilters.appointmentType]
+                        : Object.values(appt.services)[0] || 0
+                    }
+                    distance={appt.distance * 0.621371}
+                    city={appt.address.city}
+                    hasPostcode={!!appliedFilters.postcode}
+                    image={appt.photo || '/placeholder.jpg'}
+                  />
+                ))}
+              </div>
+              {appointments.length >= offset && (
+                <button
+                  onClick={showMore}
+                  className={styles.showMoreButton}
+                  disabled={loading}
+                >
+                  {loading ? 'Loading...' : 'Show More'}
+                </button>
+              )}
+            </>
           ) : (
             <p className={styles.noResults}>No appointments match your filters.</p>
           )}
