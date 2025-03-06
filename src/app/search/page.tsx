@@ -235,6 +235,7 @@ export default function SearchPage() {
                     city={appt.address.city}
                     hasPostcode={!!appliedFilters.postcode}
                     image={appt.photo || '/placeholder.jpg'}
+                    appointmentType={appliedFilters.appointmentType}
                   />
                 ))}
               </div>

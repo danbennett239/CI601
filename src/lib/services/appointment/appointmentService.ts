@@ -298,6 +298,7 @@ export async function getAppointmentWithPracticeByAppId(appointmentId: string): 
         booked
         created_at
         updated_at
+        services
         practice {
           practice_name
           email

@@ -11,6 +11,7 @@ interface AppointmentCardProps {
   city: string;
   hasPostcode: boolean;
   image: string;
+  appointmentType: string;
 }
 
 export default function AppointmentCard({
@@ -23,11 +24,11 @@ export default function AppointmentCard({
   city,
   hasPostcode,
   image,
+  appointmentType
 }: AppointmentCardProps) {
   return (
     <div className={styles.card}>
-      <Link href={`/appointments/${id}`} className={styles.cardLink}>
-        <img src={image} alt={practice} className={styles.image} />
+      <Link href={{ pathname: `/appointments/${id}`, query: { from: "search", appointmentType } }} className={styles.cardLink}>        <img src={image} alt={practice} className={styles.image} />
         <div className={styles.content}>
           <h3 className={styles.practice}>{practice}</h3>
           <p className={styles.time}>{new Date(time).toLocaleString()}</p>

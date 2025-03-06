@@ -8,6 +8,7 @@ export interface AppointmentWithPractice {
   booked: boolean;
   created_at: string;
   updated_at: string;
+  services: Record<string, number>;
   practice: {
     practice_name: string;
     email: string;
