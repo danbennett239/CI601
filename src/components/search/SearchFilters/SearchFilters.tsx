@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect, useRef } from 'react';
 import styles from './SearchFilters.module.css';
 
@@ -12,6 +14,8 @@ interface SearchFiltersProps {
   setDateRange: (range: [string, string]) => void;
   sortOption: string;
   setSortOption: (option: string) => void;
+  appointmentType: string;
+  setAppointmentType: (type: string) => void;
   onFilter: () => void;
   appointments: { price: number }[];
 }
@@ -27,6 +31,8 @@ export default function SearchFilters({
   setDateRange,
   sortOption,
   setSortOption,
+  appointmentType,
+  setAppointmentType,
   onFilter,
   appointments,
 }: SearchFiltersProps) {
@@ -35,18 +41,18 @@ export default function SearchFilters({
   const [distance, setDistance] = useState(maxDistance);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  // Calculate histogram data
-  const priceMin = Math.min(...appointments.map((appt) => appt.price));
-  const priceMax = Math.max(...appointments.map((appt) => appt.price));
+  const appointmentTypes = ['checkup', 'filling', 'cleaning', 'emergency', 'whitening', 'extraction'];
+
+  const priceMin = appointments.length > 0 ? Math.min(...appointments.map((appt) => appt.price)) : 0;
+  const priceMax = appointments.length > 0 ? Math.max(...appointments.map((appt) => appt.price)) : 200;
   const bins = 10;
-  const binSize = (priceMax - priceMin) / bins;
+  const binSize = priceMax > priceMin ? (priceMax - priceMin) / bins : 1;
   const histogram = Array(bins).fill(0);
   appointments.forEach((appt) => {
-    const binIndex = Math.min(
-      Math.floor((appt.price - priceMin) / binSize),
-      bins - 1
-    );
-    histogram[binIndex]++;
+    if (appt.price >= priceMin && appt.price <= priceMax) {
+      const binIndex = Math.min(Math.floor((appt.price - priceMin) / binSize), bins - 1);
+      histogram[binIndex]++;
+    }
   });
 
   useEffect(() => {
@@ -77,6 +83,19 @@ export default function SearchFilters({
     }
   };
 
+  const clearFilters = () => {
+    setPriceRange([0, 200]);
+    setMinPrice(0);
+    setMaxPrice(200);
+    setPostcode('');
+    setMaxDistance(50);
+    setDistance(50);
+    setDateRange(['', '']);
+    setSortOption('soonest');
+    setAppointmentType('');
+    onFilter();
+  };
+
   return (
     <div className={styles.filters}>
       <h3 className={styles.filterTitle}>Filter Appointments</h3>
@@ -88,11 +107,26 @@ export default function SearchFilters({
           onChange={(e) => setSortOption(e.target.value)}
           className={styles.sortSelect}
         >
-          <option value="default">Default</option>
-          <option value="lowest-price">Lowest Price</option>
-          <option value="highest-price">Highest Price</option>
-          <option value="closest">Closest</option>
           <option value="soonest">Soonest</option>
+          <option value="lowest_price">Lowest Price</option>
+          <option value="highest_price">Highest Price</option>
+          <option value="closest">Closest</option>
+        </select>
+      </div>
+
+      <div className={styles.filterGroup}>
+        <label className={styles.filterLabel}>Appointment Type</label>
+        <select
+          value={appointmentType}
+          onChange={(e) => setAppointmentType(e.target.value)}
+          className={styles.sortSelect}
+        >
+          <option value="">Any Type</option>
+          {appointmentTypes.map((type) => (
+            <option key={type} value={type}>
+              {type.charAt(0).toUpperCase() + type.slice(1)}
+            </option>
+          ))}
         </select>
       </div>
 
@@ -166,7 +200,7 @@ export default function SearchFilters({
           type="text"
           value={postcode}
           onChange={(e) => setPostcode(e.target.value)}
-          placeholder="e.g., SW1A 1AA"
+          placeholder="e.g., SO31 7GT"
           className={styles.postcodeInput}
         />
       </div>
@@ -178,16 +212,7 @@ export default function SearchFilters({
           value={distance}
           onChange={(e) => setDistance(Number(e.target.value))}
           min={0}
-          max={50}
           className={styles.distanceInput}
-        />
-        <input
-          type="range"
-          min={0}
-          max={50}
-          value={distance}
-          onChange={(e) => setDistance(Number(e.target.value))}
-          className={styles.slider}
         />
       </div>
 
@@ -195,14 +220,14 @@ export default function SearchFilters({
         <label className={styles.filterLabel}>Date Range</label>
         <div className={styles.dateInputs}>
           <input
-            type="date"
+            type="datetime-local"
             value={dateRange[0]}
             onChange={(e) => setDateRange([e.target.value, dateRange[1]])}
             className={styles.dateInput}
           />
           <span>to</span>
           <input
-            type="date"
+            type="datetime-local"
             value={dateRange[1]}
             onChange={(e) => setDateRange([dateRange[0], e.target.value])}
             className={styles.dateInput}
@@ -210,9 +235,14 @@ export default function SearchFilters({
         </div>
       </div>
 
-      <button onClick={onFilter} className={styles.filterButton}>
-        Apply Filters
-      </button>
+      <div className={styles.buttonGroup}>
+        <button onClick={onFilter} className={styles.filterButton}>
+          Apply Filters
+        </button>
+        <button onClick={clearFilters} className={styles.clearButton}>
+          Clear Filters
+        </button>
+      </div>
     </div>
   );
 }
