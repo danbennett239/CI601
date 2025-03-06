@@ -408,6 +408,7 @@ export async function searchAppointments(filters: {
   userLon?: number;
   maxDistance?: number;
   limit?: number;
+  offset?: number;
   appointmentType?: string;
   priceMin?: number;
   priceMax?: number;
@@ -421,6 +422,7 @@ export async function searchAppointments(filters: {
       $userLat: float8,
       $maxDistance: float8,
       $limit: Int,
+      $offset: Int,
       $appointmentType: String,
       $priceMin: numeric,
       $priceMax: numeric,
@@ -434,6 +436,7 @@ export async function searchAppointments(filters: {
           user_lat: $userLat,
           max_distance: $maxDistance,
           limit_num: $limit,
+          offset_num: $offset,
           appointment_type: $appointmentType,
           price_min: $priceMin,
           price_max: $priceMax,
@@ -471,6 +474,7 @@ export async function searchAppointments(filters: {
     userLat: filters.userLat || null,
     maxDistance: filters.maxDistance || 10000,
     limit: filters.limit || 10,
+    offset: filters.offset || 0,
     appointmentType: filters.appointmentType || null,
     priceMin: filters.priceMin || null,
     priceMax: filters.priceMax || null,

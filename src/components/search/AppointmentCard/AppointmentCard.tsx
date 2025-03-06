@@ -26,17 +26,21 @@ export default function AppointmentCard({
 }: AppointmentCardProps) {
   return (
     <div className={styles.card}>
-      <img src={image} alt={practice} className={styles.image} />
-      <div className={styles.content}>
-        <h3 className={styles.practice}>{practice}</h3>
-        <p className={styles.time}>{new Date(time).toLocaleString()}</p>
-        <p className={styles.type}>{type.charAt(0).toUpperCase() + type.slice(1)}</p>
-        <p className={styles.price}>£{price}</p>
-        <p className={styles.distance}>
-          {hasPostcode ? `${(distance).toFixed(1)} miles away` : city}
-        </p>
-        <Link href={`/appointments/${id}`} className={styles.detailsButton}>
-          View Details
+      <Link href={`/appointments/${id}`} className={styles.cardLink}>
+        <img src={image} alt={practice} className={styles.image} />
+        <div className={styles.content}>
+          <h3 className={styles.practice}>{practice}</h3>
+          <p className={styles.time}>{new Date(time).toLocaleString()}</p>
+          <p className={styles.type}>{type.charAt(0).toUpperCase() + type.slice(1)}</p>
+          <p className={styles.price}>£{price}</p>
+          <p className={styles.distance}>
+            {hasPostcode ? `${distance.toFixed(1)} miles away` : city}
+          </p>
+        </div>
+      </Link>
+      <div className={styles.detailsButtonWrapper}>
+        <Link href={`/appointments/${id}`}>
+          <button className={styles.detailsButton}>View Details</button>
         </Link>
       </div>
     </div>

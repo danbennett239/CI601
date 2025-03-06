@@ -8,6 +8,7 @@ export async function GET(request: NextRequest) {
     userLon: searchParams.get("lon") ? parseFloat(searchParams.get("lon")!) : undefined,
     maxDistance: searchParams.get("maxDistance") ? parseFloat(searchParams.get("maxDistance")!) : undefined,
     limit: searchParams.get("limit") ? parseInt(searchParams.get("limit")!, 10) : undefined,
+    offset: searchParams.get("offset") ? parseInt(searchParams.get("offset")!, 10) : undefined,
     appointmentType: searchParams.get("appointmentType")?.trim() || undefined,
     priceMin: searchParams.get("priceMin") ? parseFloat(searchParams.get("priceMin")!) : undefined,
     priceMax: searchParams.get("priceMax") ? parseFloat(searchParams.get("priceMax")!) : undefined,

@@ -16,7 +16,6 @@ interface RawAppointment {
   created_at: string;
   updated_at: string;
   services: Record<string, number>;
-  booked_service: Record<string, any> | null;
   practice_name: string;
   email: string;
   phone_number: string;
@@ -32,7 +31,16 @@ interface RawAppointment {
   };
   verified: boolean;
   verified_at: string | null;
-  location: any;
+  location: {
+    type: string;
+    crs: {
+      type: string;
+      properties: {
+        name: string;
+      };
+    };
+    coordinates: [number, number];
+  };
   distance: number;
 }
 
@@ -132,8 +140,16 @@ export default function SearchPage() {
       const response = await fetch(`/api/appointment/search?${params.toString()}`);
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `Search failed with status: ${response.status}`);
-      setAppointments((prev) => (append ? [...prev, ...(data.appointments || [])] : data.appointments || []));
-      if (append) setOffset((prev) => prev + LIMIT);
+      const newAppointments = data.appointments || [];
+      if (append) {
+        if (newAppointments.length > 0) {
+          setAppointments((prev) => [...prev, ...newAppointments]);
+          setOffset((prev) => prev + LIMIT);
+        }
+      } else {
+        setAppointments(newAppointments);
+        setOffset(LIMIT);
+      }
     } catch (err: unknown) {
       console.error('Fetch appointments error:', err);
       const message = err instanceof Error ? err.message : 'Error fetching appointments';
@@ -222,7 +238,7 @@ export default function SearchPage() {
                   />
                 ))}
               </div>
-              {appointments.length >= offset && (
+              {appointments.length >= offset && offset < (appointments.length + LIMIT) && (
                 <button
                   onClick={showMore}
                   className={styles.showMoreButton}
