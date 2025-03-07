@@ -1,5 +1,4 @@
 // app/signin/page.tsx
-
 "use client";
 
 import React, { useState } from "react";
@@ -16,13 +15,13 @@ export default function SigninPage() {
   // Called after successful login
   const handleLoginSuccess = () => {
     console.log("Login success!");
-    // ...Add your redirect or additional logic here
+    window.location.href = "/home";
   };
 
   // Called after successful registration
   const handleRegisterSuccess = () => {
     console.log("Register success!");
-    // ...Add your redirect or additional logic here
+    window.location.href = "/home";
   };
 
   if (isMobile) {
@@ -70,7 +69,6 @@ export default function SigninPage() {
 
       {/* Vertical line divider */}
       <div className={styles.divider} />
-
       <div className={styles.registerWrapper}>
         <UserRegisterForm onSuccess={handleRegisterSuccess} />
       </div>

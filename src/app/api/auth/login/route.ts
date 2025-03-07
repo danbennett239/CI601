@@ -7,9 +7,12 @@ export async function POST(req: NextRequest) {
     const { email, password } = await req.json();
     const { accessToken, refreshToken } = await loginUser({ email, password });
 
-    // Create a redirect response to '/home'
-    const response = NextResponse.redirect(new URL('/home', req.url));
-    // Set the cookies in the route
+    const response = NextResponse.json(
+      { message: 'Login successful' },
+      { status: 200 }
+    );
+
+    // Set the cookies in the response
     response.cookies.set('accessToken', accessToken, {
       httpOnly: true,
       secure: true,
@@ -22,6 +25,7 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 604800, // 1 week
     });
+
     return response;
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Authentication failed.';

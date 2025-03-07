@@ -1,4 +1,3 @@
-// /components/UserLoginForm.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -16,7 +15,6 @@ type FormErrors = { [key: string]: string[] };
 const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  // errors keyed by field name (e.g. email, password)
   const [errors, setErrors] = useState<FormErrors>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,11 +37,6 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
 
       const data = await res.json();
       if (!res.ok) {

@@ -1,4 +1,3 @@
-// /components/UserRegisterForm.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -55,11 +54,6 @@ const UserRegisterForm: React.FC<UserRegisterFormProps> = ({ onSuccess }) => {
           role: "user",
         }),
       });
-
-      if (res.redirected) {
-        window.location.href = res.url;
-        return;
-      }
 
       const data = await res.json();
 
