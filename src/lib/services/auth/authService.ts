@@ -46,9 +46,11 @@ const REGISTER_USER_MUTATION = `
 export async function loginUser({
   email,
   password,
+  rememberMe,
 }: {
   email: string;
   password: string;
+  rememberMe: boolean;
 }): Promise<{ user_id: string; email: string; role: string; accessToken: string; refreshToken: string }> {
   // Fetch user by email from Hasura.
   const response = await fetch(HASURA_GRAPHQL_URL, {
@@ -87,6 +89,7 @@ export async function loginUser({
       'x-hasura-allowed-roles': [user.role],
       'x-hasura-user-id': user.user_id,
     },
+    rememberMe,
   };
 
   // Sign the access and refresh tokens.

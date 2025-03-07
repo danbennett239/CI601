@@ -5,7 +5,9 @@ import bcrypt from 'bcryptjs';
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 const ACCESS_TOKEN_EXPIRY = '1h';     // 1 hour
+const REMEMBER_ME_TOKEN_EXPIRY = '7d'; // 7 days
 const REFRESH_TOKEN_EXPIRY = '7d';    // 7 days
+const REMEMBER_ME_REFRESH_TOKEN_EXPIRY = '30d'; // 30 days
 const SALT_ROUNDS = 10;
 
 export interface UserPayload {
@@ -14,14 +16,17 @@ export interface UserPayload {
   role: string;
   practice_id?: string;
   hasura_claims: Record<string, unknown>;
+  rememberMe: boolean;
 }
 
 export function signAccessToken(payload: UserPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: ACCESS_TOKEN_EXPIRY });
+  const expiresIn = payload.rememberMe ? REMEMBER_ME_TOKEN_EXPIRY : ACCESS_TOKEN_EXPIRY;
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 
 export function signRefreshToken(payload: UserPayload) {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: REFRESH_TOKEN_EXPIRY });
+  const expiresIn = payload.rememberMe ? REMEMBER_ME_REFRESH_TOKEN_EXPIRY : REFRESH_TOKEN_EXPIRY
+  return jwt.sign(payload, JWT_SECRET, { expiresIn });
 }
 
 export function verifyToken(token: string): UserPayload | null {

@@ -1,3 +1,4 @@
+// components/UserLoginForm.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -15,17 +16,16 @@ type FormErrors = { [key: string]: string[] };
 const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false); // New state for Remember Me
   const [errors, setErrors] = useState<FormErrors>({});
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Reset errors
     setErrors({});
 
     const result = userLoginSchema.safeParse({ email, password });
     if (!result.success) {
-      // flatten errors so that we have errors per field
       const fieldErrors = result.error.flatten().fieldErrors;
       setErrors(fieldErrors);
       return;
@@ -35,7 +35,7 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, rememberMe }), // Include rememberMe
       });
 
       const data = await res.json();
@@ -91,6 +91,19 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
               {msg}
             </span>
           ))}
+
+        <div className={styles.checkboxContainer}>
+          <input
+            type="checkbox"
+            id="rememberMe"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className={styles.checkbox}
+          />
+          <label htmlFor="rememberMe" className={styles.checkboxLabel}>
+            Remember Me
+          </label>
+        </div>
 
         {errors.form && (
           <div className={styles.formError}>
