@@ -1,0 +1,10 @@
+-- Could not auto-generate a down migration.
+-- Please write an appropriate down migration for the SQL below:
+-- CREATE TABLE password_reset_tokens (
+--     token_id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+--     token VARCHAR(64) NOT NULL UNIQUE,            -- Hex token (32 bytes = 64 chars)
+--     user_id UUID NOT NULL,                        -- Foreign key to users table
+--     expires BIGINT NOT NULL,                      -- Unix timestamp (milliseconds)
+--     created_at TIMESTAMP DEFAULT NOW(),           -- Audit trail
+--     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
+-- );
