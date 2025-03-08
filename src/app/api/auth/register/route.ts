@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
     await registerUser({ first_name, last_name, email, password, role });
     
     // Log the user in immediately (note: loginUser does its own query to get the user)
-    const { accessToken, refreshToken } = await loginUser({ email, password });
+    const { accessToken, refreshToken } = await loginUser({ email, password, rememberMe: false });
     
     // Return a redirect response to '/home' with cookies set
     const response = NextResponse.redirect(new URL('/home', req.url));
