@@ -1,4 +1,3 @@
-// /lib/services/passwordService.ts
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
 import Mailjet from "node-mailjet";
@@ -11,17 +10,17 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
   const user = await findUserByEmail(email);
   if (!user) {
     console.log("No user found for email:", email);
-    return;
+    return; // Silently fail for security (don’t reveal user existence)
   }
 
   console.log("User found:", user);
 
   const token = crypto.randomBytes(32).toString("hex");
-  const expires = Date.now() + 3600000;
-  
+  const expires = Date.now() + 3600000; // 1 hour from now
+
   console.log("Pre reset token, token:", token);
   await saveResetToken(user.user_id, token, expires);
-  console.log("Post reset token, saved in store");
+  console.log("Post reset token, saved in database");
 
   const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/reset-password?token=${token}`;
   console.log("Reset URL generated:", resetUrl);
@@ -32,7 +31,7 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
   );
 
   console.log("Mailjet connected, sending email...");
-  
+
   await mailjet
     .post("send", { version: "v3.1" })
     .request({
@@ -51,7 +50,6 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
     });
 }
 
-
 export async function resetPassword(token: string, newPassword: string): Promise<void> {
   const tokenData = await findResetToken(token);
   if (!tokenData || tokenData.expires < Date.now()) {
@@ -64,7 +62,7 @@ export async function resetPassword(token: string, newPassword: string): Promise
 
 // --- Database Query Functions using Hasura ---
 
-// Find a user by email.
+// Find a user by email
 export async function findUserByEmail(email: string): Promise<{ user_id: string; email: string; password: string } | null> {
   const query = `
     query FindUserByEmail($email: String!) {
@@ -85,13 +83,14 @@ export async function findUserByEmail(email: string): Promise<{ user_id: string;
     body: JSON.stringify({ query, variables: { email } }),
   });
   const json = await res.json();
+  if (json.errors) throw new Error("Failed to fetch user");
   if (json.data.users && json.data.users.length > 0) {
     return json.data.users[0];
   }
   return null;
 }
 
-// Update the user's password.
+// Update the user's password
 export async function updateUserPassword(userId: string, hashedPassword: string): Promise<void> {
   const mutation = `
     mutation UpdateUserPassword($userId: uuid!, $password: String!) {
@@ -109,24 +108,82 @@ export async function updateUserPassword(userId: string, hashedPassword: string)
     body: JSON.stringify({ query: mutation, variables: { userId, password: hashedPassword } }),
   });
   const json = await res.json();
-  if (json.errors) {
+  if (json.errors || json.data.update_users.affected_rows === 0) {
     throw new Error("Failed to update password");
   }
 }
 
-// --- In-Memory Reset Token Storage ---
-// (For production, store tokens in your database.)
-
-const resetTokenStore: Record<string, { userId: string; expires: number }> = {};
-
+// Save reset token to database
 async function saveResetToken(userId: string, token: string, expires: number): Promise<void> {
-  resetTokenStore[token] = { userId, expires };
+  const mutation = `
+    mutation SaveResetToken($userId: uuid!, $token: String!, $expires: bigint!) {
+      insert_password_reset_tokens_one(object: { user_id: $userId, token: $token, expires: $expires }) {
+        token_id
+      }
+    }
+  `;
+  const res = await fetch(process.env.HASURA_GRAPHQL_URL as string, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": process.env.HASURA_ADMIN_SECRET as string,
+    },
+    body: JSON.stringify({ query: mutation, variables: { userId, token, expires } }),
+  });
+  const json = await res.json();
+  if (json.errors) {
+    throw new Error("Failed to save reset token: " + JSON.stringify(json.errors));
+  }
 }
 
+// Find reset token in database
 async function findResetToken(token: string): Promise<{ userId: string; expires: number } | null> {
-  return resetTokenStore[token] || null;
+  const query = `
+    query FindResetToken($token: String!) {
+      password_reset_tokens(where: { token: { _eq: $token } }) {
+        user_id
+        expires
+      }
+    }
+  `;
+  const res = await fetch(process.env.HASURA_GRAPHQL_URL as string, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": process.env.HASURA_ADMIN_SECRET as string,
+    },
+    body: JSON.stringify({ query, variables: { token } }),
+  });
+  const json = await res.json();
+  if (json.errors) throw new Error("Failed to fetch reset token");
+  if (json.data.password_reset_tokens && json.data.password_reset_tokens.length > 0) {
+    return {
+      userId: json.data.password_reset_tokens[0].gituser_id,
+      expires: json.data.password_reset_tokens[0].expires,
+    };
+  }
+  return null;
 }
 
+// Delete reset token from database
 async function deleteResetToken(token: string): Promise<void> {
-  delete resetTokenStore[token];
+  const mutation = `
+    mutation DeleteResetToken($token: String!) {
+      delete_password_reset_tokens(where: { token: { _eq: $token } }) {
+        affected_rows
+      }
+    }
+  `;
+  const res = await fetch(process.env.HASURA_GRAPHQL_URL as string, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-hasura-admin-secret": process.env.HASURA_ADMIN_SECRET as string,
+    },
+    body: JSON.stringify({ query: mutation, variables: { token } }),
+  });
+  const json = await res.json();
+  if (json.errors) {
+    throw new Error("Failed to delete reset token");
+  }
 }
