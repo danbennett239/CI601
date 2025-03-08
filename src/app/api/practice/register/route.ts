@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       practiceServices,
     });
 
-    const { accessToken, refreshToken } = await loginUser({ email, password });
+    const { accessToken, refreshToken } = await loginUser({ email, password, rememberMe: false });
 
     const response = NextResponse.redirect(new URL('/home', req.url));
     response.cookies.set('accessToken', accessToken, {
