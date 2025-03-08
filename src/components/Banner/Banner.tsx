@@ -61,17 +61,19 @@ const Banner: React.FC = () => {
         </Link>
       )}
       {loading ? (
-        <p>Loading...</p>
+        <Link href="/signin" onClick={closeMenu}>
+          <div className={styles.navItem}>Sign In</div>
+        </Link>
       ) : user ? (
         <>
           {user.role === "user" && (
             <>
-            <Link href="/my-appointments" onClick={closeMenu}>
-              <div className={styles.navItem}>My Appointments</div>
-            </Link>
-            <Link href="/profile" onClick={closeMenu}>
-              <div className={styles.navItem}>Profile Management</div>
-            </Link>
+              <Link href="/my-appointments" onClick={closeMenu}>
+                <div className={styles.navItem}>My Appointments</div>
+              </Link>
+              <Link href="/profile" onClick={closeMenu}>
+                <div className={styles.navItem}>Profile Management</div>
+              </Link>
             </>
           )}
           {user.role === "admin" && (
