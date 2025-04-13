@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import styles from './BookAppointmentPage.module.css';
 import UserLoginForm from '@/components/UserLoginForm/UserLoginForm';
+import UserRegisterForm from '@/components/UserRegisterForm/UserRegisterForm';
 import { useUser } from '@/hooks/useUser';
 import Link from 'next/link';
 import { AppointmentWithPractice } from '@/types/appointment';
@@ -17,6 +18,7 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [showRegisterForm, setShowRegisterForm] = useState(false); // Toggle between login/register
 
   const { id } = React.use(params);
   const service = searchParams.get('service') || '';
@@ -92,10 +94,22 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
       <div className={styles.bookPage}>
         <h1 className={styles.title}>Sign In to Book</h1>
         <p className={styles.message}>Please sign in or register to proceed with your booking.</p>
-        <UserLoginForm onSuccess={handleLoginSuccess} />
-        <Link href="/register" className={styles.registerLink}>
-          Don’t have an account? Register here
-        </Link>
+
+        {showRegisterForm ? (
+          <UserRegisterForm onSuccess={handleLoginSuccess} />
+        ) : (
+          <UserLoginForm onSuccess={handleLoginSuccess} />
+        )}
+
+        <p
+          onClick={() => setShowRegisterForm(!showRegisterForm)}
+          className={styles.registerLink}
+          style={{ cursor: "pointer" }}
+        >
+          {showRegisterForm
+            ? "Already have an account? Back to Log in"
+            : "Don’t have an account? Register here"}
+        </p>
       </div>
     );
   }
