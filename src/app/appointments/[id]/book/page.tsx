@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import styles from './BookAppointmentPage.module.css';
 import UserLoginForm from '@/components/UserLoginForm/UserLoginForm';
@@ -11,6 +11,7 @@ import { AppointmentWithPractice } from '@/types/appointment';
 
 export default function BookAppointment({ params }: { params: Promise<{ id: string }> }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading: userLoading } = useUser();
   const [appointment, setAppointment] = useState<AppointmentWithPractice | null>(null);
   const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
   const [confirmed, setConfirmed] = useState(false);
 
   const { id } = React.use(params);
+  const service = searchParams.get('service') || '';
 
   // Fetch appointment details
   useEffect(() => {
@@ -43,8 +45,9 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
     fetchAppointment();
   }, [id, router]);
 
-  const handleLoginSuccess = () => {
-    router.refresh();
+  const handleLoginSuccess = async () => {
+    const query = service ? `?service=${service}` : '';
+    window.location.href = `/appointments/${id}/book${query}`;
   };
 
   const handleConfirmBooking = async () => {
