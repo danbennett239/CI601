@@ -63,13 +63,13 @@ export default function SigninPage() {
   // TODO CHANGE REGISTER BUTTON TO SAME AS PRACTICE
   return (
     <div className={styles.containerDesktop}>
-      <div className={styles.loginWrapper}>
+      <div className={styles.loginWrapper} data-cy="login-form">
         <UserLoginForm onSuccess={handleLoginSuccess} />
       </div>
 
       {/* Vertical line divider */}
       <div className={styles.divider} />
-      <div className={styles.registerWrapper}>
+      <div className={styles.registerWrapper} data-cy="register-form">
         <UserRegisterForm onSuccess={handleRegisterSuccess} />
       </div>
 
