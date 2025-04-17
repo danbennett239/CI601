@@ -305,6 +305,7 @@ const AppointmentsPage: React.FC = () => {
               setShowCreatePopup(true);
             }}
             className={styles.createButton}
+            data-cy="create-appointment-button"
           >
             Create Appointment
           </button>

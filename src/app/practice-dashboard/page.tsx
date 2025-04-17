@@ -24,6 +24,7 @@ export default function PracticeDashboard() {
         <PanelCard
           title="Manage Appointments"
           link="/practice-dashboard/appointments"
+          data-cy="manage-appointments-link"
         />
         <PanelCard
           title="Manage Practice Information and Preferences"

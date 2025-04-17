@@ -87,7 +87,7 @@ const Banner: React.FC = () => {
             </Link>
           )}
           {user.role === "verified-practice" && (
-            <Link href="/practice-dashboard" onClick={closeMenu}>
+            <Link href="/practice-dashboard" onClick={closeMenu} data-cy="banner-practice-dashboard-link">
               <div className={styles.navItem}>Practice Dashboard</div>
             </Link>
           )}

@@ -147,6 +147,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
               value={start}
               onChange={(e) => setStart(e.target.value)}
               required
+              data-cy="start-time-input"
             />
           </label>
           <label>
@@ -156,6 +157,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
               value={end}
               onChange={(e) => setEnd(e.target.value)}
               required
+              data-cy="end-time-input"
             />
           </label>
           <div className={styles.appointmentTypeSection}>
@@ -169,6 +171,7 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                   type="checkbox"
                   checked={allTypes}
                   onChange={(e) => handleAllTypesChange(e.target.checked)}
+                  data-cy="all-types-checkbox"
                 />
                 All
               </label>
@@ -179,13 +182,14 @@ const CreateAppointmentPopup: React.FC<CreateAppointmentPopupProps> = ({
                     type="checkbox"
                     checked={selectedTypes.includes(type)}
                     onChange={(e) => handleTypeChange(type, e.target.checked)}
+                    data-cy={`${type}-checkbox`}
                   />
                   {capitalizeFirstLetter(type)} (£{practiceServices[type] || 0})
                 </label>
               ))}
             </div>
           </div>
-          <button type="submit" className={styles.saveButton}>
+          <button type="submit" className={styles.saveButton} data-cy="popup-create-appointment-button">
             Create
           </button>
         </form>
