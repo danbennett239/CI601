@@ -145,7 +145,7 @@ export default async function AppointmentDetail({ params, searchParams }: Appoin
           </div>
 
           <div className={styles.actions}>
-            <Link href={`/appointments/${appointment.appointment_id}/book?service=${defaultService}`} className={styles.bookButton}>
+            <Link href={`/appointments/${appointment.appointment_id}/book?service=${defaultService}`} className={styles.bookButton} data-cy="proceed-to-checkout-button">
               Proceed to Checkout
             </Link>
             <Link href={backLink} className={styles.backButton}>

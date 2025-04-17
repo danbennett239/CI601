@@ -170,6 +170,7 @@ export default function BookAppointment({ params }: { params: Promise<{ id: stri
         <button
           onClick={handleConfirmBooking}
           className={styles.confirmButton}
+          data-cy="confirm-booking-button"
           disabled={loading}
         >
           {loading ? "Confirming..." : "Confirm Booking"}

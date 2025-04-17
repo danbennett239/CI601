@@ -27,7 +27,7 @@ export default function AppointmentCard({
   appointmentType
 }: AppointmentCardProps) {
   return (
-    <div className={styles.card}>
+    <div className={styles.card} data-cy="appointment-card">
       <Link href={{ pathname: `/appointments/${id}`, query: { from: "search", appointmentType } }} className={styles.cardLink}>        <img src={image} alt={practice} className={styles.image} />
         <div className={styles.content}>
           <h3 className={styles.practice}>{practice}</h3>

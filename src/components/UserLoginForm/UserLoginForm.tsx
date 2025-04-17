@@ -55,7 +55,7 @@ const UserLoginForm: React.FC<UserLoginFormProps> = ({ onSuccess }) => {
   };
 
   return (
-    <div className={styles.formWrapper}>
+    <div className={styles.formWrapper} data-cy="login-form">
       <h2 className={styles.title}>Sign In</h2>
       <form onSubmit={handleSubmit} className={styles.form}>
         <label htmlFor="email" className={styles.label}>

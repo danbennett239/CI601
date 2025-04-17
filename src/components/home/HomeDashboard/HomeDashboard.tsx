@@ -42,7 +42,7 @@ export function HomeDashboard({
         <div className={styles.hero}>
           <h1 className={styles.title}>Book Your Dental Visit Today</h1>
           <p className={styles.subtitle}>Unlock a world of available appointments at your fingertips</p>
-          <Link href="/search" className={styles.ctaButton}>
+          <Link href="/search" className={styles.ctaButton} data-cy="search-appointments-link">
             Search for Appointments
           </Link>
         </div>
