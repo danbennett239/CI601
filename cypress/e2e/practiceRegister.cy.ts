@@ -1,4 +1,4 @@
-describe("Dental Practice Registration (FR5)", () => {
+describe("Dental Practice Registration (FR4)", () => {
   beforeEach(() => {
     cy.visit("/signin");
     cy.intercept("PUT", "/api/integrations/upload", {
