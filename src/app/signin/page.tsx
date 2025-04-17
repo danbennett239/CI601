@@ -77,7 +77,7 @@ export default function SigninPage() {
       <div className={styles.dentalPracticeSection}>
         <p className={styles.dentalPrompt}>
           Are you a dental practice?{" "}
-          <a href="/practice-register" className={styles.dentalLink}>
+          <a href="/practice-register" className={styles.dentalLink} data-cy="practice-register-link">
             Register here
           </a>
         </p>

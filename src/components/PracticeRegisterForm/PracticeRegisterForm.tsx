@@ -470,12 +470,12 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
 
   return (
     <>
-      <Link href="/signin" className={styles.backLink}>Back to Sign In</Link>
-      <div className={styles.formWrapper}>
+      <Link href="/signin" className={styles.backLink} data-cy="back-to-signin-link">Back to Sign In</Link>
+      <div className={styles.formWrapper} data-cy="practice-register-form">
         <h2 className={styles.title}>Register Your Practice</h2>
         <form onSubmit={handleSubmit} className={styles.form}>
           <div className={styles.photoSection}>
-            <div className={styles.photoCircle} onClick={handlePhotoClick}>
+            <div className={styles.photoCircle} onClick={handlePhotoClick} data-cy="photo-circle">
               {photoPreview ? (
                 <img src={photoPreview} alt="Practice" className={styles.photoPreview} />
               ) : (
@@ -488,6 +488,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
               onChange={handlePhotoChange}
               style={{ display: "none" }}
               accept="image/*"
+              data-cy="photo-input"
             />
             <label className={styles.photoLabel}>Practice Photo</label>
             {formErrors["photo"] && <p className={styles.fieldError}>{formErrors["photo"]}</p>}
@@ -501,6 +502,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 onChange={(e) => handleInputChange("practiceName", e.target.value, setPracticeName)}
                 className={styles.input}
                 placeholder="Practice Name"
+                data-cy="practice-name-input"
               />
               {formErrors["practiceName"] && <p className={styles.fieldError}>{formErrors["practiceName"]}</p>}
             </div>
@@ -511,6 +513,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 onChange={(e) => handleInputChange("email", e.target.value, setEmail)}
                 className={styles.input}
                 placeholder="Email"
+                data-cy="email-input"
               />
               {formErrors["email"] && <p className={styles.fieldError}>{formErrors["email"]}</p>}
             </div>
@@ -521,6 +524,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 onChange={(e) => handleInputChange("phoneNumber", e.target.value, setPhoneNumber)}
                 className={styles.input}
                 placeholder="Phone Number"
+                data-cy="phone-number-input"
               />
               {formErrors["phoneNumber"] && <p className={styles.fieldError}>{formErrors["phoneNumber"]}</p>}
             </div>
@@ -531,8 +535,9 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 onChange={(e) => handleInputChange("password", e.target.value, setPassword)}
                 className={styles.input}
                 placeholder="Password"
+                data-cy="password-input"
               />
-              <span onClick={() => setShowPassword(!showPassword)} className={styles.eyeIcon}>
+              <span onClick={() => setShowPassword(!showPassword)} className={styles.eyeIcon} data-cy="show-password-toggle">
                 {showPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
               {formErrors["password"] && <p className={styles.fieldError}>{formErrors["password"]}</p>}
@@ -544,8 +549,9 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                 onChange={(e) => handleInputChange("repeatPassword", e.target.value, setRepeatPassword)}
                 className={styles.input}
                 placeholder="Confirm Password"
+                data-cy="repeat-password-input"
               />
-              <span onClick={() => setShowRepeatPassword(!showRepeatPassword)} className={styles.eyeIcon}>
+              <span onClick={() => setShowRepeatPassword(!showRepeatPassword)} className={styles.eyeIcon} data-cy="show-repeat-password-toggle">
                 {showRepeatPassword ? <FaEyeSlash /> : <FaEye />}
               </span>
               {formErrors["repeatPassword"] && <p className={styles.fieldError}>{formErrors["repeatPassword"]}</p>}
@@ -563,6 +569,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.line1", e.target.value, setAddressLine1)}
                   className={styles.input}
                   placeholder="Address Line 1"
+                  data-cy="address-line1-input"
                 />
                 {formErrors["address.line1"] && <p className={styles.fieldError}>{formErrors["address.line1"]}</p>}
               </div>
@@ -573,6 +580,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.line2", e.target.value, setAddressLine2)}
                   className={styles.input}
                   placeholder="Address Line 2"
+                  data-cy="address-line2-input"
                 />
                 {formErrors["address.line2"] && <p className={styles.fieldError}>{formErrors["address.line2"]}</p>}
               </div>
@@ -583,6 +591,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.line3", e.target.value, setAddressLine3)}
                   className={styles.input}
                   placeholder="Address Line 3"
+                  data-cy="address-line3-input"
                 />
                 {formErrors["address.line3"] && <p className={styles.fieldError}>{formErrors["address.line3"]}</p>}
               </div>
@@ -593,6 +602,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.city", e.target.value, setCity)}
                   className={styles.input}
                   placeholder="City/Town"
+                  data-cy="city-input"
                 />
                 {formErrors["address.city"] && <p className={styles.fieldError}>{formErrors["address.city"]}</p>}
               </div>
@@ -603,6 +613,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.county", e.target.value, setCounty)}
                   className={styles.input}
                   placeholder="County"
+                  data-cy="county-input"
                 />
                 {formErrors["address.county"] && <p className={styles.fieldError}>{formErrors["address.county"]}</p>}
               </div>
@@ -613,6 +624,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.postcode", e.target.value, setPostcode)}
                   className={styles.input}
                   placeholder="Postcode"
+                  data-cy="postcode-input"
                 />
                 {formErrors["address.postcode"] && <p className={styles.fieldError}>{formErrors["address.postcode"]}</p>}
               </div>
@@ -623,6 +635,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   onChange={(e) => handleInputChange("address.country", e.target.value, setCountry)}
                   className={styles.input}
                   placeholder="Country"
+                  data-cy="country-input"
                 />
                 {formErrors["address.country"] && <p className={styles.fieldError}>{formErrors["address.country"]}</p>}
               </div>
@@ -642,6 +655,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                     onChange={(e) => handleHoursChange(index, "open", e.target.value)}
                     className={styles.timeInput}
                     disabled={dayObj.closed}
+                    data-cy={`${dayObj.dayName.toLowerCase()}-open-input`}
                   />
                   <span className={styles.timeSeparator}>—</span>
                   <input
@@ -650,6 +664,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                     onChange={(e) => handleHoursChange(index, "close", e.target.value)}
                     className={styles.timeInput}
                     disabled={dayObj.closed}
+                    data-cy={`${dayObj.dayName.toLowerCase()}-close-input`}
                   />
                 </div>
                 <label className={styles.checkboxLabel}>
@@ -657,6 +672,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                     type="checkbox"
                     checked={dayObj.closed}
                     onChange={(e) => handleClosedChange(index, e.target.checked)}
+                    data-cy={`${dayObj.dayName.toLowerCase()}-closed-checkbox`}
                   />
                   Closed
                 </label>
@@ -680,6 +696,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                     type="checkbox"
                     checked={service.enabled}
                     onChange={(e) => handleServiceToggle(index, e.target.checked)}
+                    data-cy={`${service.name.toLowerCase()}-service-checkbox`}
                   />
                   {service.name}
                 </label>
@@ -692,6 +709,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
                   disabled={!service.enabled}
                   min="0"
                   step="0.01"
+                  data-cy={`${service.name.toLowerCase()}-price-input`}
                 />
                 {formErrors[`practice_services.${service.name.toLowerCase()}`] && (
                   <p className={styles.fieldError}>{formErrors[`practice_services.${service.name.toLowerCase()}`]}</p>
@@ -708,7 +726,7 @@ export default function PracticeRegisterForm({ onSuccess }: PracticeRegisterForm
             All information provided can be updated in your Practice Dashboard under Practice Preferences after verification is complete.
           </p>
 
-          <button type="submit" className={styles.submitButton}>
+          <button type="submit" className={styles.submitButton} data-cy="submit-button">
             Register Practice
           </button>
         </form>
