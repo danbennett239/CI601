@@ -78,13 +78,16 @@ export default function SearchFilters({
     setMaxDistance(distance);
   }, [distance, setMaxDistance]);
 
-  /* ---------- handlers ---------- */
   const handlePriceChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     isMin: boolean,
   ) => {
-    const value = e.target.value; // keep raw string
-    isMin ? setMinPrice(value) : setMaxPrice(value);
+    const value = e.target.value;
+    if (isMin) {
+      setMinPrice(value);
+    } else {
+      setMaxPrice(value);
+    }
   };
 
   const handleSliderChange = (
@@ -92,8 +95,13 @@ export default function SearchFilters({
     isMin: boolean,
   ) => {
     const value = e.target.value;
-    isMin ? setMinPrice(value) : setMaxPrice(value);
+    if (isMin) {
+      setMinPrice(value);
+    } else {
+      setMaxPrice(value);
+    }
   };
+
 
   const clearFilters = () => {
     setMinPrice(priceMin.toString());
@@ -186,18 +194,16 @@ export default function SearchFilters({
             <div
               className={styles.sliderTrack}
               style={{
-                left: `${
-                  ((Number.isNaN(numericMin) ? priceMin : numericMin) -
+                left: `${((Number.isNaN(numericMin) ? priceMin : numericMin) -
                     priceMin) /
                   (priceMax - priceMin) *
                   100
-                }%`,
-                width: `${
-                  ((Number.isNaN(numericMax) ? priceMax : numericMax) -
+                  }%`,
+                width: `${((Number.isNaN(numericMax) ? priceMax : numericMax) -
                     (Number.isNaN(numericMin) ? priceMin : numericMin)) /
                   (priceMax - priceMin) *
                   100
-                }%`,
+                  }%`,
               }}
             />
           </div>
