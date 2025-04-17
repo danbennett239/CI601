@@ -108,6 +108,7 @@ const DentalPracticeModal: React.FC<DentalPracticeModalProps> = ({
                 onClick={handleApprove}
                 disabled={processing}
                 className={styles.approveButton}
+                data-cy="approve-practice-button"
               >
                 Approve
               </button>
