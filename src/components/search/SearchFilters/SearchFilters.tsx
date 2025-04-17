@@ -36,55 +36,69 @@ export default function SearchFilters({
   onFilter,
   appointments,
 }: SearchFiltersProps) {
-  const [minPrice, setMinPrice] = useState(priceRange[0]);
-  const [maxPrice, setMaxPrice] = useState(priceRange[1]);
-  const [distance, setDistance] = useState(maxDistance);
+  /* 👇  keep the raw input as a string */
+  const [minPrice, setMinPrice] = useState<string>(priceRange[0].toString());
+  const [maxPrice, setMaxPrice] = useState<string>(priceRange[1].toString());
+  const [distance, setDistance] = useState<number>(maxDistance);
   const sliderRef = useRef<HTMLDivElement>(null);
 
-  const appointmentTypes = ['checkup', 'filling', 'cleaning', 'emergency', 'whitening', 'extraction'];
+  const appointmentTypes = [
+    'checkup',
+    'filling',
+    'cleaning',
+    'emergency',
+    'whitening',
+    'extraction',
+  ];
 
-  // Static range for slider and histogram, not tied to API response
+  /* ---------- Histogram data ---------- */
   const priceMin = 0;
   const priceMax = 200;
   const bins = 10;
   const binSize = (priceMax - priceMin) / bins;
   const histogram = Array(bins).fill(0);
-  appointments.forEach((appt) => {
-    if (appt.price >= priceMin && appt.price <= priceMax) {
-      const binIndex = Math.min(Math.floor((appt.price - priceMin) / binSize), bins - 1);
-      histogram[binIndex]++;
+  appointments.forEach(({ price }) => {
+    if (price >= priceMin && price <= priceMax) {
+      const idx = Math.min(Math.floor((price - priceMin) / binSize), bins - 1);
+      histogram[idx]++;
     }
   });
 
+  /* ---------- keep the lifted state up-to-date ---------- */
   useEffect(() => {
-    setPriceRange([minPrice, maxPrice]);
-    setMaxDistance(distance);
-  }, [minPrice, maxPrice, distance, setPriceRange, setMaxDistance]);
+    const min = parseFloat(minPrice);
+    const max = parseFloat(maxPrice);
 
-  const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>, isMin: boolean) => {
-    const value = Number(e.target.value);
-    if (isMin) {
-      setMinPrice(value <= maxPrice ? value : maxPrice);
-    } else {
-      setMaxPrice(value >= minPrice ? value : minPrice);
+    if (!Number.isNaN(min) && !Number.isNaN(max) && min <= max) {
+      setPriceRange([min, max]);
     }
+  }, [minPrice, maxPrice, setPriceRange]);
+
+  useEffect(() => {
+    setMaxDistance(distance);
+  }, [distance, setMaxDistance]);
+
+  /* ---------- handlers ---------- */
+  const handlePriceChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isMin: boolean,
+  ) => {
+    const value = e.target.value; // keep raw string
+    isMin ? setMinPrice(value) : setMaxPrice(value);
   };
 
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>, isMin: boolean) => {
-    const value = Number(e.target.value);
-    if (isMin) {
-      setMinPrice(value <= maxPrice ? value : maxPrice);
-    } else {
-      setMaxPrice(value >= minPrice ? value : minPrice);
-    }
+  const handleSliderChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    isMin: boolean,
+  ) => {
+    const value = e.target.value;
+    isMin ? setMinPrice(value) : setMaxPrice(value);
   };
 
   const clearFilters = () => {
-    setPriceRange([0, 200]);
-    setMinPrice(0);
-    setMaxPrice(200);
+    setMinPrice(priceMin.toString());
+    setMaxPrice(priceMax.toString());
     setPostcode('');
-    setMaxDistance(50);
     setDistance(50);
     setDateRange(['', '']);
     setSortOption('soonest');
@@ -92,10 +106,15 @@ export default function SearchFilters({
     onFilter();
   };
 
+  /* helpers so the slider always has a number */
+  const numericMin = parseFloat(minPrice);
+  const numericMax = parseFloat(maxPrice);
+
   return (
     <div className={styles.filters}>
       <h3 className={styles.filterTitle}>Filter Appointments</h3>
 
+      {/* --- Sort --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Sort By</label>
         <select
@@ -110,40 +129,47 @@ export default function SearchFilters({
         </select>
       </div>
 
+      {/* --- Appointment type --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Appointment Type</label>
         <select
           value={appointmentType}
           onChange={(e) => setAppointmentType(e.target.value)}
           className={styles.sortSelect}
+          data-cy="filter-type-select"
         >
           <option value="">Any Type</option>
-          {appointmentTypes.map((type) => (
-            <option key={type} value={type}>
-              {type.charAt(0).toUpperCase() + type.slice(1)}
+          {appointmentTypes.map((t) => (
+            <option key={t} value={t}>
+              {t.charAt(0).toUpperCase() + t.slice(1)}
             </option>
           ))}
         </select>
       </div>
 
+      {/* --- Price range (histogram + slider + inputs) --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Price Range (£)</label>
+
+        {/* histogram */}
         <div className={styles.histogramSlider}>
           <div className={styles.histogram}>
-            {histogram.map((count, index) => (
+            {histogram.map((count, i) => (
               <div
-                key={index}
+                key={i}
                 className={styles.histogramBar}
                 style={{ height: `${count * 5}px` }}
               />
             ))}
           </div>
+
+          {/* double‑ended slider */}
           <div className={styles.sliderContainer} ref={sliderRef}>
             <input
               type="range"
               min={priceMin}
               max={priceMax}
-              value={minPrice}
+              value={Number.isNaN(numericMin) ? priceMin : numericMin}
               onChange={(e) => handleSliderChange(e, true)}
               className={`${styles.priceSlider} ${styles.minSlider}`}
             />
@@ -151,19 +177,33 @@ export default function SearchFilters({
               type="range"
               min={priceMin}
               max={priceMax}
-              value={maxPrice}
+              value={Number.isNaN(numericMax) ? priceMax : numericMax}
               onChange={(e) => handleSliderChange(e, false)}
               className={`${styles.priceSlider} ${styles.maxSlider}`}
             />
+
+            {/* track highlight */}
             <div
               className={styles.sliderTrack}
               style={{
-                left: `${((minPrice - priceMin) / (priceMax - priceMin)) * 100}%`,
-                width: `${((maxPrice - minPrice) / (priceMax - priceMin)) * 100}%`,
+                left: `${
+                  ((Number.isNaN(numericMin) ? priceMin : numericMin) -
+                    priceMin) /
+                  (priceMax - priceMin) *
+                  100
+                }%`,
+                width: `${
+                  ((Number.isNaN(numericMax) ? priceMax : numericMax) -
+                    (Number.isNaN(numericMin) ? priceMin : numericMin)) /
+                  (priceMax - priceMin) *
+                  100
+                }%`,
               }}
             />
           </div>
         </div>
+
+        {/* numeric inputs */}
         <div className={styles.priceInputs}>
           <div className={styles.inputWrapper}>
             <label className={styles.inputLabel}>Min</label>
@@ -172,8 +212,9 @@ export default function SearchFilters({
               value={minPrice}
               onChange={(e) => handlePriceChange(e, true)}
               min={priceMin}
-              max={maxPrice}
+              max={numericMax || priceMax}
               className={styles.priceInput}
+              data-cy="filter-price-min"
             />
           </div>
           <div className={styles.inputWrapper}>
@@ -182,14 +223,16 @@ export default function SearchFilters({
               type="number"
               value={maxPrice}
               onChange={(e) => handlePriceChange(e, false)}
-              min={minPrice}
+              min={numericMin || priceMin}
               max={priceMax}
               className={styles.priceInput}
+              data-cy="filter-price-max"
             />
           </div>
         </div>
       </div>
 
+      {/* --- Postcode --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Location (Postcode)</label>
         <input
@@ -198,9 +241,11 @@ export default function SearchFilters({
           onChange={(e) => setPostcode(e.target.value)}
           placeholder="e.g., SO31 7GT"
           className={styles.postcodeInput}
+          data-cy="filter-postcode-input"
         />
       </div>
 
+      {/* --- Distance --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Max Distance (miles)</label>
         <input
@@ -209,9 +254,11 @@ export default function SearchFilters({
           onChange={(e) => setDistance(Number(e.target.value))}
           min={0}
           className={styles.distanceInput}
+          data-cy="filter-distance"
         />
       </div>
 
+      {/* --- Date range --- */}
       <div className={styles.filterGroup}>
         <label className={styles.filterLabel}>Date Range</label>
         <div className={styles.dateInputs}>
@@ -231,8 +278,13 @@ export default function SearchFilters({
         </div>
       </div>
 
+      {/* --- Buttons --- */}
       <div className={styles.buttonGroup}>
-        <button onClick={onFilter} className={styles.filterButton}>
+        <button
+          onClick={onFilter}
+          className={styles.filterButton}
+          data-cy="filter-apply"
+        >
           Apply Filters
         </button>
         <button onClick={clearFilters} className={styles.clearButton}>
