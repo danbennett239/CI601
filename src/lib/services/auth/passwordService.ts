@@ -39,7 +39,7 @@ export async function sendForgotPasswordEmail(email: string): Promise<void> {
         {
           From: {
             Email: process.env.MAILJET_SENDER_EMAIL as string,
-            Name: "Tempname Dentist",
+            Name: "DentalConnect",
           },
           To: [{ Email: email }],
           Subject: "Reset Your Password",

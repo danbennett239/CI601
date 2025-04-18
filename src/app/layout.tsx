@@ -8,7 +8,7 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css"
 
 export const metadata: Metadata = {
-  title: "Tempname",
+  title: "DentalConnect",
   description: "Book last-minute dental appointments with ease.",
   icons: {
     icon: "/favicon.ico",

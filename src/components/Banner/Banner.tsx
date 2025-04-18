@@ -117,12 +117,12 @@ const Banner: React.FC = () => {
         <div className={styles.logoSection}>
           <Image
             src="/logo.png"
-            alt="Tempname Logo"
+            alt="DentalConnect Logo"
             className={styles.logo}
             height={40}
             width={40}
           />
-          <span className={styles.name}>Tempname</span>
+          <span className={styles.name}>DentalConnect</span>
         </div>
 
         {/* Desktop Navigation */}
