@@ -83,14 +83,11 @@ export function HomeDashboard({
           <h2 className={styles.infoTitle}>Why Choose Us?</h2>
           <div className={styles.infoContent}>
             <p>
-              Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-            </p>
+              Finding and booking your next dental appointment has never been easier. With real-time availability, you can search for appointments near you, filter by services, and book instantly—all in just a few clicks. Our platform ensures you get the care you need, exactly when you need it.</p>
             <p>
-              Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
-            </p>
+              Dental practices trust us to keep their schedules full. By listing unbooked or cancelled appointments, practices can reach more patients and reduce downtime. It&apos;s a win-win: practices thrive, and you get access to more appointment options.</p>
             <p>
-              Practices love us because they can easily list their cancelled or unbooked appointments, filling their schedules while offering you unbeatable convenience. Join thousands of happy patients and practices today!
-            </p>
+              We prioritise trust and transparency. Explore verified practices, read authentic reviews, and check ratings to make informed decisions. Join thousands of satisfied patients who have simplified their dental care with us!</p>
           </div>
         </section>
 
