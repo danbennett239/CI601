@@ -62,6 +62,9 @@ interface SavedFilters {
 }
 
 export default function SearchPage() {
+  const now = new Date();
+  const todayISOString = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
   const [appointments, setAppointments] = useState<RawAppointment[]>([]);
   const [appliedFilters, setAppliedFilters] = useState<{
     priceRange: [number, number];
@@ -84,7 +87,7 @@ export default function SearchPage() {
       priceRange: [0, 200],
       postcode: '',
       maxDistance: 50,
-      dateRange: ['', ''],
+      dateRange: [todayISOString, ''],
       sortOption: 'soonest',
       appointmentType: '',
     };
