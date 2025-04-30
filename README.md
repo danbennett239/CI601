@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DentalConnect
 
-## Getting Started
+DentalConnect is a full-stack web application that enables users to search, compare, and book private dental appointments. It uses Hasura, PostgreSQL, and Next.js, and is designed for local development using Docker.
 
-First, run the development server:
+## Prerequisites
+
+Before starting, make sure the following tools are installed on your machine:
+
+| Tool           | Required | Description                                        | Download Link                                                   |
+|----------------|----------|----------------------------------------------------|------------------------------------------------------------------|
+| **Docker**     | ✅ Yes    | Runs PostgreSQL and Hasura containers              | [Get Docker](https://www.docker.com/products/docker-desktop)     |
+| **Node.js**    | ✅ Yes    | Runs the frontend app (Next.js)                    | [Get Node.js](https://nodejs.org/)                               |
+| **Hasura CLI** | ✅ Yes  | Applies Hasura migrations and metadata       | [Install Hasura CLI](https://hasura.io/docs/latest/hasura-cli/install-hasura-cli/) |
+
+
+## 1. Clone the Repository
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone https://github.com/danbennett239/CI601.git
+cd ci601-app
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 2. Create .env file
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Create a .env file in the root of the project and populate the fields defined within .env.example
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 3. Start Hasura and Postgres with Docker
 
-## Learn More
+```bash
+docker-compose up -d
+```
 
-To learn more about Next.js, take a look at the following resources:
+## 4. Populate Hasura
+```
+cd hasura
+hasura migrate apply
+hasura metadata apply
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 5. Install dependencies
+```
+npm install
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 6. Running the local development environment
 
-## Deploy on Vercel
+Run Docker
+```
+docker-compose up
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Run Hasura
+```
+cd hasura
+hasura console
+```
+Run Frontend 
+```
+npm run dev
+```
