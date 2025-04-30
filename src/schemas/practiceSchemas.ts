@@ -7,7 +7,16 @@ export const practiceRegistrationSchema = z
   .object({
     practiceName: z.string().min(1, "Practice name is required"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
+    password: z
+      .string()
+      .refine(
+        (val) =>
+          val.length >= 8 &&
+          /[!@#$%^&*(),.?":{}|<>]/.test(val),
+        {
+          message: "Password must be at least 8 characters long and contain a special character",
+        }
+      ),
     repeatPassword: z.string().min(1, "Please confirm your password"),
     phoneNumber: z.string().min(1, "Phone number is required"),
     photo: z
@@ -57,19 +66,22 @@ export const practiceRegistrationSchema = z
           });
         },
         {
-          message: "For open days, both opening and closing times are required and closing must be after opening",
+          message:
+            "For open days, both opening and closing times are required and closing must be after opening",
           path: ["openingHours"],
         }
       ),
-    practice_services: z.record(z.string(), z.number().nonnegative("Price must be non-negative")).refine(
-      (services) => Object.keys(services).length > 0,
-      { message: "At least one service must be selected with a price" }
-    ),
+    practice_services: z
+      .record(z.string(), z.number().nonnegative("Price must be non-negative"))
+      .refine((services) => Object.keys(services).length > 0, {
+        message: "At least one service must be selected with a price",
+      }),
   })
   .refine((data) => data.password === data.repeatPassword, {
     message: "Passwords do not match",
     path: ["repeatPassword"],
   });
+
 
 
 // Schema for create appointment in Practice Dashboard

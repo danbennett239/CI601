@@ -3,7 +3,7 @@ const HASURA_ADMIN_SECRET = process.env.HASURA_ADMIN_SECRET!;
 
 import { validateInvite } from "./inviteService";
 import { markInviteAsUsed } from "./tokenService";
-import { hashPassword } from "@/lib/utils/auth";
+import { UserPayload, signAccessToken, signRefreshToken, hashPassword } from "@/lib/utils/auth";
 
 export async function getUserById(userId: string) {
   const query = `
@@ -138,4 +138,72 @@ export async function checkUserExists(email: string): Promise<boolean> {
   }
 
   return result.data.users.length > 0; // Returns `true` if user exists
+}
+
+export async function updateUserEmail(userId: string, email: string, currentUser: UserPayload) {
+  const mutation = `
+    mutation UpdateUserEmail($userId: uuid!, $email: String!) {
+      update_users_by_pk(
+        pk_columns: { user_id: $userId }
+        _set: { email: $email }
+      ) {
+        user_id
+        email
+        role
+        practice_id
+      }
+    }
+  `;
+
+  try {
+    const response = await fetch(HASURA_GRAPHQL_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      },
+      body: JSON.stringify({
+        query: mutation,
+        variables: { userId, email },
+      }),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok || result.errors) {
+      throw new Error(result.errors?.[0]?.message || "Error updating user email");
+    }
+
+    const updatedUser = result.data.update_users_by_pk;
+    if (!updatedUser) {
+      throw new Error("User not found");
+    }
+
+    // Prepare response with updated user data
+    const responseData: {
+      user: { user_id: string; email: string; role: string; practice_id?: string };
+      accessToken?: string;
+      refreshToken?: string;
+    } = { user: updatedUser };
+
+    // If email changed, reissue tokens
+    if (email !== currentUser.email) {
+      const payload: UserPayload = {
+        id: updatedUser.user_id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        practice_id: updatedUser.practice_id,
+        hasura_claims: currentUser.hasura_claims,
+        rememberMe: currentUser.rememberMe,
+      };
+      responseData.accessToken = signAccessToken(payload);
+      responseData.refreshToken = signRefreshToken(payload);
+    }
+
+    return responseData;
+  } catch (error: unknown) {
+    console.error("Error in updateUserEmail:", error);
+    const message = error instanceof Error ? error.message : "Error updating user email";
+    throw new Error(message);
+  }
 }

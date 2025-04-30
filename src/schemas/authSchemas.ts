@@ -26,7 +26,17 @@ export const userRegistrationSchema = z
       .refine((val) => val === "" || /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val), {
         message: "Invalid email address",
       }),
-    password: z.string().min(6, "Password must be at least 6 characters long"),
+      password: z
+      .string()
+      .refine(
+        (val) =>
+          val.length >= 8 &&
+          /[!@#$%^&*(),.?":{}|<>]/.test(val),
+        {
+          message: "Password must be at least 8 characters long and contain a special character",
+        }
+      ),
+    
     repeatPassword: z.string().min(1, "Please confirm your password"),
     role: z.literal("user"),
   })
