@@ -42,7 +42,7 @@ hasura metadata apply
 npm install
 ```
 
-## 6. Running the local development environment
+## Running the local development environment
 
 Run Docker
 ```
@@ -57,4 +57,15 @@ hasura console
 Run Frontend 
 ```
 npm run dev
+```
+
+## Running Tests
+Start Local development Environment
+```
+npx cypress open
+```
+
+Ensure the following setting in `cypress.config.ts`
+```
+baseUrl: "http://localhost:3000"
 ```

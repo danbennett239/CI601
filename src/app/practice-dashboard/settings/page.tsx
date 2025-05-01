@@ -474,6 +474,7 @@ const PracticeSettings: React.FC = () => {
               type="text"
               value={info.practice_name}
               onChange={(e) => handleFieldChange("practice_name", e.target.value)}
+              data-cy="practice-name-input"
             />
           </div>
           <div className={styles.fieldGroup}>

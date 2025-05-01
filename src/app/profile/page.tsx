@@ -126,6 +126,7 @@ const UserSettings: React.FC = () => {
               type="email"
               value={info.email}
               onChange={(e) => handleFieldChange(e.target.value)}
+              data-cy="email-input"
             />
           </div>
         </section>
@@ -135,6 +136,7 @@ const UserSettings: React.FC = () => {
             className={unsavedChanges ? styles.saveButtonActive : styles.saveButton}
             onClick={handleSave}
             disabled={!unsavedChanges}
+            data-cy="save-button"
           >
             Save
           </button>

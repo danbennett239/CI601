@@ -29,6 +29,7 @@ export default function PracticeDashboard() {
         <PanelCard
           title="Manage Practice Information and Preferences"
           link="/practice-dashboard/settings"
+          data-cy="manage-practice-settings-link"
         />
         <PanelCard
           title="Analytics Dashboard"
