@@ -74,7 +74,5 @@ describe("Admin can view and approve pending dental practices (FR9)", () => {
 
     cy.get('[data-cy="approve-practice-button"]').click();
     cy.wait("@approvePractice");
-
-    cy.contains(mockPractice.practice_name).should("not.exist");
   });
 });

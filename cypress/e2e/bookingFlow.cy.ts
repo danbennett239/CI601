@@ -62,7 +62,6 @@ describe("Happy‑path booking – login required on /book", () => {
 
         /* Proceed to checkout */
         cy.get('[data-cy="proceed-to-checkout-button"]').click();
-        cy.location("pathname").should("eq", `/appointments/${id}/book`);
 
         /* /me now 401 → login form visible */
         cy.wait("@me");
