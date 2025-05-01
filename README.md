@@ -1,6 +1,6 @@
 # DentalConnect
 
-DentalConnect is a full-stack web application that enables users to search, compare, and book private dental appointments. It uses Hasura, PostgreSQL, and Next.js, and is designed for local development using Docker.
+DentalConnect is a full-stack web application that enables users to search, compare, and book private dental appointments. It uses React, Next.js, Hasura, PostgreSQL, and is designed for local development using Docker.
 
 ## Prerequisites
 
