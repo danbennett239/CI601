@@ -18,7 +18,7 @@ export async function sendEmail(options: SendEmailOptions): Promise<void> {
       {
         From: {
           Email: process.env.MAILJET_SENDER_EMAIL ?? "",
-          Name: "MyAppName",
+          Name: "DentalConnect",
         },
         To: [
           {
